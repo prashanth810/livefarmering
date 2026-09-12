@@ -76,24 +76,24 @@ const App = () => {
                 </div>
 
                 {/* Form */}
-                <div className="flex flex-1 items-center justify-center px-8 pb-12 sm:px-12">
-                    <div className="w-full max-w-md">
-                        <h2 className="text-3xl font-bold text-gray-900">Create an account</h2>
-                        <p className="mt-2 text-sm text-gray-500">
+                <div className="flex flex-1 items-center justify-center px-8 pb-10 sm:px-12">
+                    <div className="w-full max-w-xl">
+                        <h2 className="text-2xl font-medium text-gray-900">Create an account</h2>
+                        <p className="text-xs text-gray-500">
                             Enter your details below to get started.
                         </p>
 
                         {/* Role toggle with animated sliding background */}
-                        <div className="relative mt-4 grid grid-cols-2 gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
+                        <div className="relative mt-4 grid grid-cols-2 gap-1  border border-gray-200 bg-gray-50 p-1">
                             {/* Sliding pill */}
                             <div
-                                className={`absolute inset-y-1 w-[calc(50%-0.25rem)] rounded-md border border-gray-200 bg-white shadow-sm transition-transform duration-500 ease-out ${role === "vendor" ? "translate-x-[calc(100%+0.25rem)]" : "translate-x-0"
+                                className={`absolute inset-y-1 w-[calc(50%-0.25rem)] border border-gray-200 bg-white shadow-sm transition-transform duration-500 ease-out ${role === "vendor" ? "translate-x-[calc(100%+0.25rem)]" : "translate-x-0"
                                     }`}
                             />
                             <button
                                 type="button"
                                 onClick={() => setRole("customer")}
-                                className={`relative z-10 rounded-md py-2 text-sm font-medium transition-colors duration-500 cursor-pointer ${role === "customer" ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
+                                className={`relative z-10 py-2 text-sm font-medium transition-colors duration-500 cursor-pointer ${role === "customer" ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
                                     }`}
                             >
                                 I'm a Customer
@@ -101,14 +101,14 @@ const App = () => {
                             <button
                                 type="button"
                                 onClick={handleregister}
-                                className={`relative z-10 rounded-md py-2 text-sm font-medium transition-colors duration-500 cursor-pointer ${role === "vendor" ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
+                                className={`relative z-10 py-2 text-sm font-medium transition-colors duration-500 cursor-pointer ${role === "vendor" ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
                                     }`}
                             >
                                 I'm a Vendor
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+                        <form onSubmit={handleSubmit} className="mt-5 grid grid-cols-1 gap-y-5">
                             {/* Name fields */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -124,7 +124,7 @@ const App = () => {
                                         placeholder="Jane"
                                         value={form.firstName}
                                         onChange={handleChange("firstName")}
-                                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full  border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                     />
                                 </div>
                                 <div>
@@ -140,7 +140,7 @@ const App = () => {
                                         placeholder="Doe"
                                         value={form.lastName}
                                         onChange={handleChange("lastName")}
-                                        className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full  border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                     />
                                 </div>
                             </div>
@@ -161,7 +161,7 @@ const App = () => {
                                         placeholder="jane.doe@example.com"
                                         value={form.email}
                                         onChange={handleChange("email")}
-                                        className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-3.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full  border border-gray-300 py-2.5 pl-10 pr-3.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                     />
                                 </div>
                             </div>
@@ -182,13 +182,13 @@ const App = () => {
                                         placeholder="••••••••••••"
                                         value={form.password}
                                         onChange={handleChange("password")}
-                                        className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full  border border-gray-300 py-2.5 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword((v) => !v)}
                                         aria-label={showPassword ? "Hide password" : "Show password"}
-                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                                     >
                                         {showPassword ? (
                                             <FiEyeOff className="h-4.5 w-4.5" />
@@ -226,7 +226,7 @@ const App = () => {
                             {/* Submit */}
                             <button
                                 type="submit"
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                                className="flex w-full items-center justify-center gap-2 bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 cursor-pointer"
                             >
                                 Create Account
                                 <FiArrowRight className="h-4 w-4" />
@@ -234,31 +234,29 @@ const App = () => {
                         </form>
 
                         {/* Divider */}
-                        <div className="mt-6 flex items-center gap-3">
+                        <div className="mt-4 flex items-center gap-3">
                             <div className="h-px flex-1 bg-gray-200" />
                             <span className="text-xs text-gray-400">Or register with</span>
                             <div className="h-px flex-1 bg-gray-200" />
                         </div>
 
                         {/* Social buttons */}
-                        <div className="mt-6 grid grid-cols-2 gap-4">
+                        <div className="mt-4 grid grid-cols-2 gap-4">
                             <button
                                 type="button"
-                                className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                            >
+                                className="flex items-center justify-center gap-2  border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50  cursor-pointer">
                                 <FcGoogle className="h-4.5 w-4.5" />
                                 Google
                             </button>
                             <button
                                 type="button"
-                                className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                            >
+                                className="flex items-center justify-center gap-2  border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50  cursor-pointer">
                                 <FaFacebook className="h-4.5 w-4.5 text-[#1877F2]" />
                                 Facebook
                             </button>
                         </div>
 
-                        <p className="mt-6 text-center text-sm text-gray-500">
+                        <p className="mt-4.5 text-center text-sm text-gray-500">
                             Already have an account?{" "}
                             <Link to='/login' className="font-medium text-emerald-600 hover:text-emerald-700">
                                 Log in

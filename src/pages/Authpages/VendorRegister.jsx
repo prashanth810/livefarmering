@@ -55,21 +55,9 @@ const VendorRegister = () => {
                     alt="Fresh produce at a local market"
                     className="absolute inset-0 h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 via-emerald-400/10 to-emerald-400/20" />
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/10 via-emerald-400/10 to-emerald-200/10" />
 
                 <div className="relative flex h-full flex-col p-10">
-                    {/* <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white">
-                            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 text-emerald-600" fill="currentColor">
-                                <path d="M12 2c-4 3-7 7-7 11a7 7 0 0 0 14 0c0-4-3-8-7-11z" />
-                            </svg>
-                        </span>
-                        <span className="text-base font-semibold text-white">Green Leaf</span>
-                    </div> */}
-
-                    <div className="mt-auto max-w-md">
-
-                    </div>
                 </div>
             </div>
 
@@ -86,16 +74,16 @@ const VendorRegister = () => {
                 </div>
 
                 <div className="flex flex-1 items-start justify-center overflow-y-auto px-8 pb-6 sm:px-12">
-                    <div className="w-full max-w-md">
-                        <h2 className="text-2xl font-bold text-gray-900">Create Vendor Account</h2>
-                        <p className="mt-1.5 text-sm text-gray-500">
+                    <div className="w-full max-w-xl">
+                        <h2 className="text-2xl font-medium text-gray-900">Create Vendor Account</h2>
+                        <p className="text-xs text-gray-500">
                             Fill in your details to get started with Green Leaf.
                         </p>
 
                         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                             {/* Store Name */}
                             <div>
-                                <label htmlFor="storeName" className="mb-1.5 block text-sm font-semibold text-gray-900">
+                                <label htmlFor="storeName" className="mb-1.5 block text-sm text-gray-700">
                                     Store Name <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -105,13 +93,13 @@ const VendorRegister = () => {
                                     placeholder="e.g. Sunny Farm Organics"
                                     value={form.storeName}
                                     onChange={handleChange("storeName")}
-                                    className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                    className="w-full border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                 />
                             </div>
 
                             {/* Business Category */}
                             <div>
-                                <label htmlFor="category" className="mb-1.5 block text-sm font-semibold text-gray-900">
+                                <label htmlFor="category" className="mb-1.5 block text-sm text-gray-700">
                                     Business Category <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
@@ -120,7 +108,7 @@ const VendorRegister = () => {
                                         required
                                         value={form.category}
                                         onChange={handleChange("category")}
-                                        className="w-full appearance-none rounded-lg border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full appearance-none border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                     >
                                         <option value="" disabled className="text-gray-400">
                                             Select category...
@@ -138,7 +126,7 @@ const VendorRegister = () => {
                             {/* Name fields */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label htmlFor="firstName" className="mb-1.5 block text-sm font-semibold text-gray-900">
+                                    <label htmlFor="firstName" className="mb-1.5 block text-sm text-gray-700">
                                         First Name <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -148,11 +136,11 @@ const VendorRegister = () => {
                                         placeholder="e.g. John"
                                         value={form.firstName}
                                         onChange={handleChange("firstName")}
-                                        className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="lastName" className="mb-1.5 block text-sm font-semibold text-gray-900">
+                                    <label htmlFor="lastName" className="mb-1.5 block text-sm text-gray-700">
                                         Last Name <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -162,14 +150,14 @@ const VendorRegister = () => {
                                         placeholder="e.g. Doe"
                                         value={form.lastName}
                                         onChange={handleChange("lastName")}
-                                        className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                     />
                                 </div>
                             </div>
 
                             {/* Email */}
                             <div>
-                                <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-gray-900">
+                                <label htmlFor="email" className="mb-1.5 block text-sm text-gray-700">
                                     Email Address <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -179,13 +167,13 @@ const VendorRegister = () => {
                                     placeholder="john@sunnyfarm.com"
                                     value={form.email}
                                     onChange={handleChange("email")}
-                                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                    className="w-full border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                 />
                             </div>
 
                             {/* Phone */}
                             <div>
-                                <label htmlFor="phone" className="mb-1.5 block text-sm font-semibold text-gray-900">
+                                <label htmlFor="phone" className="mb-1.5 block text-sm text-gray-700">
                                     Phone Number <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -195,32 +183,32 @@ const VendorRegister = () => {
                                     placeholder="+1 (555) 000-0000"
                                     value={form.phone}
                                     onChange={handleChange("phone")}
-                                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                    className="w-full border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                 />
                             </div>
 
                             {/* Submit */}
                             <button
                                 type="submit"
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                                className="flex w-full items-center justify-center gap-2 bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 cursor-pointer"
                             >
                                 Create Vendor Account
                                 <FiArrowRight className="h-4 w-4" />
                             </button>
                         </form>
 
-                        <p className="mt-4 text-center text-sm text-gray-500">
+                        <p className="mt-4 text-sm text-gray-500">
                             Already have a vendor account?{" "}
                             <Link to="/vendor-login" className="font-medium text-emerald-600 hover:text-emerald-700">
                                 Log in
                             </Link>
                         </p>
-                        <p className="mt-1 text-center text-sm text-gray-500">
+                        <p className="mt-2 text-sm text-gray-500">
                             Signing up as a customer instead?{" "}
                             <button
                                 type="button"
                                 onClick={() => navigate("/register")}
-                                className="font-medium text-emerald-600 hover:text-emerald-700"
+                                className="font-medium text-emerald-600 hover:text-emerald-700 cursor-pointer"
                             >
                                 Switch to customer
                             </button>
