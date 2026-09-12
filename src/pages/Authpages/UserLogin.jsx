@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiMail, FiLock } from "react-icons/fi";
+import { FiMail, FiLock, FiArrowLeft } from "react-icons/fi";
 import { FaLeaf, FaStar, FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { vendorlogin, login } from "../../constants/Imageconstants";
@@ -57,32 +57,33 @@ const UserLogin = () => {
                 </div>
 
                 {/* Right form panel */}
-                <div className="flex w-full flex-col px-6 py-8 sm:px-10 lg:px-16 lg:py-10">
+                <div className="flex w-full flex-col px-6 py-8 sm:px-10 lg:px-16 lg:py-8">
                     {/* Top bar */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E8449]">
+                            <span className="flex h-8 w-8 items-center justify-center bg-[#1E8449]">
                                 <FaLeaf size={15} className="text-white" />
                             </span>
                             <span className="text-lg font-semibold tracking-tight text-[#1E8449]">
                                 Freshies
                             </span>
                         </div>
-                        <a
-                            href="#"
-                            className="text-sm text-[#5B6157] transition hover:text-[#22261F]"
+
+                        <Link to="/"
+                            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                         >
-                            Back to home
-                        </a>
+                            <FiArrowLeft className="h-4 w-4" />
+                            Back to Home
+                        </Link>
                     </div>
 
                     {/* Center content */}
-                    <div className="flex flex-1 flex-col justify-center py-8">
-                        <div className="mx-auto w-full max-w-sm">
-                            <h1 className="text-3xl font-semibold tracking-tight text-[#1B1F17]">
+                    <div className="flex flex-1 flex-col justify-center py-8 mt-5">
+                        <div className="mx-auto w-full max-w-lg">
+                            <h1 className="text-2xl font-semibold tracking-tight text-[#1B1F17]">
                                 Welcome back
                             </h1>
-                            <p className="mt-2 text-[15px] leading-relaxed text-[#6B7166]">
+                            <p className="text-xs leading-relaxed text-[#6B7166]">
                                 Enter your email and password to access your account.
                             </p>
 
@@ -103,7 +104,7 @@ const UserLogin = () => {
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full rounded-xl border border-[#DDE3D6] bg-white px-3.5 py-3 text-sm text-[#2C3126] outline-none transition placeholder:text-[#A6AB9D] focus:border-[#1E8449] focus:ring-2 focus:ring-[#1E8449]/15"
+                                        className="w-full border border-[#DDE3D6] bg-white px-3.5 py-3 text-sm text-[#2C3126] outline-none transition placeholder:text-[#A6AB9D] focus:border-[#1E8449] focus:ring-2 focus:ring-[#1E8449]/15"
                                         placeholder="e.g. emily@example.com"
                                     />
                                 </div>
@@ -120,18 +121,18 @@ const UserLogin = () => {
                                         type="password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full rounded-xl border border-[#DDE3D6] bg-white px-3.5 py-3 text-sm text-[#2C3126] outline-none transition placeholder:text-[#A6AB9D] focus:border-[#1E8449] focus:ring-2 focus:ring-[#1E8449]/15"
+                                        className="w-full border border-[#DDE3D6] bg-white px-3.5 py-3 text-sm text-[#2C3126] outline-none transition placeholder:text-[#A6AB9D] focus:border-[#1E8449] focus:ring-2 focus:ring-[#1E8449]/15"
                                         placeholder="Enter your password"
                                     />
                                 </div>
 
                                 <div className="flex items-center justify-between">
-                                    <label className="flex select-none items-center gap-2.5 text-sm text-[#4A5043]">
+                                    <label className="flex select-none items-center gap-2.5 text-sm text-[#4A5043] cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={remember}
                                             onChange={() => setRemember((r) => !r)}
-                                            className="h-4 w-4 rounded border-[#C6CDBC] text-[#1E8449] accent-[#1E8449] focus:ring-[#1E8449]/30"
+                                            className="h-4 w-4 border-[#C6CDBC] text-[#1E8449] accent-[#1E8449] focus:ring-[#1E8449]/30 cursor-pointer"
                                         />
                                         Remember me
                                     </label>
@@ -145,7 +146,7 @@ const UserLogin = () => {
 
                                 <button
                                     type="submit"
-                                    className="mt-1 flex w-full items-center justify-center rounded-xl bg-[#1E8449] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#166638] focus:outline-none focus:ring-2 focus:ring-[#1E8449]/40 focus:ring-offset-2"
+                                    className="mt-1 flex w-full items-center justify-center bg-[#1E8449] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#166638] focus:outline-none focus:ring-2 focus:ring-[#1E8449]/40 focus:ring-offset-2 cursor-pointer"
                                 >
                                     Sign in
                                 </button>
@@ -164,15 +165,13 @@ const UserLogin = () => {
                             <div className="grid grid-cols-2 gap-3">
                                 <button
                                     type="button"
-                                    className="flex items-center justify-center gap-2 rounded-xl border border-[#DDE3D6] bg-white py-2.5 text-sm font-medium text-[#2C3126] transition hover:bg-[#F7F5EF]"
-                                >
+                                    className="flex items-center justify-center gap-2 border border-[#DDE3D6] bg-white py-2.5 text-sm font-medium text-[#2C3126] transition hover:bg-[#F7F5EF] cursor-pointer">
                                     <FcGoogle size={18} />
                                     Google
                                 </button>
                                 <button
                                     type="button"
-                                    className="flex items-center justify-center gap-2 rounded-xl border border-[#DDE3D6] bg-white py-2.5 text-sm font-medium text-[#2C3126] transition hover:bg-[#F7F5EF]"
-                                >
+                                    className="flex items-center justify-center gap-2 border border-[#DDE3D6] bg-white py-2.5 text-sm font-medium text-[#2C3126] transition hover:bg-[#F7F5EF] cursor-pointer">
                                     <FaApple size={17} />
                                     Apple
                                 </button>
