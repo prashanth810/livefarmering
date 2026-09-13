@@ -9,6 +9,7 @@ import {
 } from "react-icons/fi";
 import { FaLeaf } from "react-icons/fa";
 import { vendorlogin } from "../../constants/Imageconstants";
+import { Link } from "react-router-dom";
 
 export default function FreshiesVendorLogin() {
     const [showPassword, setShowPassword] = useState(false);
@@ -31,39 +32,30 @@ export default function FreshiesVendorLogin() {
                 </div>
 
                 {/* ================= RIGHT SIDE ================= */}
-                <div className="relative flex h-full w-full flex-1 flex-col bg-white">
+                <div className="relative flex h-full w-full flex-1 flex-col bg-white xl:px-16 xl:py-8">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                            <span className="flex h-8 w-8 items-center justify-center bg-[#1E8449]">
+                                <FaLeaf size={15} className="text-white" />
+                            </span>
+                            <span className="text-lg font-semibold tracking-tight text-[#1E8449]">
+                                Freshies
+                            </span>
+                        </div>
 
-                    {/* Back to marketplace */}
-                    <div className="absolute right-8 top-7">
-                        <a
-                            href="#"
-                            className="text-xs text-gray-500 transition hover:text-gray-900"
+                        <Link to="/"
+                            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                         >
-                            Back to Marketplace
-                        </a>
+                            <FiArrowLeft className="h-4 w-4" />
+                            Back to Home
+                        </Link>
                     </div>
+
 
                     {/* ================= CENTER CONTENT ================= */}
                     <div className="flex h-full items-center justify-center px-6 sm:px-10 lg:px-16">
 
-                        <div className="w-full max-w-[420px]">
-
-                            {/* Brand */}
-                            <div className="mb-7 flex items-center gap-2.5">
-
-                                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#FF542D] text-white">
-                                    <FaLeaf size={14} />
-                                </span>
-
-                                <span className="text-lg font-bold text-[#FF542D]">
-                                    Green Leaf
-                                </span>
-
-                                <span className="ml-1 rounded-sm bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase text-gray-500">
-                                    Vendors
-                                </span>
-
-                            </div>
+                        <div className="w-full max-w-xl">
 
                             {/* Heading */}
                             <h1 className="text-3xl font-bold tracking-tight text-black">
@@ -90,7 +82,7 @@ export default function FreshiesVendorLogin() {
                                         Email Address
                                     </label>
 
-                                    <div className="flex h-10 items-center rounded-md border border-gray-200 bg-white px-3 transition focus-within:border-[#FF542D]">
+                                    <div className="flex h-10 items-center border border-gray-200 bg-white px-3 transition focus-within:border-[#FF542D]">
                                         <FiMail
                                             size={16}
                                             className="mr-2 text-gray-400"
@@ -130,7 +122,7 @@ export default function FreshiesVendorLogin() {
 
                                     </div>
 
-                                    <div className="flex h-10 items-center rounded-md border border-gray-200 bg-white px-3 transition focus-within:border-[#FF542D]">
+                                    <div className="flex h-10 items-center border border-gray-200 bg-white px-3 transition focus-within:border-[#FF542D]">
 
                                         <FiLock
                                             size={16}
@@ -188,7 +180,7 @@ export default function FreshiesVendorLogin() {
                                 {/* Button */}
                                 <button
                                     type="submit"
-                                    className="flex h-10 w-full items-center justify-center rounded-md bg-[#FF542D] text-sm font-semibold text-white transition hover:bg-[#E94824]"
+                                    className="flex h-10 w-full items-center justify-center bg-[#FF542D] text-sm font-semibold text-white transition hover:bg-[#E94824]"
                                 >
                                     Sign In to Dashboard
                                     <FiArrowRight
