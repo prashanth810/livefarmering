@@ -142,14 +142,14 @@ const NavBar = ({ cartTotal = "24.50" }) => {
                 {/* Right actions - desktop */}
                 <nav className="ml-auto hidden items-center gap-6 lg:flex">
                     <Link
-                        to="/vendors"
+                        to="/vendor-register"
                         className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
                     >
                         <PiStorefrontLight className="h-5 w-5" />
                         Vendors
                     </Link>
                     <Link
-                        to="/account"
+                        to="/login"
                         className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
                     >
                         <FiUser className="h-5 w-5" />

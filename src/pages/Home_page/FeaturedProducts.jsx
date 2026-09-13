@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FiHeart, FiPlus, FiArrowRight } from "react-icons/fi";
+import { FiHeart, FiPlus, FiArrowRight, FiShoppingCart } from "react-icons/fi";
 
 const products = [
     {
@@ -10,6 +10,7 @@ const products = [
         unit: "1 kg",
         price: 4.25,
         oldPrice: 5.0,
+        stock: 10,
         image:
             "https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=400&q=80",
         badges: [
@@ -17,6 +18,7 @@ const products = [
             { label: "Organic", color: "bg-green-600" },
         ],
     },
+
     {
         id: "milk",
         vendor: "Valley Dairy",
@@ -24,10 +26,14 @@ const products = [
         unit: "1 Liter",
         price: 2.5,
         oldPrice: null,
+        stock: 0, // OUT OF STOCK
         image:
             "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=400&q=80",
-        badges: [{ label: "Farm Fresh", color: "bg-green-600" }],
+        badges: [
+            { label: "Farm Fresh", color: "bg-green-600" }
+        ],
     },
+
     {
         id: "avocados",
         vendor: "Green Valley Organics",
@@ -35,10 +41,12 @@ const products = [
         unit: "Pack of 3",
         price: 6.99,
         oldPrice: null,
+        stock: 5,
         image:
             "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=400&q=80",
         badges: [],
     },
+
     {
         id: "sourdough",
         vendor: "Artisan Bakers",
@@ -46,9 +54,12 @@ const products = [
         unit: "400 g",
         price: 4.5,
         oldPrice: 5.0,
+        stock: 0, // OUT OF STOCK
         image:
             "https://images.unsplash.com/photo-1585478259715-4d3c5ee36e2c?auto=format&fit=crop&w=400&q=80",
-        badges: [{ label: "10% OFF", color: "bg-red-500" }],
+        badges: [
+            { label: "10% OFF", color: "bg-red-500" }
+        ],
     },
 ];
 
@@ -95,7 +106,7 @@ const ProductCard = ({ product }) => {
 
                 <div className="mt-4 flex items-center justify-between">
                     <div className="flex items-baseline gap-2">
-                        <span className="text-base font-extrabold text-gray-900 sm:text-lg">
+                        <span className="text-base font-bold text-gray-900 sm:text-lg">
                             ${product.price.toFixed(2)}
                         </span>
                         {product.oldPrice && (
@@ -104,13 +115,20 @@ const ProductCard = ({ product }) => {
                             </span>
                         )}
                     </div>
-                    <button
-                        type="button"
-                        className="flex items-center gap-1 bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
-                    >
-                        <FiPlus className="h-3.5 w-3.5" />
-                        Add
-                    </button>
+                    {product.stock > 0 ? (
+                        <button type="button" className="flex items-center gap-1 bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 cursor-pointer">
+                            <FiShoppingCart className="h-3.5 w-3.5" />
+                            Add
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            disabled
+                            className="cursor-not-allowed bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-500"
+                        >
+                            Out of Stock
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
@@ -119,14 +137,14 @@ const ProductCard = ({ product }) => {
 
 const FeaturedProducts = () => {
     return (
-        <section className="bg-white px-4 py-12 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-7xl">
+        <section className="bg-white px-4 py-12 sm:px-6 lg:px-8 xl:pt-16 xl:pb-30">
+            <div className="mx-auto max-w-[95%]">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h2 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">
+                        <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
                             Featured Products
                         </h2>
-                        <p className="mt-2 text-sm text-gray-500 sm:text-base">
+                        <p className="mt-1 text-sm text-gray-500 sm:text-base">
                             Handpicked fresh arrivals from our top-rated local vendors
                         </p>
                     </div>
