@@ -7,7 +7,9 @@ import UserLogin from "./pages/Authpages/UserLogin";
 import NavBar from "./pages/navbar/NavBar";
 import HomePage from "./pages/Home_page/HomePage";
 import Footer from "./pages/footer/Footer";
-import SearchResults from "./pages/SearchResults";
+import SearchResults from "./pages/productdetails/SearchResults";
+import ProductDetails from "./pages/productdetails/ProductDetails";
+import CartPage from "./pages/cartpage/CartPage";
 
 // Home
 const Home = () => (
@@ -49,7 +51,11 @@ const App = () => {
 
         <Route path="/contact" element={<Contact />} />
 
+        <Route path="/shop" element={<SearchResults />} />
         <Route path="/search" element={<SearchResults />} />
+        <Route path="cart" element={<CartPage />} />
+        <Route path="/product-details" element={<ProductDetails />} />
+        <Route path="/product-details/:productId" element={<ProductDetails />} />
 
         <Route
           path="/vendor-register"

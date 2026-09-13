@@ -105,7 +105,7 @@ const SearchField = ({ value, onChange, onSubmit, onSearchComplete, mobile = fal
     );
 };
 
-const NavBar = ({ cartTotal = "24.50" }) => {
+const NavBar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [searchValue, setSearchValue] = useState("");
 
@@ -116,7 +116,7 @@ const NavBar = ({ cartTotal = "24.50" }) => {
         <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
             {/* Announcement bar */}
             <div className="bg-orange-500 px-4 py-2 text-center text-xs font-medium text-white sm:text-sm">
-                Free delivery on all orders over $50! Shop now.
+                🎉 Free delivery on all orders over $50! Shop now. 🎉
             </div>
 
             {/* Main nav */}
@@ -161,11 +161,8 @@ const NavBar = ({ cartTotal = "24.50" }) => {
                     >
                         <span className="relative">
                             <FiShoppingCart className="h-5 w-5" />
-                            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
-                                3
-                            </span>
+                            <span className="absolute -right-2 -top-1 flex h-2 w-2 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white" />
                         </span>
-                        ${cartTotal}
                     </Link>
                 </nav>
 
