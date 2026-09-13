@@ -34,8 +34,8 @@ const Footer = () => {
     };
 
     return (
-        <footer className="bg-white px-4 pt-14 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-7xl">
+        <footer className="bg-white px-4 pt-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[95%]">
                 <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Brand */}
                     <div>

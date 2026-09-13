@@ -12,7 +12,7 @@ const stats = [
 
 const HeroBanner = () => {
     return (
-        <section className="bg-[#DFF7E9]">
+        <section className="bg-[#DFF7E9] mt-8">
             <div className="mx-auto grid max-w-[95%] items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-2 lg:gap-8 lg:px-8 lg:py-16">
                 {/* Copy column */}
                 <div className="flex flex-col items-start text-left">
