@@ -10,6 +10,7 @@ import Footer from "./pages/footer/Footer";
 import SearchResults from "./pages/productdetails/SearchResults";
 import ProductDetails from "./pages/productdetails/ProductDetails";
 import CartPage from "./pages/cartpage/CartPage";
+import WishlistPage from "./pages/wishlist/WishlistPage";
 
 // Home
 const Home = () => (
@@ -54,6 +55,7 @@ const App = () => {
         <Route path="/shop" element={<SearchResults />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="cart" element={<CartPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/product-details" element={<ProductDetails />} />
         <Route path="/product-details/:productId" element={<ProductDetails />} />
 

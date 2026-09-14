@@ -15,6 +15,7 @@ import { LuLeaf } from "react-icons/lu";
 import { PiStorefrontLight } from "react-icons/pi";
 import { FaFacebookF, FaXTwitter, FaInstagram } from "react-icons/fa6";
 import { products } from "../../constants/products";
+import { useWishlist } from "../../services/wishlist";
 import { nutritionRows, ratingBars, reviews, themeVars, thumbnails } from "../../constants/Styles";
 import { FaArrowCircleRight, FaArrowRight } from "react-icons/fa";
 
@@ -87,7 +88,7 @@ const ProductDetails = () => {
     const [activeThumb, setActiveThumb] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState("description");
-    const [wishlisted, setWishlisted] = useState(false);
+    const { isWishlisted, toggleWishlist } = useWishlist();
 
     // Pull in the Inter font used by the design.
     useEffect(() => {
@@ -247,12 +248,12 @@ const ProductDetails = () => {
 
                                 <button
                                     type="button"
-                                    onClick={() => setWishlisted((w) => !w)}
-                                    aria-label="Add to wishlist"
+                                    onClick={() => toggleWishlist(product.id)}
+                                    aria-label={`${isWishlisted(product.id) ? "Remove" : "Add"} from wishlist`}
                                     className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)]"
                                 >
                                     <FiHeart
-                                        className={`h-5 w-5 ₹{wishlisted
+                                        className={`h-5 w-5 ${isWishlisted(product.id)
                                             ? "fill-[var(--destructive)] text-[var(--destructive)]"
                                             : ""
                                             }`}

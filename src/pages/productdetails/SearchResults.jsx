@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { FiChevronRight, FiEye, FiShoppingCart, FiStar } from "react-icons/fi";
+import { FiChevronRight, FiEye, FiHeart, FiShoppingCart, FiStar } from "react-icons/fi";
 import { products } from "../../constants/products";
+import { useWishlist } from "../../services/wishlist";
 
 const ProductCard = ({ product }) => {
     const navigate = useNavigate();
+    const { isWishlisted, toggleWishlist } = useWishlist();
 
     return (
         <article className="flex min-w-0 flex-col overflow-hidden border border-gray-200 bg-white transition-shadow hover:shadow-md">
@@ -21,6 +23,14 @@ const ProductCard = ({ product }) => {
                     className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm hover:text-green-600 cursor-pointer"
                 >
                     <FiEye className="h-4 w-4" />
+                </button>
+                <button
+                    type="button"
+                    aria-label={`${isWishlisted(product.id) ? "Remove" : "Add"} ${product.name} ${isWishlisted(product.id) ? "from" : "to"} wishlist`}
+                    onClick={() => toggleWishlist(product.id)}
+                    className="absolute right-3 top-12 flex h-7 w-7 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm hover:text-red-500 cursor-pointer"
+                >
+                    <FiHeart className={`h-4 w-4 ${isWishlisted(product.id) ? "fill-red-500 text-red-500" : ""}`} />
                 </button>
                 <img src={product.image} alt={product.name} className="h-full w-full object-contain" />
             </div>

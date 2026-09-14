@@ -1,69 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FiHeart, FiPlus, FiArrowRight, FiShoppingCart } from "react-icons/fi";
-
-const products = [
-    {
-        id: "tomatoes",
-        vendor: "Sunrise Farms",
-        name: "Fresh Organic Red Tomatoes",
-        unit: "1 kg",
-        price: 4.25,
-        oldPrice: 5.0,
-        stock: 10,
-        image:
-            "https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=400&q=80",
-        badges: [
-            { label: "15% OFF", color: "bg-red-500" },
-            { label: "Organic", color: "bg-green-600" },
-        ],
-    },
-
-    {
-        id: "milk",
-        vendor: "Valley Dairy",
-        name: "Farm Fresh Whole Milk",
-        unit: "1 Liter",
-        price: 2.5,
-        oldPrice: null,
-        stock: 0, // OUT OF STOCK
-        image:
-            "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=400&q=80",
-        badges: [
-            { label: "Farm Fresh", color: "bg-green-600" }
-        ],
-    },
-
-    {
-        id: "avocados",
-        vendor: "Green Valley Organics",
-        name: "Premium Hass Avocados",
-        unit: "Pack of 3",
-        price: 6.99,
-        oldPrice: null,
-        stock: 5,
-        image:
-            "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=400&q=80",
-        badges: [],
-    },
-
-    {
-        id: "sourdough",
-        vendor: "Artisan Bakers",
-        name: "Classic Sourdough Loaf",
-        unit: "400 g",
-        price: 4.5,
-        oldPrice: 5.0,
-        stock: 0, // OUT OF STOCK
-        image:
-            "https://images.unsplash.com/photo-1585478259715-4d3c5ee36e2c?auto=format&fit=crop&w=400&q=80",
-        badges: [
-            { label: "10% OFF", color: "bg-red-500" }
-        ],
-    },
-];
+import { FiHeart, FiArrowRight, FiShoppingCart } from "react-icons/fi";
+import { useWishlist } from "../../services/wishlist";
+import { featuredProducts } from "../../constants/products";
 
 const ProductCard = ({ product }) => {
+    const { isWishlisted, toggleWishlist } = useWishlist();
+
     return (
         <div className="group relative flex flex-col overflow-hidden border border-emerald-400/20 bg-white shadow-sm transition-shadow hover:shadow-md hover:border-emerald-500/30 duration-500 cursor-pointer">
             {/* Image + badges + favorite */}
@@ -82,10 +25,11 @@ const ProductCard = ({ product }) => {
                 )}
                 <button
                     type="button"
-                    aria-label="Add to favorites"
+                    aria-label={`${isWishlisted(product.id) ? "Remove" : "Add"} ${product.name} ${isWishlisted(product.id) ? "from" : "to"} wishlist`}
+                    onClick={() => toggleWishlist(product.id)}
                     className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-400 shadow-sm transition-colors hover:text-red-500"
                 >
-                    <FiHeart className="h-4 w-4" />
+                    <FiHeart className={`h-4 w-4 ${isWishlisted(product.id) ? "fill-red-500 text-red-500" : ""}`} />
                 </button>
                 <img
                     src={product.image}
@@ -158,7 +102,7 @@ const FeaturedProducts = () => {
                 </div>
 
                 <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    {products.map((product) => (
+                    {featuredProducts.map((product) => (
                         <ProductCard key={product.id} product={product} />
                     ))}
                 </div>
