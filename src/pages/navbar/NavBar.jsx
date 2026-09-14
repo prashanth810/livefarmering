@@ -8,6 +8,7 @@ import {
     FiX,
     FiChevronDown,
     FiTag,
+    FiHeart,
 } from "react-icons/fi";
 import { PiStorefrontLight } from "react-icons/pi";
 import { LuLeaf } from "react-icons/lu";
@@ -156,6 +157,10 @@ const NavBar = () => {
                         Account
                     </Link>
                     <Link
+                        to="/wishlist"
+                        className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600">
+                        <FiHeart className="h-5 w-5" />                    </Link>
+                    <Link
                         to="/cart"
                         className="flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
                     >
@@ -233,6 +238,12 @@ const NavBar = () => {
             {mobileOpen && (
                 <div className="border-t border-gray-100 bg-white px-4 pb-4 md:hidden">
                     <nav className="flex flex-col divide-y divide-gray-100">
+                        <Link
+                            to="/wishlist"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 py-3 text-sm font-medium text-gray-700">
+                            <FiHeart className="h-5 w-5" />
+                        </Link>
                         <Link
                             to="/vendors"
                             onClick={() => setMobileOpen(false)}
