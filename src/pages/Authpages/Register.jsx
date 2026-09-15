@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { brand_logo, register } from "../../constants/Imageconstants";
 import {
     FiArrowLeft,
@@ -12,6 +12,8 @@ import {
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
+import { handleRegister } from "../../redux/Slices/AuthSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const App = () => {
     const navigate = useNavigate();
@@ -24,13 +26,98 @@ const App = () => {
         email: "",
         password: "",
     });
+    const dispatch = useDispatch();
+    const { registerloading, registererror } = useSelector((state) => state.auth.register);
+    const [errors, setErrors] = useState({});
 
     const handleChange = (field) => (e) =>
         setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-    const handleSubmit = (e) => {
+    const handlevalids = () => {
+        const newErrors = {};
+
+        if (!form.firstName.trim()) {
+            newErrors.firstName = "First name is required";
+        }
+        else if (form.firstName.trim().length < 2) {
+            newErrors.firstName = "First name must be at least 2 characters";
+        }
+        else if (!/^[A-Za-z]+$/.test(form.firstName.trim())) {
+            newErrors.firstName = "First name can contain only letters";
+        }
+
+        if (!form.lastName.trim()) {
+            newErrors.lastName = "Last name is required";
+        } else if (form.lastName.trim().length < 2) {
+            newErrors.lastName = "Last name must be at least 2 characters";
+        } else if (!/^[A-Za-z]+$/.test(form.lastName.trim())) {
+            newErrors.lastName = "Last name can contain only letters";
+        }
+
+        if (!form.email.trim()) {
+            newErrors.email = "Email is required";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+            newErrors.email = "Please enter a valid email address";
+        }
+
+        if (!form.password) {
+            newErrors.password = "Password is required";
+        } else if (form.password.length < 8) {
+            newErrors.password = "Password must be at least 8 characters";
+        } else if (!/[A-Z]/.test(form.password)) {
+            newErrors.password = "Password must contain at least one uppercase letter";
+        } else if (!/[a-z]/.test(form.password)) {
+            newErrors.password = "Password must contain at least one lowercase letter";
+        } else if (!/[0-9]/.test(form.password)) {
+            newErrors.password = "Password must contain at least one number";
+        } else if (!/[^A-Za-z0-9]/.test(form.password)) {
+            newErrors.password = "Password must contain at least one special character";
+        }
+
+        if (!agreed) {
+            newErrors.agreed = "Please agree to the Terms of Service and Privacy Policy";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    }
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log({ role, ...form, agreed });
+
+        // Run validation
+        const isValid = handlevalids();
+
+        if (!isValid) {
+            return;
+        }
+
+        // Combine first name + last name
+        const name = `${form.firstName.trim()} ${form.lastName.trim()}`;
+
+        // Data required by backend
+        const registerData = {
+            name,
+            email: form.email.trim().toLowerCase(),
+            password: form.password,
+            role: "user",
+        };
+        console.log("Register Data:", registerData);
+
+        try {
+            const result = await dispatch(handleRegister(registerData));
+
+            if (handleRegister.fulfilled.match(result)) {
+                console.log("Registration successful", result.payload);
+
+                // Navigate after successful registration
+                navigate("/");
+            } else {
+                console.log("Registration failed", result.payload);
+            }
+        } catch (error) {
+            console.log("Register error:", error);
+        }
     };
 
     const handleregister = () => {
@@ -82,6 +169,7 @@ const App = () => {
                         <p className="text-xs text-gray-500">
                             Enter your details below to get started.
                         </p>
+                        {registererror && <p className="mt-2 text-sm text-red-600">{registererror}</p>}
 
                         {/* Role toggle with animated sliding background */}
                         <div className="relative mt-4 grid grid-cols-2 gap-1  border border-gray-200 bg-gray-50 p-1">
@@ -126,6 +214,7 @@ const App = () => {
                                         onChange={handleChange("firstName")}
                                         className="w-full  border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                     />
+                                    {errors.firstName && <p className="mt-1 text-xs text-red-600">{errors.firstName}</p>}
                                 </div>
                                 <div>
                                     <label
@@ -142,6 +231,7 @@ const App = () => {
                                         onChange={handleChange("lastName")}
                                         className="w-full  border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                     />
+                                    {errors.lastName && <p className="mt-1 text-xs text-red-600">{errors.lastName}</p>}
                                 </div>
                             </div>
 
@@ -164,6 +254,7 @@ const App = () => {
                                         className="w-full  border border-gray-300 py-2.5 pl-10 pr-3.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                                     />
                                 </div>
+                                {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
                             </div>
 
                             {/* Password */}
@@ -197,6 +288,7 @@ const App = () => {
                                         )}
                                     </button>
                                 </div>
+                                {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
                             </div>
 
                             {/* Agreement */}
@@ -222,13 +314,15 @@ const App = () => {
                                     .
                                 </span>
                             </label>
+                            {errors.agreed && <p className="-mt-4 text-xs text-red-600">{errors.agreed}</p>}
 
                             {/* Submit */}
                             <button
                                 type="submit"
-                                className="flex w-full items-center justify-center gap-2 bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 cursor-pointer"
+                                disabled={registerloading}
+                                className="flex w-full items-center justify-center gap-2 bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Create Account
+                                {registerloading ? "Creating account..." : "Create Account"}
                                 <FiArrowRight className="h-4 w-4" />
                             </button>
                         </form>
