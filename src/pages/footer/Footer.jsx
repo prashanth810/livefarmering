@@ -59,7 +59,7 @@ const Footer = () => {
                             </div>
                             <div className="flex items-center gap-2">
                                 <FiMail className="h-4 w-4 text-gray-400" />
-                                support@greenleaf.com
+                                support@freshies.com
                             </div>
                         </div>
                     </div>
@@ -131,7 +131,7 @@ const Footer = () => {
                 {/* Bottom bar */}
                 <div className="mt-12 flex flex-col items-center gap-4 border-t border-gray-100 py-6 sm:flex-row sm:justify-between">
                     <p className="text-xs text-gray-500">
-                        © 2025 Green Leaf Grocers. All rights reserved.
+                        © 2026 Freshies Grocers. All rights reserved.
                     </p>
                     <div className="flex items-center gap-3">
                         {socialLinks.map((social) => {
