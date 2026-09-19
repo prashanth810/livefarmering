@@ -1,14 +1,86 @@
-import React, { useState } from "react";
-import { FiMail, FiLock, FiArrowLeft } from "react-icons/fi";
-import { FaLeaf, FaStar, FaApple } from "react-icons/fa";
+import { useState } from "react";
+import { FiArrowLeft } from "react-icons/fi";
+import { FaLeaf, FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { vendorlogin, login } from "../../constants/Imageconstants";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { handleLogin } from "../../redux/Slices/AuthSlice";
 
 const UserLogin = () => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { loginloading, loginerror } = useSelector((state) => state.auth.login);
     const [remember, setRemember] = useState(true);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [errors, setErrors] = useState({});
+
+
+    const handlevalids = () => {
+        const newErrors = {};
+
+        if (!email.trim()) {
+            newErrors.email = "Email is required";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+            newErrors.email = "Please enter a valid email address";
+        }
+
+        if (!password) {
+            newErrors.password = "Password is required";
+        } else if (password.length < 8) {
+            newErrors.password = "Password must be at least 8 characters";
+        } else if (!/[A-Z]/.test(password)) {
+            newErrors.password = "Password must contain at least one uppercase letter";
+        } else if (!/[a-z]/.test(password)) {
+            newErrors.password = "Password must contain at least one lowercase letter";
+        } else if (!/[0-9]/.test(password)) {
+            newErrors.password = "Password must contain at least one number";
+        } else if (!/[^A-Za-z0-9]/.test(password)) {
+            newErrors.password = "Password must contain at least one special character";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    }
+
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        // Run validation
+        const isValid = handlevalids();
+
+        if (!isValid) {
+            return;
+        }
+
+        // Data required by backend
+        const loginddata = {
+            email: email.trim().toLowerCase(),
+            password: password,
+            role: "user",
+        };
+        console.log("Login Data:", loginddata);
+
+        try {
+            const result = await dispatch(handleLogin(loginddata));
+
+            if (handleLogin.fulfilled.match(result)) {
+                console.log("Registration successful", result.payload);
+
+                // Navigate after successful registration
+                navigate("/");
+            } else {
+                console.log("Registration failed", result.payload);
+            }
+        } catch (error) {
+            console.log("Register error:", error);
+        }
+    };
+
+
+
 
     return (
         <div className="min-h-screen w-full bg-white font-sans text-[#22261F]">
@@ -33,27 +105,6 @@ const UserLogin = () => {
                         />
                     </div>
 
-                    {/* Testimonial content */}
-                    {/* <div className="absolute inset-x-0 bottom-0 flex flex-col gap-4 p-8 lg:p-12">
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <FaStar key={i} size={18} className="text-[#F5B342]" />
-                            ))}
-                        </div>
-
-                        <p
-                            className="max-w-md text-2xl leading-snug text-white lg:text-[28px]"
-                            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
-                        >
-                            &ldquo;Freshies has completely transformed how I shop for my
-                            family. The quality and freshness are unmatched.&rdquo;
-                        </p>
-
-                        <div>
-                            <p className="font-semibold text-white">Sarah Jenkins</p>
-                            <p className="text-sm text-white/70">Verified Customer</p>
-                        </div>
-                    </div> */}
                 </div>
 
                 {/* Right form panel */}
@@ -90,8 +141,7 @@ const UserLogin = () => {
                             {/* Form */}
                             <form
                                 className="mt-8 flex flex-col gap-5"
-                                onSubmit={(e) => e.preventDefault()}
-                            >
+                                onSubmit={handleSubmit} >
                                 <div>
                                     <label
                                         htmlFor="email"
@@ -148,8 +198,9 @@ const UserLogin = () => {
                                     type="submit"
                                     className="mt-1 flex w-full items-center justify-center bg-[#1E8449] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#166638] focus:outline-none focus:ring-2 focus:ring-[#1E8449]/40 focus:ring-offset-2 cursor-pointer"
                                 >
-                                    Sign in
+                                    {loginloading ? "Signing in..." : "Sign in"}
                                 </button>
+                                {loginerror && <p className="text-sm text-red-600">{loginerror}</p>}
                             </form>
 
                             {/* Divider */}

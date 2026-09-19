@@ -4,6 +4,7 @@ import Register from "./pages/Authpages/Register";
 import VendorRegister from "./pages/Authpages/VendorRegister";
 import VendorLogin from "./pages/Authpages/VendorLogin";
 import UserLogin from "./pages/Authpages/UserLogin";
+import ProfilePage from "./pages/Authpages/ProfilePage";
 import NavBar from "./pages/navbar/NavBar";
 import HomePage from "./pages/Home_page/HomePage";
 import Footer from "./pages/footer/Footer";
@@ -47,6 +48,7 @@ const App = () => {
         <Route path="/about" element={<About />} />
 
         <Route path="/login" element={<UserLogin />} />
+        <Route path="/profile" element={<ProfilePage />} />
 
         <Route path="/register" element={<Register />} />
 

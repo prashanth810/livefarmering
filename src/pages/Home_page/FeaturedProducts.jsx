@@ -1,8 +1,36 @@
-import React from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FiHeart, FiArrowRight, FiShoppingCart } from "react-icons/fi";
+import { useDispatch, useSelector } from "react-redux";
 import { useWishlist } from "../../services/wishlist";
-import { featuredProducts } from "../../constants/products";
+import { getallcategories, handlegetproductsbycategory } from "../../redux/Slices/ProductSlice";
+import Productloader from "../../reusables/Productloader";
+
+const normalizeProduct = (product) => {
+    const variant = product.variants?.[0] || {};
+    const badges = [];
+
+    if (variant.discount_price) {
+        badges.push({ label: "DISCOUNT", color: "bg-orange-500" });
+    }
+
+    if (product.coupons?.some((coupon) => coupon.is_active)) {
+        badges.push({ label: "COUPON", color: "bg-emerald-600" });
+    }
+
+    return {
+        ...product,
+        id: product._id,
+        name: product.name || "Unnamed product",
+        vendor: product.createdby?.name || "Local vendor",
+        unit: variant.weight || "",
+        image: product.thumbnail || product.images?.[0] || "",
+        price: Number(variant.selling_price) || 0,
+        oldPrice: Number(variant.original_price) || null,
+        stock: product.is_active ? 1 : 0,
+        badges,
+    };
+};
 
 const ProductCard = ({ product }) => {
     const { isWishlisted, toggleWishlist } = useWishlist();
@@ -80,6 +108,27 @@ const ProductCard = ({ product }) => {
 };
 
 const FeaturedProducts = () => {
+    const dispatch = useDispatch();
+    const { categorydata } = useSelector((state) => state.product.category);
+    const { productdata, productloading, producterror } = useSelector((state) => state.product.products);
+    const selectedCategoryId = useSelector((state) => state.product.selectedCategoryId);
+
+    useEffect(() => {
+        if (categorydata.length === 0) {
+            dispatch(getallcategories());
+        }
+    }, [categorydata.length, dispatch]);
+
+    useEffect(() => {
+        if (selectedCategoryId) {
+            dispatch(handlegetproductsbycategory(selectedCategoryId));
+        }
+    }, [selectedCategoryId, dispatch]);
+
+    const products = Array.isArray(productdata)
+        ? productdata.slice(0, 4).map(normalizeProduct)
+        : [];
+
     return (
         <section className="bg-white px-4 py-12 sm:px-6 lg:px-8 xl:pt-16 xl:pb-30">
             <div className="mx-auto max-w-[95%]">
@@ -93,19 +142,24 @@ const FeaturedProducts = () => {
                         </p>
                     </div>
                     <Link
-                        to="/products"
-                        className="flex shrink-0 items-center justify-center gap-2 self-start border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50"
-                    >
+                        to="/shop" onClick={() => window.scrollTo(0, 0)}
+                        className="flex shrink-0 items-center justify-center gap-2 self-start border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50" >
                         View All Products
                         <FiArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
 
-                <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    {featuredProducts.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                    ))}
-                </div>
+                {productloading ? (
+                    <Productloader />
+                ) : producterror || products.length === 0 ? (
+                    <p className="mt-8 text-center text-sm text-gray-500">Products not available</p>
+                ) : (
+                    <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                        {products.map((product) => (
+                            <ProductCard key={product.id} product={product} />
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     );

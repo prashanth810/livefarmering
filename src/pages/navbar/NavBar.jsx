@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
     FiSearch,
     FiShoppingCart,
@@ -9,14 +10,16 @@ import {
     FiChevronDown,
     FiTag,
     FiHeart,
+    FiLogOut,
 } from "react-icons/fi";
 import { PiStorefrontLight } from "react-icons/pi";
 import { LuLeaf } from "react-icons/lu";
 import { MdOutlineGridView } from "react-icons/md";
 import { getSearchSuggestions } from "../../constants/products";
+import { handlefetchprofileinfo, logout } from "../../redux/Slices/AuthSlice";
 
 const categories = [
-    { label: "All Categories", href: "/categories", hasIcon: true },
+    { label: "All Categories", href: "/shop", hasIcon: true },
     { label: "Fruits & Vegetables", href: "/category/fruits-vegetables" },
     { label: "Dairy & Breakfast", href: "/category/dairy-breakfast" },
     { label: "Meat & Seafood", href: "/category/meat-seafood" },
@@ -109,6 +112,26 @@ const SearchField = ({ value, onChange, onSubmit, onSearchComplete, mobile = fal
 const NavBar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [searchValue, setSearchValue] = useState("");
+    const [accountOpen, setAccountOpen] = useState(false);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { profiledata, profileloading } = useSelector((state) => state.auth.profile);
+    const token = useSelector((state) => state.auth.login.token) || localStorage.getItem("token");
+
+    useEffect(() => {
+        if (token && !profiledata) {
+            dispatch(handlefetchprofileinfo());
+        }
+    }, [dispatch, profiledata, token]);
+
+    const handleLogout = () => {
+        dispatch(logout());
+        setAccountOpen(false);
+        navigate("/login");
+    };
+
+    const profileName = profiledata?.name || profiledata?.fullname || profiledata?.username || "Account";
+    const profileImage = profiledata?.imageurl || profiledata?.imageUrl || profiledata?.profileImage || profiledata?.avatar;
 
     const handleSearchSubmit = () => { };
     const handleSearchComplete = () => setSearchValue("");
@@ -149,13 +172,55 @@ const NavBar = () => {
                         <PiStorefrontLight className="h-5 w-5" />
                         Vendors
                     </Link>
-                    <Link
-                        to="/login"
-                        className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
-                    >
-                        <FiUser className="h-5 w-5" />
-                        Account
-                    </Link>
+                    {token ? (
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setAccountOpen((open) => !open)}
+                                className="flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
+                                aria-expanded={accountOpen}
+                                aria-label="Open account menu"
+                            >
+                                {profileImage ? (
+                                    <img src={profileImage} alt="" className="h-8 w-8 rounded-full object-cover" />
+                                ) : (
+                                    <FiUser className="h-5 w-5" />
+                                )}
+                                <span>{profileloading ? "Loading..." : profileName}</span>
+                                <FiChevronDown className="h-3.5 w-3.5" />
+                            </button>
+                            {accountOpen && (
+                                <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden border border-gray-200 bg-white py-1 shadow-lg">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAccountOpen(false);
+                                            navigate("/profile");
+                                        }}
+                                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Profile
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleLogout}
+                                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                                    >
+                                        <FiLogOut className="h-4 w-4" />
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <Link
+                            to="/login"
+                            className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
+                        >
+                            <FiUser className="h-5 w-5" />
+                            Account
+                        </Link>
+                    )}
                     <Link
                         to="/wishlist"
                         className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600">
@@ -215,13 +280,12 @@ const NavBar = () => {
                                     ? "text-green-700"
                                     : "text-gray-700 hover:text-green-600"
                                 }`
-                            }
-                        >
+                            } onClick={() => window.scrollTo(0, 0)}>
                             {category.hasIcon && < MdOutlineGridView className="h-4 w-4" />}
                             {category.label}
-                            {category.label === "All Categories" && (
+                            {/* {category.label === "All Categories" && (
                                 <FiChevronDown className="h-3.5 w-3.5" />
-                            )}
+                            )} */}
                         </NavLink>
                     ))}
                     <Link

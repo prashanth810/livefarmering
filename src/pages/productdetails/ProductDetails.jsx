@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import {
     FiShoppingCart,
     FiChevronRight,
+    FiChevronLeft,
     FiMinus,
     FiPlus,
     FiHeart,
@@ -14,10 +15,11 @@ import {
 import { LuLeaf } from "react-icons/lu";
 import { PiStorefrontLight } from "react-icons/pi";
 import { FaFacebookF, FaXTwitter, FaInstagram } from "react-icons/fa6";
-import { products } from "../../constants/products";
 import { useWishlist } from "../../services/wishlist";
-import { nutritionRows, ratingBars, reviews, themeVars, thumbnails } from "../../constants/Styles";
+import { nutritionRows, ratingBars, reviews, themeVars } from "../../constants/Styles";
 import { FaArrowCircleRight, FaArrowRight } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 
 
 const tabs = [
@@ -72,23 +74,53 @@ const IconCircle = ({ children, size = 24 }) => (
 /* ------------------------------------------------------------------ */
 const ProductDetails = () => {
     const { productId } = useParams();
-    const product = products.find((item) => item.id === productId) || {
-        id: "demo-product",
-        vendor: "Green Valley Farms",
-        name: "Premium Organic Hass Avocados",
-        category: "Fruits & Vegetables",
-        unit: "500 g",
-        price: 6.99,
-        oldPrice: 8.99,
-        rating: 4.8,
-        reviews: 124,
-        image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=900&q=85",
-        badge: "Bestseller",
-    };
+    const dispatch = useDispatch();
+    const { singleproductdata, singleloading, singleerror } = useSelector(
+        (state) => state.product.singleproduct,
+    );
     const [activeThumb, setActiveThumb] = useState(0);
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState("description");
     const { isWishlisted, toggleWishlist } = useWishlist();
+
+    useEffect(() => {
+        if (productId) {
+            setActiveThumb(0);
+            setSelectedVariantIndex(0);
+            setQuantity(1);
+            dispatch(getsingleproduct(productId));
+        }
+    }, [dispatch, productId]);
+
+    const variants = Array.isArray(singleproductdata?.variants) ? singleproductdata.variants : [];
+    const variant = variants[selectedVariantIndex] || variants[0] || {};
+    const variantStock = Number(variant.stock ?? variant.stock_quantity) || 0;
+    const product = singleproductdata && {
+        ...singleproductdata,
+        id: singleproductdata._id || productId,
+        vendor: singleproductdata.createdby?.name || "Local vendor",
+        category: singleproductdata.category?.name || "Category unavailable",
+        unit: variant.weight || "Unit unavailable",
+        price: Number(variant.selling_price) || 0,
+        oldPrice: Number(variant.original_price) || null,
+        rating: Number(singleproductdata.rating) || 0,
+        reviews: singleproductdata.reviews?.length || 0,
+        image: singleproductdata.thumbnail || singleproductdata.images?.[0] || "",
+    };
+    const aboutProduct = singleproductdata?.about_product || [];
+    const nutritionFacts = singleproductdata?.nutrition_facts || {};
+    const productImages = [...new Set([singleproductdata?.thumbnail, ...(singleproductdata?.images || [])].filter(Boolean))];
+    const activeImageIndex = Math.min(activeThumb, Math.max(productImages.length - 1, 0));
+    const activeImage = productImages[activeImageIndex];
+
+    const showPreviousImage = () => {
+        setActiveThumb((current) => current === 0 ? productImages.length - 1 : current - 1);
+    };
+
+    const showNextImage = () => {
+        setActiveThumb((current) => (current + 1) % productImages.length);
+    };
 
     // Pull in the Inter font used by the design.
     useEffect(() => {
@@ -101,6 +133,14 @@ const ProductDetails = () => {
             "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
         document.head.appendChild(link);
     }, []);
+
+    if (singleloading) {
+        return <main className="min-h-screen px-6 py-16 text-center text-gray-500">Loading product...</main>;
+    }
+
+    if (singleerror || !product) {
+        return <main className="min-h-screen px-6 py-16 text-center text-gray-500">Product information is not available.</main>;
+    }
 
     return (
         <div
@@ -134,29 +174,76 @@ const ProductDetails = () => {
                             </div>
                             <img
                                 alt={product.name}
-                                src={activeThumb === 0 ? product.image : thumbnails[activeThumb].src}
+                                src={activeImage}
                                 className="h-full w-full object-contain"
                             />
+                            {productImages.length > 1 && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={showPreviousImage}
+                                        aria-label="Previous product image"
+                                        className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white cursor-pointer"
+                                    >
+                                        <FiChevronLeft className="h-5 w-5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={showNextImage}
+                                        aria-label="Next product image"
+                                        className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md hover:bg-white cursor-pointer"
+                                    >
+                                        <FiChevronRight className="h-5 w-5" />
+                                    </button>
+                                </>
+                            )}
                         </div>
-                        <div className="grid grid-cols-5 gap-4">
-                            {thumbnails.map((thumb, index) => (
-                                <button
-                                    key={thumb.alt}
-                                    type="button"
-                                    onClick={() => setActiveThumb(index)}
-                                    className={`flex w-30 h-30 aspect-square items-center justify-center border bg-[#f3f4f6] p-3 transition-shadow cursor-pointer ${activeThumb === index
-                                        ? "border-[#FF6900]"
-                                        : "border-[#cccccd]"
-                                        }`}
-                                >
-                                    <img
-                                        src={thumb.src}
-                                        alt={thumb.alt}
-                                        className="h-full w-full bg-[#f3f4f6] object-cover"
-                                    />
-                                </button>
-                            ))}
-                        </div>
+                        {productImages.length > 0 ? (
+                            <div className="flex items-center gap-3">
+                                {productImages.length > 5 && (
+                                    <button
+                                        type="button"
+                                        onClick={showPreviousImage}
+                                        aria-label="Previous product thumbnails"
+                                        className="flex h-10 w-10 shrink-0 items-center justify-center border border-[var(--border)] bg-white text-gray-600 hover:border-[#FF6900]"
+                                    >
+                                        <FiChevronLeft className="h-5 w-5" />
+                                    </button>
+                                )}
+                                <div className="flex min-w-0 flex-1 gap-4 overflow-hidden">
+                                    {productImages.map((image, index) => (
+                                        <button
+                                            key={image}
+                                            type="button"
+                                            onClick={() => setActiveThumb(index)}
+                                            className={`flex h-20 w-20 shrink-0 aspect-square items-center justify-center border bg-[#f3f4f6] p-2 transition-shadow cursor-pointer ${activeImageIndex === index
+                                                ? "border-2 border-[#FF6900]"
+                                                : "border-[#cccccd]"
+                                                }`}>
+                                            <img
+                                                src={image}
+                                                alt={`${product.name} image ${index + 1}`}
+                                                className="h-full w-full bg-[#f3f4f6] object-cover"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                                {productImages.length > 5 && (
+                                    <button
+                                        type="button"
+                                        onClick={showNextImage}
+                                        aria-label="Next product thumbnails"
+                                        className="flex h-10 w-10 shrink-0 items-center justify-center border border-[var(--border)] bg-white text-gray-600 hover:border-[#FF6900]"
+                                    >
+                                        <FiChevronRight className="h-5 w-5" />
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex aspect-[4/3] items-center justify-center border border-dashed border-[var(--border)] text-sm text-[var(--muted-foreground)]">
+                                Product images not available.
+                            </div>
+                        )}
                     </div>
 
                     {/* Product info */}
@@ -197,6 +284,45 @@ const ProductDetails = () => {
                             </span>}
                         </div>
 
+                        {variants.length > 0 && (
+                            <div className="mb-6">
+                                <span className="mb-3 block text-sm font-semibold text-[var(--foreground)]">
+                                    Select variant
+                                </span>
+                                <div className="flex flex-wrap gap-3">
+                                    {variants.map((item, index) => {
+                                        const itemPrice = Number(item.selling_price) || 0;
+                                        const itemStock = Number(item.stock ?? item.stock_quantity) || 0;
+                                        const isSelected = variants[index] === variant;
+                                        return (
+                                            <button
+                                                key={`${item.weight || "variant"}-${index}`}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedVariantIndex(index);
+                                                    setQuantity(1);
+                                                }}
+                                                className={`min-w-28 border px-4 py-3 text-left transition-colors ${isSelected
+                                                    ? "border-[#FF6900] bg-orange-50"
+                                                    : "border-[var(--border)] bg-[var(--card)] hover:border-[#FF6900]"
+                                                    }`}
+                                            >
+                                                <span className="block text-sm font-semibold text-[var(--foreground)]">
+                                                    {item.weight || "Variant"}
+                                                </span>
+                                                <span className="mt-1 block text-sm text-[var(--muted-foreground)]">
+                                                    ₹{itemPrice.toFixed(2)}
+                                                </span>
+                                                <span className={`mt-1 block text-xs ${itemStock > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                                                    {itemStock > 0 ? "In stock" : "Out of stock"}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         <p className="mb-8 text-base leading-relaxed text-[var(--muted-foreground)]">
                             Freshly selected from trusted vendors, {product.name} is packed,
                             handled with care, and delivered ready for your everyday meals.
@@ -223,9 +349,10 @@ const ProductDetails = () => {
                                     </span>
                                     <button
                                         type="button"
-                                        onClick={() => setQuantity((q) => q + 1)}
+                                        disabled={variantStock > 0 && quantity >= variantStock}
+                                        onClick={() => setQuantity((q) => variantStock > 0 ? Math.min(variantStock, q + 1) : q + 1)}
                                         aria-label="Increase quantity"
-                                        className="flex h-full w-10 items-center justify-center text-[var(--muted-foreground)] bg-white text-[#059669] cursor-pointer hover:bg-[#05966875] hover:text-[#fff] duration-500"
+                                        className="flex h-full w-10 items-center justify-center text-[var(--muted-foreground)] bg-white text-[#059669] cursor-pointer hover:bg-[#05966875] hover:text-[#fff] duration-500 disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                         <FiPlus className="h-5 w-5" />
                                     </button>
@@ -262,29 +389,6 @@ const ProductDetails = () => {
                             </div>
                         </div>
 
-                        {/* Meta */}
-                        <div className="flex flex-col gap-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--input)] p-6">
-                            <div className="flex items-center gap-3 text-[15px] text-[var(--foreground)]">
-                                <IconCircle size={20}>
-                                    <FiCheckCircle className="h-5 w-5 text-[var(--success)]" />
-                                </IconCircle>
-                                <span className="font-semibold text-[var(--success)]">
-                                    In Stock (45 packs available)
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[15px] text-[var(--foreground)]">
-                                <IconCircle size={20}>
-                                    <FiTruck className="h-5 w-5 text-[var(--muted-foreground)]" />
-                                </IconCircle>
-                                <span>Free delivery on orders over ₹50</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[15px] text-[var(--foreground)]">
-                                <IconCircle size={20}>
-                                    <FiRefreshCw className="h-5 w-5 text-[var(--muted-foreground)]" />
-                                </IconCircle>
-                                <span>Easy 3-day freshness return guarantee</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -314,36 +418,46 @@ const ProductDetails = () => {
                                     About this product
                                 </h3>
                                 <p className="mb-6 text-base leading-relaxed text-[var(--muted-foreground)]">
-                                    Our premium Hass avocados are grown organically without the
-                                    use of synthetic pesticides or fertilizers. They are
-                                    characterized by their bumpy, dark green to purplish-black
-                                    skin when ripe, and their incredibly creamy, rich pale green
-                                    flesh.
+                                    {product.description || "Description not available."}
                                 </p>
-                                <p className="mb-6 text-base leading-relaxed text-[var(--muted-foreground)]">
-                                    Known as a superfood, avocados are an excellent source of
-                                    heart-healthy monounsaturated fats, dietary fiber, and
-                                    various essential vitamins and minerals, including
-                                    potassium, vitamin K, vitamin E, and B vitamins.
-                                </p>
+
+                                {aboutProduct.length > 0 && (
+                                    <ul className="mb-6 list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-[var(--muted-foreground)]">
+                                        {aboutProduct.map((item) => <li key={item}>{item}</li>)}
+                                    </ul>
+                                )}
 
                                 <h4 className="mb-3 text-base font-bold text-[var(--foreground)]">
                                     Storage Instructions
                                 </h4>
                                 <ul className="list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-[var(--muted-foreground)]">
-                                    <li>
-                                        Store unripe avocados at room temperature until they feel
-                                        slightly soft to gentle pressure.
-                                    </li>
-                                    <li>
-                                        Once ripe, store in the refrigerator to slow down further
-                                        ripening for up to 3-5 days.
-                                    </li>
-                                    <li>
-                                        To accelerate ripening, place in a brown paper bag with an
-                                        apple or banana.
-                                    </li>
+                                    <li>{product.storage_instructions || "Storage instructions not available."}</li>
                                 </ul>
+
+                                {/* Meta */}
+                                <div className="flex flex-col gap-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--input)] p-5 mt-5">
+                                    <p className="text-lg font-semibold border-b border-gray-200 pb-2"> Stock Details </p>
+                                    <div className="flex items-center gap-3 text-[15px] text-[var(--foreground)]">
+                                        <IconCircle size={20}>
+                                            <FiCheckCircle className="h-5 w-5 text-[var(--success)]" />
+                                        </IconCircle>
+                                        <span className="font-semibold text-[var(--success)]">
+                                            {variantStock > 0 ? `In Stock (${variantStock} available)` : "Out of stock"}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-[15px] text-[var(--foreground)]">
+                                        <IconCircle size={20}>
+                                            <FiTruck className="h-5 w-5 text-[var(--muted-foreground)]" />
+                                        </IconCircle>
+                                        <span>Free delivery on orders over ₹50</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-[15px] text-[var(--foreground)]">
+                                        <IconCircle size={20}>
+                                            <FiRefreshCw className="h-5 w-5 text-[var(--muted-foreground)]" />
+                                        </IconCircle>
+                                        <span>Easy 3-day freshness return guarantee</span>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Nutrition */}
@@ -353,20 +467,22 @@ const ProductDetails = () => {
                                         Nutrition Facts
                                     </h3>
                                     <div className="mb-4 text-sm">
-                                        Serving size: 1/3 medium avocado (50g)
+                                        Serving size: {nutritionFacts.serving_size || "Not available"}
                                     </div>
                                     <div className="mb-4 border-b-1 border-[#FF6900] bg-[#FF6900]" />
 
-                                    {nutritionRows.map((row) => (
-                                        <div
-                                            key={row.label}
-                                            className={`flex justify-between border-b border-[var(--border)] py-3 text-[15px] ₹{row.bold ? "font-bold border-b-2" : ""}`}>
-                                            <span className={row.indent ? "pl-4" : ""}>
-                                                {row.label}
-                                            </span>
-                                            <span>{row.value}</span>
-                                        </div>
-                                    ))}
+                                    {(Object.keys(nutritionFacts).length > 0 ? Object.entries(nutritionFacts)
+                                        .filter(([key]) => key !== "serving_size")
+                                        .map(([label, value]) => ({ label: label.replaceAll("_", " "), value })) : nutritionRows).map((row) => (
+                                            <div
+                                                key={row.label}
+                                                className={`flex justify-between border-b border-[var(--border)] py-3 text-[15px] ₹{row.bold ? "font-bold border-b-2" : ""}`}>
+                                                <span className={row.indent ? "pl-4" : ""}>
+                                                    {row.label}
+                                                </span>
+                                                <span>{row.value}</span>
+                                            </div>
+                                        ))}
                                 </div>
                             </div>
                         </div>
