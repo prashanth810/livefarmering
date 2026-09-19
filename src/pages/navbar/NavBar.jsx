@@ -15,8 +15,8 @@ import {
 import { PiStorefrontLight } from "react-icons/pi";
 import { LuLeaf } from "react-icons/lu";
 import { MdOutlineGridView } from "react-icons/md";
-import { getSearchSuggestions } from "../../constants/products";
 import { handlefetchprofileinfo, logout } from "../../redux/Slices/AuthSlice";
+import { clearSearchProducts, handlesearchproducts } from "../../redux/Slices/ProductSlice";
 
 const categories = [
     { label: "All Categories", href: "/shop", hasIcon: true },
@@ -28,9 +28,8 @@ const categories = [
     { label: "Beverages", href: "/category/beverages" },
 ];
 
-const SearchField = ({ value, onChange, onSubmit, onSearchComplete, mobile = false }) => {
+const SearchField = ({ value, onChange, onSubmit, onSearchComplete, suggestions, searchLoading, mobile = false }) => {
     const navigate = useNavigate();
-    const suggestions = getSearchSuggestions(value);
     const showSuggestions = value.trim().length > 0;
 
     const openResults = (query = value) => {
@@ -39,6 +38,16 @@ const SearchField = ({ value, onChange, onSubmit, onSearchComplete, mobile = fal
             onSearchComplete();
             navigate(`/search?q=${encodeURIComponent(trimmedQuery)}`);
         }
+    };
+
+    const openProduct = (product) => {
+        if (product?._id) {
+            onSearchComplete();
+            navigate(`/product-details/${product._id}`);
+            return;
+        }
+
+        openResults(product?.name);
     };
 
     return (
@@ -70,16 +79,18 @@ const SearchField = ({ value, onChange, onSubmit, onSearchComplete, mobile = fal
 
             {showSuggestions && (
                 <div className="absolute left-0 right-0 top-full z-[60] mt-1 overflow-hidden border border-gray-200 bg-white shadow-xl">
-                    {suggestions.length > 0 ? (
+                    {searchLoading ? (
+                        <div className="px-4 py-4 text-sm text-gray-500">Searching products...</div>
+                    ) : suggestions.length > 0 ? (
                         suggestions.map((product) => (
                             <button
-                                key={product.id}
+                                key={product._id}
                                 type="button"
-                                onClick={() => openResults(product.name)}
+                                onClick={() => openProduct(product)}
                                 className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-green-50 cursor-pointer"
                             >
                                 <img
-                                    src={product.image}
+                                    src={product.thumbnail || product.images?.[0] || ""}
                                     alt=""
                                     className="h-11 w-11 rounded-md bg-gray-50 object-contain"
                                 />
@@ -88,7 +99,7 @@ const SearchField = ({ value, onChange, onSubmit, onSearchComplete, mobile = fal
                                         {product.name}
                                     </span>
                                     <span className="block text-xs text-gray-400">
-                                        {product.category}
+                                        {product.category?.name || "Product"}
                                     </span>
                                 </span>
                             </button>
@@ -117,6 +128,21 @@ const NavBar = () => {
     const navigate = useNavigate();
     const { profiledata, profileloading } = useSelector((state) => state.auth.profile);
     const token = useSelector((state) => state.auth.login.token) || localStorage.getItem("token");
+    const { searchproddata, searchprodloading } = useSelector((state) => state.product.searchproducts);
+
+    useEffect(() => {
+        const query = searchValue.trim();
+        if (!query) {
+            dispatch(clearSearchProducts());
+            return undefined;
+        }
+
+        const timer = window.setTimeout(() => {
+            dispatch(handlesearchproducts(query));
+        }, 300);
+
+        return () => window.clearTimeout(timer);
+    }, [dispatch, searchValue]);
 
     useEffect(() => {
         if (token && !profiledata) {
@@ -161,6 +187,8 @@ const NavBar = () => {
                     onChange={(event) => setSearchValue(event.target.value)}
                     onSubmit={handleSearchSubmit}
                     onSearchComplete={handleSearchComplete}
+                    suggestions={searchproddata}
+                    searchLoading={searchprodloading}
                 />
 
                 {/* Right actions - desktop */}
@@ -265,6 +293,8 @@ const NavBar = () => {
                 onChange={(event) => setSearchValue(event.target.value)}
                 onSubmit={handleSearchSubmit}
                 onSearchComplete={handleSearchComplete}
+                suggestions={searchproddata}
+                searchLoading={searchprodloading}
                 mobile
             />
 
