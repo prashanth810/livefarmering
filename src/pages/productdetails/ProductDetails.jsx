@@ -360,24 +360,25 @@ const ProductDetails = () => {
 
                                 <button
                                     type="button"
-                                    className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-6 text-base font-semibold text-[var(--primary-foreground)]"
-                                >
+                                    className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-6 text-base font-semibold text-[var(--primary-foreground)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer" >
                                     <FiShoppingCart className="h-5 w-5" />
                                     Add to Cart
                                 </button>
 
-                                <button
-                                    type="button"
-                                    className="flex h-12 flex-1 items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] px-6 text-base font-semibold text-[var(--accent-foreground)]"
-                                >
-                                    Buy Now
-                                </button>
+                                {variantStock > 0 && (
+                                    <button
+                                        type="button"
+                                        className="flex h-12 flex-1 items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] px-6 text-base font-semibold text-[var(--accent-foreground)] cursor-pointer"
+                                    >
+                                        Buy Now
+                                    </button>
+                                )}
 
                                 <button
                                     type="button"
                                     onClick={() => toggleWishlist(product.id)}
                                     aria-label={`${isWishlisted(product.id) ? "Remove" : "Add"} from wishlist`}
-                                    className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)]"
+                                    className="flex h-10 w-10 items-center justify-center border border-gray-400 bg-[var(--card)] text-[var(--muted-foreground)] hover:bg-[#059669] hover:text-[#fff] hover:border-[#fff] transition-all duration-300 cursor-pointer"
                                 >
                                     <FiHeart
                                         className={`h-5 w-5 ${isWishlisted(product.id)
