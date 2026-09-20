@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FiHeart, FiArrowRight, FiShoppingCart } from "react-icons/fi";
+import { Link, useNavigate } from "react-router-dom";
+import { FiHeart, FiEye, FiArrowRight, FiShoppingCart } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { useWishlist } from "../../services/wishlist";
 import { getallcategories, handlegetproductsbycategory } from "../../redux/Slices/ProductSlice";
@@ -33,6 +33,7 @@ const normalizeProduct = (product) => {
 };
 
 const ProductCard = ({ product }) => {
+    const navigate = useNavigate();
     const { isWishlisted, toggleWishlist } = useWishlist();
 
     return (
@@ -53,9 +54,20 @@ const ProductCard = ({ product }) => {
                 )}
                 <button
                     type="button"
+                    aria-label={`View ${product.name}`}
+                    onClick={() => {
+                        navigate(`/product-details/${product.id}`);
+                        window.scrollTo(0, 0);
+                    }}
+                    className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-400 shadow-sm transition-colors hover:text-emerald-600"
+                >
+                    <FiEye className="h-4 w-4" />
+                </button>
+                <button
+                    type="button"
                     aria-label={`${isWishlisted(product.id) ? "Remove" : "Add"} ${product.name} ${isWishlisted(product.id) ? "from" : "to"} wishlist`}
                     onClick={() => toggleWishlist(product.id)}
-                    className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-400 shadow-sm transition-colors hover:text-red-500"
+                    className="absolute right-3 top-12 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-400 shadow-sm transition-colors hover:text-red-500"
                 >
                     <FiHeart className={`h-4 w-4 ${isWishlisted(product.id) ? "fill-red-500 text-red-500" : ""}`} />
                 </button>
