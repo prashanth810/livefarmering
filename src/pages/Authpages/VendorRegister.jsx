@@ -55,10 +55,6 @@ const VendorRegister = () => {
                     alt="Fresh produce at a local market"
                     className="absolute inset-0 h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/10 via-emerald-400/10 to-emerald-200/10" />
-
-                <div className="relative flex h-full flex-col p-10">
-                </div>
             </div>
 
             {/* Right form panel */}

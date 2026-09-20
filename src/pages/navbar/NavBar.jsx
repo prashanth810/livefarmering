@@ -28,6 +28,23 @@ const categories = [
     { label: "Beverages", href: "/category/beverages" },
 ];
 
+const SearchSuggestionLoader = () => (
+    <div className="animate-pulse" aria-label="Loading product suggestions">
+        {Array.from({ length: 3 }).map((_, index) => (
+            <div
+                key={index}
+                className="flex items-center gap-3 border-b border-gray-100 px-4 py-3 last:border-b-0"
+            >
+                <div className="h-11 w-11 shrink-0 rounded-md bg-gray-200" />
+                <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-3 w-3/4 rounded bg-gray-200" />
+                    <div className="h-2.5 w-1/2 rounded bg-gray-200" />
+                </div>
+            </div>
+        ))}
+    </div>
+);
+
 const SearchField = ({ value, onChange, onSubmit, onSearchComplete, suggestions, searchLoading, mobile = false }) => {
     const navigate = useNavigate();
     const showSuggestions = value.trim().length > 0;
@@ -44,6 +61,7 @@ const SearchField = ({ value, onChange, onSubmit, onSearchComplete, suggestions,
         if (product?._id) {
             onSearchComplete();
             navigate(`/product-details/${product._id}`);
+            window.scrollTo(0, 0);
             return;
         }
 
@@ -80,7 +98,7 @@ const SearchField = ({ value, onChange, onSubmit, onSearchComplete, suggestions,
             {showSuggestions && (
                 <div className="absolute left-0 right-0 top-full z-[60] mt-1 overflow-hidden border border-gray-200 bg-white shadow-xl">
                     {searchLoading ? (
-                        <div className="px-4 py-4 text-sm text-gray-500">Searching products...</div>
+                        <SearchSuggestionLoader />
                     ) : suggestions.length > 0 ? (
                         suggestions.map((product) => (
                             <button
@@ -105,14 +123,9 @@ const SearchField = ({ value, onChange, onSubmit, onSearchComplete, suggestions,
                             </button>
                         ))
                     ) : (
-                        <button
-                            type="button"
-                            onClick={() => openResults()}
-                            className="flex w-full items-center gap-3 px-4 py-4 text-left text-sm text-gray-600 hover:bg-green-50"
-                        >
-                            <FiSearch className="h-4 w-4 text-gray-400" />
-                            Search all products for <strong className="text-gray-900">{value}</strong>
-                        </button>
+                        <div className="px-4 py-4 text-center text-sm text-gray-500">
+                            No products available
+                        </div>
                     )}
                 </div>
             )}
@@ -137,6 +150,7 @@ const NavBar = () => {
             return undefined;
         }
 
+        dispatch(clearSearchProducts());
         const timer = window.setTimeout(() => {
             dispatch(handlesearchproducts(query));
         }, 300);
