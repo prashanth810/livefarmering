@@ -1,51 +1,39 @@
 import { useEffect, useState } from "react";
 
-const STORAGE_KEY = "freshies-wishlist";
 const WISHLIST_EVENT = "freshies:wishlist-changed";
-
-const readWishlist = () => {
-    try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        return Array.isArray(saved) ? saved : [];
-    } catch {
-        return [];
-    }
-};
+let wishlistIds = ["apples", "tomatoes"];
 
 const publishWishlist = (ids) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+    wishlistIds = ids;
     window.dispatchEvent(new Event(WISHLIST_EVENT));
 };
 
 export const toggleWishlist = (productId) => {
-    const current = readWishlist();
-    const next = current.includes(productId)
-        ? current.filter((id) => id !== productId)
-        : [...current, productId];
+    const next = wishlistIds.includes(productId)
+        ? wishlistIds.filter((id) => id !== productId)
+        : [...wishlistIds, productId];
     publishWishlist(next);
     return next;
 };
 
 export const removeFromWishlist = (productId) => {
-    publishWishlist(readWishlist().filter((id) => id !== productId));
+    publishWishlist(wishlistIds.filter((id) => id !== productId));
 };
 
 export const useWishlist = () => {
-    const [wishlistIds, setWishlistIds] = useState(readWishlist);
+    const [currentWishlist, setCurrentWishlist] = useState(wishlistIds);
 
     useEffect(() => {
-        const syncWishlist = () => setWishlistIds(readWishlist());
+        const syncWishlist = () => setCurrentWishlist(wishlistIds);
         window.addEventListener(WISHLIST_EVENT, syncWishlist);
-        window.addEventListener("storage", syncWishlist);
         return () => {
             window.removeEventListener(WISHLIST_EVENT, syncWishlist);
-            window.removeEventListener("storage", syncWishlist);
         };
     }, []);
 
     return {
-        wishlistIds,
-        isWishlisted: (productId) => wishlistIds.includes(productId),
+        wishlistIds: currentWishlist,
+        isWishlisted: (productId) => currentWishlist.includes(productId),
         toggleWishlist,
         removeFromWishlist,
     };

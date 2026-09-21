@@ -33,3 +33,14 @@ export const getmyprofielinfo = async () => {
         console.log(error.message);
     }
 }
+
+// vendor register
+export const handlevendorregister = async (data) => {
+    try {
+        const resposne = await authApi.post("/api/auth/v1/vendor/register", data);
+        return resposne;
+    }
+    catch (error) {
+        console.log(error.message);
+    }
+}

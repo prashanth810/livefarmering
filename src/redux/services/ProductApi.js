@@ -14,9 +14,11 @@ export const handlegetcategories = async () => {
 }
 
 // get products based on the category
-export const getproductsbycategory = async (id) => {
+export const getproductsbycategory = async (id, page = 1, limit = 10) => {
     try {
-        const response = await productApi.get(`${baseurl}/category/${id}`);
+        const response = await productApi.get(`${baseurl}/category/${id}`, {
+            params: { page, limit },
+        });
         return response;
     }
     catch (error) {

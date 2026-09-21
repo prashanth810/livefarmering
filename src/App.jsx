@@ -1,4 +1,5 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 import Register from "./pages/Authpages/Register";
 import VendorRegister from "./pages/Authpages/VendorRegister";
@@ -24,6 +25,26 @@ const Home = () => (
 const About = () => <p>About page</p>;
 const Contact = () => <p>Contact page</p>;
 
+const useIsAuthenticated = () => {
+  const loginToken = useSelector((state) => state.auth.login.token);
+  const registerToken = useSelector((state) => state.auth.register.token);
+  const sessionToken = sessionStorage.getItem("token");
+
+  return Boolean(loginToken || registerToken || sessionToken);
+};
+
+const PublicOnlyRoute = ({ children }) => {
+  const isAuthenticated = useIsAuthenticated();
+
+  return isAuthenticated ? <Navigate to="/" replace /> : children;
+};
+
+const PrivateRoute = ({ children }) => {
+  const isAuthenticated = useIsAuthenticated();
+
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
 const App = () => {
   const location = useLocation();
 
@@ -47,17 +68,52 @@ const App = () => {
 
         <Route path="/about" element={<About />} />
 
-        <Route path="/login" element={<UserLogin />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <UserLogin />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <ProfilePage />
+            </PrivateRoute>
+          }
+        />
 
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/register"
+          element={
+            <PublicOnlyRoute>
+              <Register />
+            </PublicOnlyRoute>
+          }
+        />
 
         <Route path="/contact" element={<Contact />} />
 
         <Route path="/shop" element={<SearchResults />} />
         <Route path="/search" element={<SearchResults />} />
-        <Route path="cart" element={<CartPage />} />
-        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route
+          path="/cart"
+          element={
+            <PrivateRoute>
+              <CartPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <PrivateRoute>
+              <WishlistPage />
+            </PrivateRoute>
+          }
+        />
         <Route path="/product-details" element={<ProductDetails />} />
         <Route path="/product-details/:productId" element={<ProductDetails />} />
 

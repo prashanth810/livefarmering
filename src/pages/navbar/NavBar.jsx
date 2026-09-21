@@ -140,7 +140,7 @@ const NavBar = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { profiledata, profileloading } = useSelector((state) => state.auth.profile);
-    const token = useSelector((state) => state.auth.login.token) || localStorage.getItem("token");
+    const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
     const { searchproddata, searchprodloading } = useSelector((state) => state.product.searchproducts);
 
     useEffect(() => {

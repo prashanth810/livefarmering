@@ -61,7 +61,7 @@ const AuthSlice = createSlice({
             state.login.token = null;
             state.login.logindata = {};
             state.profile.profiledata = null;
-            localStorage.removeItem("token");
+            sessionStorage.removeItem("token");
         },
     },
 
@@ -74,7 +74,7 @@ const AuthSlice = createSlice({
                 state.register.registerloading = false;
                 state.register.registerdata = action.payload.data;
                 state.register.token = action.payload.token;
-                localStorage.setItem("token", action.payload.token);
+                sessionStorage.setItem("token", action.payload.token);
             })
             .addCase(handleRegister.rejected, (state, action) => {
                 state.register.registerloading = false;
@@ -88,7 +88,7 @@ const AuthSlice = createSlice({
                 state.login.loginloading = false;
                 state.login.logindata = action.payload.data;
                 state.login.token = action.payload.token;
-                localStorage.setItem("token", action.payload.token);
+                sessionStorage.setItem("token", action.payload.token);
             })
             .addCase(handleLogin.rejected, (state, action) => {
                 state.login.loginloading = false;

@@ -14,10 +14,16 @@ export const getallcategories = createAsyncThunk('categoris/fetch', async (_, Th
 });
 
 // get [roducts by caegory id
-export const handlegetproductsbycategory = createAsyncThunk("products/fetch", async (id, ThunkApi) => {
+export const handlegetproductsbycategory = createAsyncThunk("products/fetch", async (category, ThunkApi) => {
     try {
-        const response = await getproductsbycategory(id);
-        return response.data.data;
+        const { categoryId, page = 1, limit = 10 } = typeof category === "object"
+            ? category
+            : { categoryId: category };
+        const response = await getproductsbycategory(categoryId, page, limit);
+        return {
+            products: response.data.data,
+            pagination: response.data.pagination,
+        };
     }
     catch (error) {
         return ThunkApi.rejectWithValue(error.message);
@@ -58,6 +64,7 @@ const initialState = {
     products: {
         productloading: false,
         productdata: [],
+        productpagination: null,
         producterror: null,
     },
     singleproduct: {
@@ -109,7 +116,10 @@ const ProductSlice = createSlice({
             })
             .addCase(handlegetproductsbycategory.fulfilled, (state, action) => {
                 state.products.productloading = false;
-                state.products.productdata = action.payload;
+                state.products.productdata = Array.isArray(action.payload.products)
+                    ? action.payload.products
+                    : [];
+                state.products.productpagination = action.payload.pagination || null;
             })
             .addCase(handlegetproductsbycategory.rejected, (state, action) => {
                 state.products.productloading = false;
