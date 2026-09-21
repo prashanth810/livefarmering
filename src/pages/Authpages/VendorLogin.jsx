@@ -82,7 +82,7 @@ export default function FreshiesVendorLogin() {
                                         Email Address
                                     </label>
 
-                                    <div className="flex h-10 items-center border border-gray-200 bg-white px-3 transition focus-within:border-[#FF542D]">
+                                    <div className="flex h-11 items-center border border-gray-300 bg-white px-3 transition focus-within:border-[#FF542D] cursor-pointer">
                                         <FiMail
                                             size={16}
                                             className="mr-2 text-gray-400"
@@ -122,7 +122,7 @@ export default function FreshiesVendorLogin() {
 
                                     </div>
 
-                                    <div className="flex h-10 items-center border border-gray-200 bg-white px-3 transition focus-within:border-[#FF542D]">
+                                    <div className="flex h-11 items-center border border-gray-300 bg-white px-3 transition focus-within:border-[#FF542D] cursor-pointer">
 
                                         <FiLock
                                             size={16}
@@ -162,7 +162,7 @@ export default function FreshiesVendorLogin() {
                                 </div>
 
                                 {/* Remember */}
-                                <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
 
                                     <input
                                         type="checkbox"
@@ -170,7 +170,7 @@ export default function FreshiesVendorLogin() {
                                         onChange={() =>
                                             setRemember((r) => !r)
                                         }
-                                        className="h-4 w-4 accent-[#FF542D]"
+                                        className="h-4 w-4 accent-[#FF542D] cursor-pointer"
                                     />
 
                                     Remember me for 30 days
@@ -182,7 +182,7 @@ export default function FreshiesVendorLogin() {
                                     type="submit"
                                     className="flex h-10 w-full items-center justify-center bg-[#FF542D] text-sm font-semibold text-white transition hover:bg-[#E94824]"
                                 >
-                                    Sign In to Dashboard
+                                    Sign In
                                     <FiArrowRight
                                         size={16}
                                         className="ml-2"
@@ -192,16 +192,14 @@ export default function FreshiesVendorLogin() {
                             </form>
 
                             {/* Apply */}
-                            <p className="mt-7 text-center text-xs text-gray-500">
+                            <p className="mt-7 text-xs text-gray-500">
 
                                 Don't have a vendor account yet?{" "}
 
-                                <a
-                                    href="#"
-                                    className="font-semibold text-[#FF542D] hover:underline"
-                                >
+                                <Link to='/vendor-register'
+                                    className="font-semibold text-[#FF542D] hover:underline">
                                     Apply now
-                                </a>
+                                </Link>
 
                             </p>
 

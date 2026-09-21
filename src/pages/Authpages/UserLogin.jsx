@@ -1,11 +1,17 @@
 import { useState } from "react";
 import { FiArrowLeft } from "react-icons/fi";
-import { FaLeaf, FaApple } from "react-icons/fa";
+import { FaLeaf, FaApple, FaEye } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { vendorlogin, login } from "../../constants/Imageconstants";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { handleLogin } from "../../redux/Slices/AuthSlice";
+import {
+    showErrorToast,
+    showSuccessToast,
+    showWarningToast,
+} from "../../components/Toast";
+import { LuEyeClosed } from "react-icons/lu";
 
 const UserLogin = () => {
     const dispatch = useDispatch();
@@ -15,6 +21,7 @@ const UserLogin = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [errors, setErrors] = useState({});
+    const [showpass, Setshowpass] = useState(false);
 
 
     const handlevalids = () => {
@@ -41,6 +48,9 @@ const UserLogin = () => {
         }
 
         setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+            showWarningToast("Please fix the highlighted fields");
+        }
         return Object.keys(newErrors).length === 0;
     }
 
@@ -61,21 +71,17 @@ const UserLogin = () => {
             password: password,
             role: "user",
         };
-        console.log("Login Data:", loginddata);
-
         try {
             const result = await dispatch(handleLogin(loginddata));
 
             if (handleLogin.fulfilled.match(result)) {
-                console.log("Registration successful", result.payload);
-
-                // Navigate after successful registration
+                showSuccessToast("Login successful");
                 navigate("/");
             } else {
-                console.log("Registration failed", result.payload);
+                showErrorToast(result.payload || "Login failed");
             }
         } catch (error) {
-            console.log("Register error:", error);
+            showErrorToast(error.message || "Login failed");
         }
     };
 
@@ -153,10 +159,17 @@ const UserLogin = () => {
                                         id="email"
                                         type="email"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full border border-[#DDE3D6] bg-white px-3.5 py-3 text-sm text-[#2C3126] outline-none transition placeholder:text-[#A6AB9D] focus:border-[#1E8449] focus:ring-2 focus:ring-[#1E8449]/15"
+                                        onChange={(e) => {
+                                            setEmail(e.target.value);
+                                            setErrors((previousErrors) => ({
+                                                ...previousErrors,
+                                                email: undefined,
+                                            }));
+                                        }}
+                                        className={`w-full border bg-white px-3.5 py-3 text-sm text-[#2C3126] outline-none transition placeholder:text-[#A6AB9D] focus:border-[#1E8449] focus:ring-2 focus:ring-[#1E8449]/15 ${errors.email ? "border-red-500" : "border-[#DDE3D6]"}`}
                                         placeholder="e.g. emily@example.com"
                                     />
+                                    {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
                                 </div>
 
                                 <div>
@@ -166,14 +179,33 @@ const UserLogin = () => {
                                     >
                                         Password
                                     </label>
-                                    <input
-                                        id="password"
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full border border-[#DDE3D6] bg-white px-3.5 py-3 text-sm text-[#2C3126] outline-none transition placeholder:text-[#A6AB9D] focus:border-[#1E8449] focus:ring-2 focus:ring-[#1E8449]/15"
-                                        placeholder="Enter your password"
-                                    />
+
+                                    <div className={`flex items-center border bg-white px-3.5 py-3 text-sm text-[#2C3126] outline-none transition placeholder:text-[#A6AB9D] focus-within:border-[#1E8449] focus-within:ring-2 focus-within:ring-[#1E8449]/15 ${errors.password ? "border-red-500" : "border-[#DDE3D6]"}`}>
+                                        <input
+                                            id="password"
+                                            type={showpass ? "text" : "password"}
+                                            value={password}
+                                            onChange={(e) => {
+                                                setPassword(e.target.value);
+                                                setErrors((previousErrors) => ({
+                                                    ...previousErrors,
+                                                    password: undefined,
+                                                }));
+                                            }}
+                                            className="w-full outline-none"
+                                            placeholder="Enter your password"
+                                        />
+                                        <button
+                                            type="button"
+                                            aria-label={showpass ? "Hide password" : "Show password"}
+                                            onClick={() => Setshowpass((prev) => !prev)}
+                                        >
+                                            {
+                                                showpass ? (<FaEye />) : (<LuEyeClosed />)
+                                            }
+                                        </button>
+                                    </div>
+                                    {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password}</p>}
                                 </div>
 
                                 <div className="flex items-center justify-between">
@@ -200,7 +232,6 @@ const UserLogin = () => {
                                 >
                                     {loginloading ? "Signing in..." : "Sign in"}
                                 </button>
-                                {loginerror && <p className="text-sm text-red-600">{loginerror}</p>}
                             </form>
 
                             {/* Divider */}

@@ -140,7 +140,7 @@ const NavBar = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { profiledata, profileloading } = useSelector((state) => state.auth.profile);
-    const token = useSelector((state) => state.auth.login.token) || localStorage.getItem("token");
+    const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
     const { searchproddata, searchprodloading } = useSelector((state) => state.product.searchproducts);
 
     useEffect(() => {
@@ -260,7 +260,7 @@ const NavBar = () => {
                             className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
                         >
                             <FiUser className="h-5 w-5" />
-                            Account
+                            Login
                         </Link>
                     )}
                     <Link
@@ -366,7 +366,7 @@ const NavBar = () => {
                             className="flex items-center gap-2 py-3 text-sm font-medium text-gray-700"
                         >
                             <FiUser className="h-5 w-5" />
-                            Account
+                            Login
                         </Link>
                         {categories.map((category) => (
                             <Link

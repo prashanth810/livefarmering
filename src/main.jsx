@@ -4,6 +4,7 @@ import App from './App.jsx'
 import { Provider } from 'react-redux'
 import Mystore from './redux/Store/Mystore.js';
 import { BrowserRouter } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 
 
 createRoot(document.getElementById('root')).render(
@@ -11,5 +12,6 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <App />
     </BrowserRouter>
+    <Toaster position="top-center" />
   </Provider>,
 )

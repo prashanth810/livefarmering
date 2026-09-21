@@ -161,7 +161,7 @@ const SearchResults = () => {
 
     const dispatch = useDispatch();
     const { categorydata, categoryloading } = useSelector((state) => state.product.category);
-    const { productdata, productloading, producterror } = useSelector((state) => state.product.products);
+    const { productdata, productloading, producterror, productpagination } = useSelector((state) => state.product.products);
     const selectedCategoryId = useSelector((state) => state.product.selectedCategoryId);
 
     const [sort, setSort] = useState("Popularity");
@@ -183,13 +183,16 @@ const SearchResults = () => {
         }
     }, [categorydata, selectedCategoryId, dispatch]);
 
-    /* fetch products whenever the category changes */
+    /* fetch the selected API page whenever the category or page changes */
     useEffect(() => {
         if (selectedCategoryId) {
-            dispatch(handlegetproductsbycategory(selectedCategoryId));
-            setPage(1);
+            dispatch(handlegetproductsbycategory({
+                categoryId: selectedCategoryId,
+                page,
+                limit: 10,
+            }));
         }
-    }, [selectedCategoryId, dispatch]);
+    }, [selectedCategoryId, page, dispatch]);
 
     const allProducts = useMemo(
         () => (Array.isArray(productdata) ? productdata.map(normalizeProduct) : []),
@@ -209,6 +212,7 @@ const SearchResults = () => {
     const displayCategory = activeCategory?.name || "All Products";
 
     const handleCategoryChange = (id) => {
+        setPage(1);
         dispatch(setSelectedCategory(id));
     };
 
@@ -250,6 +254,9 @@ const SearchResults = () => {
     }, [allProducts, query, minPrice, maxPrice, selectedBrands, minimumRating, sort]);
 
     const hasActiveFilters = selectedBrands.length > 0 || minimumRating > 0;
+    const totalPages = Math.max(1, Number(productpagination?.totalPages) || 1);
+    const totalProducts = Number(productpagination?.totalProducts) || allProducts.length;
+    const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
 
     return (
         <main className="min-h-screen bg-gray-50 px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -268,7 +275,7 @@ const SearchResults = () => {
                     <div>
                         <h1 className="text-lg font-bold text-gray-800 sm:text-2xl lg:text-3xl">{displayCategory}</h1>
                         <p className="mt-1 text-xs text-gray-400 sm:text-sm">
-                            Showing {visibleProducts.length} of {allProducts.length} products
+                            Showing {visibleProducts.length} of {totalProducts} products
                         </p>
                     </div>
                     <label className="flex items-center gap-2 self-start bg-white px-3 py-2 text-xs text-gray-500 shadow-sm sm:self-auto">
@@ -454,11 +461,11 @@ const SearchResults = () => {
                         {/* pagination */}
                         {!productloading && visibleProducts.length > 0 && (
                             <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-xs">
-                                <button type="button" disabled={page === 1} onClick={() => setPage((c) => Math.max(1, c - 1))} className="bg-white px-3 py-2 text-gray-500 disabled:opacity-40">Previous</button>
-                                {[1, 2, 3].map((n) => (
+                                <button type="button" disabled={!productpagination?.hasPrevPage && page === 1} onClick={() => setPage((c) => Math.max(1, c - 1))} className="bg-white px-3 py-2 text-gray-500 disabled:opacity-40">Previous</button>
+                                {pageNumbers.map((n) => (
                                     <button key={n} type="button" onClick={() => setPage(n)} className={`h-8 w-8 ${page === n ? "bg-emerald-600 text-white" : "bg-white text-gray-600"}`}>{n}</button>
                                 ))}
-                                <button type="button" onClick={() => setPage((c) => c + 1)} className="bg-white px-3 py-2 text-gray-500">Next</button>
+                                <button type="button" disabled={!productpagination?.hasNextPage && page >= totalPages} onClick={() => setPage((c) => Math.min(totalPages, c + 1))} className="bg-white px-3 py-2 text-gray-500 disabled:opacity-40">Next</button>
                             </div>
                         )}
                     </section>

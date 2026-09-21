@@ -14,6 +14,11 @@ import { FaFacebook } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { handleRegister } from "../../redux/Slices/AuthSlice";
 import { useDispatch, useSelector } from "react-redux";
+import {
+    showErrorToast,
+    showSuccessToast,
+    showWarningToast,
+} from "../../components/Toast";
 
 const App = () => {
     const navigate = useNavigate();
@@ -79,6 +84,9 @@ const App = () => {
         }
 
         setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+            showWarningToast("Please fix the highlighted fields");
+        }
         return Object.keys(newErrors).length === 0;
     }
 
@@ -102,21 +110,17 @@ const App = () => {
             password: form.password,
             role: "user",
         };
-        console.log("Register Data:", registerData);
-
         try {
             const result = await dispatch(handleRegister(registerData));
 
             if (handleRegister.fulfilled.match(result)) {
-                console.log("Registration successful", result.payload);
-
-                // Navigate after successful registration
+                showSuccessToast("Registration successful");
                 navigate("/");
             } else {
-                console.log("Registration failed", result.payload);
+                showErrorToast(result.payload || "Registration failed");
             }
         } catch (error) {
-            console.log("Register error:", error);
+            showErrorToast(error.message || "Registration failed");
         }
     };
 
