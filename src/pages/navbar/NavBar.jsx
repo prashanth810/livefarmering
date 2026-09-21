@@ -260,7 +260,7 @@ const NavBar = () => {
                             className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
                         >
                             <FiUser className="h-5 w-5" />
-                            Account
+                            Login
                         </Link>
                     )}
                     <Link
@@ -366,7 +366,7 @@ const NavBar = () => {
                             className="flex items-center gap-2 py-3 text-sm font-medium text-gray-700"
                         >
                             <FiUser className="h-5 w-5" />
-                            Account
+                            Login
                         </Link>
                         {categories.map((category) => (
                             <Link
