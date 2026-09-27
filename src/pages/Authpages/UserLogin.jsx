@@ -98,19 +98,6 @@ const UserLogin = () => {
                         alt="Fresh fruit and vegetables"
                         className="absolute inset-0 h-full w-full object-cover"
                     />
-
-                    {/* Readability gradient over the photo */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/5 to-black/10" />
-
-                    {/* Customer avatar, top-left */}
-                    <div className="absolute left-6 top-6 h-11 w-11 overflow-hidden rounded-full ring-2 ring-white/70">
-                        <img
-                            src={vendorlogin}
-                            alt="Sarah Jenkins"
-                            className="h-full w-full object-cover"
-                        />
-                    </div>
-
                 </div>
 
                 {/* Right form panel */}

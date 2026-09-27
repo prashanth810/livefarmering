@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
     FiShoppingCart,
     FiChevronRight,
@@ -20,6 +20,8 @@ import { nutritionRows, ratingBars, reviews, themeVars } from "../../constants/S
 import { FaArrowCircleRight, FaArrowRight } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
+import { addtocart } from "../../redux/Slices/AddtocartSlice";
+import { showErrorToast, showSuccessToast } from "../../components/Toast";
 
 
 const tabs = [
@@ -75,9 +77,12 @@ const IconCircle = ({ children, size = 24 }) => (
 const ProductDetails = () => {
     const { productId } = useParams();
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { singleproductdata, singleloading, singleerror } = useSelector(
         (state) => state.product.singleproduct,
     );
+    const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
+    const cartloading = useSelector((state) => state.cart.carts.cartloading);
     const [activeThumb, setActiveThumb] = useState(0);
     const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
@@ -120,6 +125,28 @@ const ProductDetails = () => {
 
     const showNextImage = () => {
         setActiveThumb((current) => (current + 1) % productImages.length);
+    };
+
+    const handleAddToCart = async () => {
+        if (!token) {
+            showErrorToast("Please login to add items to your cart");
+            navigate("/login");
+            return;
+        }
+
+        try {
+            await dispatch(
+                addtocart({
+                    productId: product.id,
+                    name: product.name,
+                    weight: variant.weight || product.unit,
+                    quantity,
+                })
+            ).unwrap();
+            showSuccessToast(`${product.name} added to cart`);
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to add this item to your cart");
+        }
     };
 
     // Pull in the Inter font used by the design.
@@ -360,9 +387,11 @@ const ProductDetails = () => {
 
                                 <button
                                     type="button"
+                                    onClick={handleAddToCart}
+                                    disabled={cartloading || (variantStock <= 0 && variants.length > 0)}
                                     className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-6 text-base font-semibold text-[var(--primary-foreground)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer" >
                                     <FiShoppingCart className="h-5 w-5" />
-                                    Add to Cart
+                                    {cartloading ? "Adding..." : "Add to Cart"}
                                 </button>
 
                                 {variantStock > 0 && (

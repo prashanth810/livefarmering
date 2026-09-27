@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getallcategories, setSelectedCategory } from "../../redux/Slices/ProductSlice";
 import Cateoryloader from "../../reusables/Cateoryloader";
@@ -42,16 +41,22 @@ const CategorySection = () => {
                     {categorydata.map((category) => (
                         <div
                             key={category._id}
-                            className={`flex h-32 w-32 shrink-0 items-center justify-center border bg-white px-3 shadow-sm ${selectedCategoryId === category._id
+                            className={`flex h-28 w-28 shrink-0 items-center justify-center border bg-white px-3 shadow-sm rounded ${selectedCategoryId === category._id
                                 ? "border-orange-500"
-                                : "border-gray-200"
+                                : "border-0"
                                 }`} >
-                            <Link
-                                to={category.href}
-                                onClick={() => dispatch(setSelectedCategory(category._id))}
-                                className="group flex h-full w-full flex-col items-center justify-center gap-3"
-                            >
-                                <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm transition-transform group-hover:scale-[1.02]">
+                            <button
+                                type="button"
+                                aria-pressed={selectedCategoryId === category._id}
+                                onClick={() => {
+                                    dispatch(setSelectedCategory(category._id));
+                                    document.getElementById("featured-products")?.scrollIntoView({
+                                        behavior: "smooth",
+                                        block: "start",
+                                    });
+                                }}
+                                className="group flex h-full w-full flex-col items-center justify-center gap-3" >
+                                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm transition-transform group-hover:scale-[1.02]">
                                     <img
                                         src={category.imageurl}
                                         alt={category._id}
@@ -59,10 +64,10 @@ const CategorySection = () => {
                                     />
                                 </span>
 
-                                <span className="whitespace-nowrap text-sm font-medium text-gray-900">
+                                <span className="whitespace-nowrap text-xs font-medium text-gray-900">
                                     {category.name}
                                 </span>
-                            </Link>
+                            </button>
                         </div>
                     ))}
                 </div>

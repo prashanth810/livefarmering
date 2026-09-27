@@ -17,6 +17,7 @@ import { LuLeaf } from "react-icons/lu";
 import { MdOutlineGridView } from "react-icons/md";
 import { handlefetchprofileinfo, logout } from "../../redux/Slices/AuthSlice";
 import { clearSearchProducts, handlesearchproducts } from "../../redux/Slices/ProductSlice";
+import { getcartitems } from "../../redux/Slices/AddtocartSlice";
 
 const categories = [
     { label: "All Categories", href: "/shop", hasIcon: true },
@@ -142,6 +143,11 @@ const NavBar = () => {
     const { profiledata, profileloading } = useSelector((state) => state.auth.profile);
     const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
     const { searchproddata, searchprodloading } = useSelector((state) => state.product.searchproducts);
+    const cartItems = useSelector((state) => state.cart.carts.cartdata);
+    const userId = profiledata?._id || profiledata?.id || profiledata?.userId || profiledata?.user?._id;
+    const cartCount = Array.isArray(cartItems)
+        ? cartItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
+        : 0;
 
     useEffect(() => {
         const query = searchValue.trim();
@@ -163,6 +169,12 @@ const NavBar = () => {
             dispatch(handlefetchprofileinfo());
         }
     }, [dispatch, profiledata, token]);
+
+    useEffect(() => {
+        if (token && userId) {
+            dispatch(getcartitems(userId));
+        }
+    }, [dispatch, token, userId]);
 
     const handleLogout = () => {
         dispatch(logout());
@@ -273,7 +285,11 @@ const NavBar = () => {
                     >
                         <span className="relative">
                             <FiShoppingCart className="h-5 w-5" />
-                            <span className="absolute -right-2 -top-1 flex h-2 w-2 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white" />
+                            {cartCount > 0 && (
+                                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+                                    {cartCount > 9 ? "9+" : cartCount}
+                                </span>
+                            )}
                         </span>
                     </Link>
                 </nav>
@@ -282,9 +298,11 @@ const NavBar = () => {
                 <div className="ml-auto flex items-center gap-4 lg:hidden">
                     <Link to="/cart" className="relative text-gray-700">
                         <FiShoppingCart className="h-6 w-6" />
-                        <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
-                            3
-                        </span>
+                        {cartCount > 0 && (
+                            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+                                {cartCount > 9 ? "9+" : cartCount}
+                            </span>
+                        )}
                     </Link>
                     <button
                         type="button"

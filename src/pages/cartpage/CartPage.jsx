@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
     FiMinus,
     FiPlus,
@@ -8,56 +9,140 @@ import {
     FiArrowLeft,
     FiShield,
 } from "react-icons/fi";
-
-const initialCartItems = [
-    {
-        id: "broccoli",
-        vendor: "Daily Fresh",
-        name: "Organic Green Broccoli",
-        unit: "500 g",
-        price: 2.49,
-        quantity: 2,
-        image:
-            "https://media.istockphoto.com/id/1135308302/photo/broccoli-on-white.jpg?s=612x612&w=0&k=20&c=ONhL9A0yMth8m-83Z8eAwzAsDeKU81IcpZc-2rVDMJo=",
-    },
-    {
-        id: "eggs",
-        vendor: "Healthy Choice",
-        name: "Farm Fresh Brown Eggs",
-        unit: "12 Pack",
-        price: 6.99,
-        quantity: 1,
-        image:
-            "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=300&q=85",
-    },
-    {
-        id: "sourdough",
-        vendor: "Farmhouse Bakery",
-        name: "Whole Wheat Sourdough",
-        unit: "400 g",
-        price: 4.5,
-        quantity: 1,
-        image:
-            "https://images.squarespace-cdn.com/content/v1/5c2d2d10b27e398709a72eb2/1614011918348-WXUWPCYXGJ0YBJYM1TF1/20_percent_wheat_sourdough-10.jpg",
-    },
-];
+import { addtocart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
+import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
+import { getsingleproduct } from "../../redux/Slices/ProductSlice";
+import { showErrorToast } from "../../components/Toast";
 
 const CartPage = () => {
-    const [cartItems, setCartItems] = useState(initialCartItems);
+    const dispatch = useDispatch();
     const [promoCode, setPromoCode] = useState("");
+    const [productDetailsById, setProductDetailsById] = useState({});
+    const profile = useSelector((state) => state.auth.profile.profiledata);
+    const profileLoading = useSelector((state) => state.auth.profile.profileloading);
+    const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
+    const { getcartloading, getcartdata, getcarterror } = useSelector((state) => state.cart.getcart);
+    const cartloading = useSelector((state) => state.cart.carts.cartloading);
+    const userId = profile?._id || profile?.id || profile?.userId || profile?.user?._id;
 
-    const updateQuantity = (id, delta) => {
-        setCartItems((items) =>
-            items.map((item) =>
-                item.id === id
-                    ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-                    : item
-            )
-        );
+    useEffect(() => {
+        if (token && !userId && !profileLoading) {
+            dispatch(handlefetchprofileinfo());
+        }
+    }, [dispatch, profileLoading, token, userId]);
+
+    useEffect(() => {
+        if (userId) {
+            dispatch(getcartitems(userId));
+        }
+    }, [dispatch, userId]);
+
+    const rawCartItems = useMemo(() => {
+        return Array.isArray(getcartdata)
+            ? getcartdata
+            : Array.isArray(getcartdata?.items)
+                ? getcartdata.items
+                : [];
+    }, [getcartdata]);
+
+    const cartProductIdsKey = useMemo(() => [...new Set(rawCartItems
+        .map((item) => {
+            const productId = item.productId && typeof item.productId === "object"
+                ? item.productId._id
+                : item.productId;
+            return productId ? String(productId) : null;
+        })
+        .filter(Boolean))].join(","), [rawCartItems]);
+
+    useEffect(() => {
+        let active = true;
+        const productIds = cartProductIdsKey ? cartProductIdsKey.split(",") : [];
+
+        if (productIds.length > 0) {
+            Promise.all(productIds.map(async (productId) => {
+                try {
+                    const product = await dispatch(getsingleproduct(productId)).unwrap();
+                    return [productId, product];
+                } catch {
+                    return [productId, null];
+                }
+            })).then((products) => {
+                if (active) {
+                    setProductDetailsById(Object.fromEntries(products.filter(([, product]) => product)));
+                }
+            });
+        }
+
+        return () => {
+            active = false;
+        };
+    }, [cartProductIdsKey, dispatch]);
+
+    const cartItems = useMemo(() => {
+        return rawCartItems.map((item, index) => {
+            const embeddedProduct = item.productId && typeof item.productId === "object" ? item.productId : {};
+            const productId = embeddedProduct._id || item.productId;
+            const product = embeddedProduct._id
+                ? embeddedProduct
+                : productDetailsById[String(productId)] || {};
+            const variant = product.variants?.find((productVariant) => productVariant.weight === item.weight)
+                || product.variants?.[0];
+
+            return {
+                ...item,
+                id: `${productId || index}-${item.weight || "unit"}`,
+                productId,
+                vendor: item.vendor || product.createdby?.name || "",
+                name: item.name || product.name || "Product",
+                unit: item.weight || item.unit || "",
+                price: Number(item.selling_price ?? item.price ?? variant?.selling_price) || 0,
+                quantity: Number(item.quantity) || 0,
+                stock: Number(variant?.stock ?? variant?.stock_quantity ?? product.stock ?? item.stock),
+                image: item.image || item.imageurl || item.thumbnail || product.thumbnail || product.images?.[0] || "",
+            };
+        });
+    }, [productDetailsById, rawCartItems]);
+
+    const refreshCart = async () => {
+        if (userId) {
+            await dispatch(getcartitems(userId)).unwrap();
+        }
     };
 
-    const removeItem = (id) => {
-        setCartItems((items) => items.filter((item) => item.id !== id));
+    const updateQuantity = async (item, delta) => {
+        try {
+            if (delta > 0) {
+                await dispatch(addtocart({
+                    productId: item.productId,
+                    name: item.name,
+                    weight: item.unit,
+                    quantity: 1,
+                })).unwrap();
+            } else {
+                await dispatch(removetocart({
+                    productId: item.productId,
+                    weight: item.unit,
+                })).unwrap();
+            }
+            await refreshCart();
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to update your cart");
+        }
+    };
+
+    const removeItem = async (item) => {
+        try {
+            for (let remaining = item.quantity; remaining > 0; remaining -= 1) {
+                await dispatch(removetocart({
+                    productId: item.productId,
+                    weight: item.unit,
+                })).unwrap();
+            }
+            await refreshCart();
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to remove this item from your cart");
+            await refreshCart();
+        }
     };
 
     const subtotal = useMemo(
@@ -91,7 +176,11 @@ const CartPage = () => {
                     </span>
                 </h1>
 
-                {cartItems.length === 0 ? (
+                {getcartloading ? (
+                    <p className="bg-white p-10 text-center text-gray-500">Loading your cart...</p>
+                ) : getcarterror ? (
+                    <p className="bg-white p-10 text-center text-red-600">{getcarterror}</p>
+                ) : cartItems.length === 0 ? (
                     <div className="rounded-xl bg-white p-10 text-center shadow-sm">
                         <p className="mb-4 text-gray-500">Your cart is empty.</p>
                         <Link
@@ -123,13 +212,17 @@ const CartPage = () => {
                                     >
                                         {/* Left: image + info */}
                                         <div className="flex items-center gap-4">
-                                            <img
-                                                src={item.image}
-                                                alt={item.name}
-                                                className="h-20 w-20 shrink-0 rounded-lg bg-gray-50 object-cover sm:h-30 sm:w-28"
-                                            />
+                                            {item.image ? (
+                                                <img
+                                                    src={item.image}
+                                                    alt={item.name}
+                                                    className="h-20 w-20 shrink-0 rounded-lg bg-gray-50 object-cover sm:h-30 sm:w-28"
+                                                />
+                                            ) : (
+                                                <div className="h-20 w-20 shrink-0 rounded-lg bg-gray-50 sm:h-30 sm:w-28" aria-hidden="true" />
+                                            )}
                                             <div className="min-w-0">
-                                                <p className="text-xs text-gray-400 py-3">{item.vendor}</p>
+                                                {item.vendor && <p className="py-3 text-xs text-gray-400">{item.vendor}</p>}
                                                 <h3 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
                                                     {item.name}
                                                 </h3>
@@ -138,7 +231,8 @@ const CartPage = () => {
                                                 </p>
                                                 <button
                                                     type="button"
-                                                    onClick={() => removeItem(item.id)}
+                                                    onClick={() => removeItem(item)}
+                                                    disabled={cartloading}
                                                     className="flex items-center gap-1.5 border border-purple-200 px-3 py-1 text-xs font-medium text-red-600 transition-colors hover:border-red-300 duration-300 cursor-pointer"
                                                 >
                                                     <FiTrash2 className="h-3.5 w-3.5" />
@@ -161,20 +255,40 @@ const CartPage = () => {
                                             <div className="flex items-center overflow-hidden bg-[#ebeceb] border border-gray-200 p-0.5">
                                                 <button
                                                     type="button"
-                                                    onClick={() => updateQuantity(item.id, -1)}
-                                                    aria-label={`Decrease quantity of ${item.name}`}
-                                                    className="flex h-6 w-6 items-center justify-center text-gray-500 transition-colors bg-[#FFFFFF] hover:bg-gray-50 cursor-pointer"
+                                                    onClick={() =>
+                                                        item.quantity <= 1
+                                                            ? removeItem(item)
+                                                            : updateQuantity(item, -1)
+                                                    }
+                                                    disabled={cartloading}
+                                                    aria-label={
+                                                        item.quantity <= 1
+                                                            ? `Remove ${item.name} from cart`
+                                                            : `Decrease quantity of ${item.name}`
+                                                    }
+                                                    className={`flex h-6 w-6 items-center justify-center transition-colors bg-[#FFFFFF] cursor-pointer ${item.quantity <= 1
+                                                        ? "text-red-500 hover:bg-red-50"
+                                                        : "text-gray-500 hover:bg-gray-50"
+                                                        }`}
                                                 >
-                                                    <FiMinus className="h-3 w-3" />
+                                                    {item.quantity <= 1 ? (
+                                                        <FiTrash2 className="h-3 w-3" />
+                                                    ) : (
+                                                        <FiMinus className="h-3 w-3" />
+                                                    )}
                                                 </button>
                                                 <span className="flex h-8 w-9 items-center justify-center text-sm font-semibold text-gray-800">
                                                     {item.quantity}
                                                 </span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => updateQuantity(item.id, 1)}
+                                                    onClick={() => updateQuantity(item, 1)}
+                                                    disabled={cartloading || item.stock === 0 || (item.stock > 0 && item.quantity >= item.stock)}
                                                     aria-label={`Increase quantity of ${item.name}`}
-                                                    className="flex h-6 w-6 items-center justify-center text-gray-500 transition-colors bg-[#FFFFFF]  hover:bg-gray-50 cursor-pointer"
+                                                    className={`flex h-6 w-6 items-center justify-center text-gray-500 transition-colors bg-[#FFFFFF] ${cartloading || item.stock === 0 || (item.stock > 0 && item.quantity >= item.stock)
+                                                        ? "cursor-not-allowed opacity-40"
+                                                        : "cursor-pointer hover:bg-gray-50"
+                                                        }`}
                                                 >
                                                     <FiPlus className="h-3 w-3" />
                                                 </button>

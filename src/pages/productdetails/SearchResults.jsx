@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { FiChevronRight, FiEye, FiHeart, FiShoppingCart, FiStar } from "react-icons/fi";
+import { FiChevronRight, FiEye, FiHeart, FiMinus, FiPlus, FiShoppingCart, FiStar, FiTrash2 } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { useWishlist } from "../../services/wishlist";
 import {
@@ -8,6 +8,9 @@ import {
     handlegetproductsbycategory,
     setSelectedCategory,
 } from "../../redux/Slices/ProductSlice";
+import { addtocart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
+import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
+import { showErrorToast, showSuccessToast } from "../../components/Toast";
 import Productloader from "../../reusables/Productloader";
 
 /* ---------------- normalize api product ---------------- */
@@ -21,6 +24,7 @@ const normalizeProduct = (product) => {
         image: product.thumbnail || product.images?.[0] || "",
         price: Number(variant.selling_price) || 0,
         oldPrice: Number(variant.original_price) || null,
+        stock: Number(variant.stock ?? variant.stock_quantity ?? product.stock),
         rating: Number(product.rating) || 0,
         reviews: product.reviews?.length || 0,
         badge: variant.discount_price ? "DISCOUNT" : null,
@@ -31,7 +35,88 @@ const normalizeProduct = (product) => {
 /* ---------------- product card ---------------- */
 const ProductCard = ({ product }) => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const { isWishlisted, toggleWishlist } = useWishlist();
+    const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
+    const cartItems = useSelector((state) => state.cart.carts.cartdata);
+    const cartloading = useSelector((state) => state.cart.carts.cartloading);
+    const [busy, setBusy] = useState(false);
+
+    const cartQuantity = useMemo(() => {
+        if (!Array.isArray(cartItems)) return 0;
+        return cartItems.reduce((sum, item) => {
+            const itemProductId = item.productId?._id ?? item.productId;
+            const sameProduct = String(itemProductId) === String(product.id);
+            const sameWeight = String(item.weight ?? item.unit ?? "") === String(product.unit ?? "");
+            return sameProduct && sameWeight ? sum + (Number(item.quantity) || 0) : sum;
+        }, 0);
+    }, [cartItems, product.id, product.unit]);
+
+    const requireLogin = () => {
+        if (token) return true;
+        showErrorToast("Please login to add items to your cart");
+        navigate("/login");
+        return false;
+    };
+
+    const handleAddToCart = async () => {
+        if (!requireLogin()) return;
+
+        try {
+            setBusy(true);
+            await dispatch(
+                addtocart({
+                    productId: product.id,
+                    name: product.name,
+                    weight: product.unit,
+                    quantity: 1,
+                })
+            ).unwrap();
+            showSuccessToast(`${product.name} added to cart`);
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to add this item to your cart");
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const handleIncrease = async () => {
+        if (!requireLogin()) return;
+
+        try {
+            setBusy(true);
+            await dispatch(
+                addtocart({
+                    productId: product.id,
+                    name: product.name,
+                    weight: product.unit,
+                    quantity: 1,
+                })
+            ).unwrap();
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to update your cart");
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const handleDecrease = async () => {
+        if (!requireLogin()) return;
+
+        try {
+            setBusy(true);
+            await dispatch(
+                removetocart({
+                    productId: product.id,
+                    weight: product.unit,
+                })
+            ).unwrap();
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to update your cart");
+        } finally {
+            setBusy(false);
+        }
+    };
 
     return (
         <article className="flex min-w-0 flex-col overflow-hidden border border-gray-200 bg-white transition-shadow hover:shadow-md">
@@ -77,10 +162,44 @@ const ProductCard = ({ product }) => {
                             <span className="text-xs text-gray-400 line-through">${product.oldPrice.toFixed(2)}</span>
                         ) : null}
                     </div>
-                    <button type="button" className="flex items-center gap-1 bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 cursor-pointer">
-                        <FiShoppingCart className="h-3.5 w-3.5" />
-                        Add
-                    </button>
+                    {cartQuantity > 0 ? (
+                        <div className="flex items-center overflow-hidden bg-[#ebeceb] border border-gray-200 p-0.5">
+                            <button
+                                type="button"
+                                onClick={handleDecrease}
+                                disabled={busy || cartloading}
+                                aria-label={cartQuantity <= 1 ? `Remove ${product.name} from cart` : `Decrease quantity of ${product.name}`}
+                                className={`flex h-7 w-7 items-center justify-center transition-colors bg-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${cartQuantity <= 1 ? "text-red-500 hover:bg-red-50" : "text-gray-500 hover:bg-gray-50"}`}
+                            >
+                                {cartQuantity <= 1 ? <FiTrash2 className="h-3.5 w-3.5" /> : <FiMinus className="h-3.5 w-3.5" />}
+                            </button>
+                            <span className="flex h-7 w-8 items-center justify-center text-xs font-semibold text-gray-800">
+                                {cartQuantity}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={handleIncrease}
+                                disabled={busy || cartloading || product.stock === 0 || (product.stock > 0 && cartQuantity >= product.stock)}
+                                aria-label={`Increase quantity of ${product.name}`}
+                                className={`flex h-7 w-7 items-center justify-center text-gray-500 transition-colors bg-white ${busy || cartloading || product.stock === 0 || (product.stock > 0 && cartQuantity >= product.stock)
+                                    ? "cursor-not-allowed opacity-40"
+                                    : "cursor-pointer hover:bg-gray-50"
+                                    }`}
+                            >
+                                <FiPlus className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleAddToCart}
+                            disabled={busy || cartloading || product.stock === 0}
+                            className="flex items-center gap-1 bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <FiShoppingCart className="h-3.5 w-3.5" />
+                            {busy ? "Adding..." : "Add"}
+                        </button>
+                    )}
                 </div>
             </div>
         </article>
@@ -163,6 +282,10 @@ const SearchResults = () => {
     const { categorydata, categoryloading } = useSelector((state) => state.product.category);
     const { productdata, productloading, producterror, productpagination } = useSelector((state) => state.product.products);
     const selectedCategoryId = useSelector((state) => state.product.selectedCategoryId);
+    const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
+    const profile = useSelector((state) => state.auth.profile.profiledata);
+    const profileLoading = useSelector((state) => state.auth.profile.profileloading);
+    const userId = profile?._id || profile?.id || profile?.userId || profile?.user?._id;
 
     const [sort, setSort] = useState("Popularity");
     const [minPrice, setMinPrice] = useState("0");
@@ -170,6 +293,19 @@ const SearchResults = () => {
     const [selectedBrands, setSelectedBrands] = useState([]);
     const [minimumRating, setMinimumRating] = useState(0);
     const [page, setPage] = useState(1);
+
+    /* make sure the logged-in user's cart is loaded so quantities on the cards are correct on refresh */
+    useEffect(() => {
+        if (token && !userId && !profileLoading) {
+            dispatch(handlefetchprofileinfo());
+        }
+    }, [dispatch, profileLoading, token, userId]);
+
+    useEffect(() => {
+        if (token && userId) {
+            dispatch(getcartitems(userId));
+        }
+    }, [dispatch, token, userId]);
 
     /* load categories once */
     useEffect(() => {
