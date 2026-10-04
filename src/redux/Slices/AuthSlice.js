@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getmyprofielinfo, LoginApi, Registerapi } from "../Apis";
+import { getmyprofielinfo, handlelogout, LoginApi, Registerapi } from "../Apis";
 
 // register api
 export const handleRegister = createAsyncThunk("auth/register", async (data, { rejectWithValue }) => {
@@ -26,6 +26,17 @@ export const handlefetchprofileinfo = createAsyncThunk("auth/profil", async (_, 
     try {
         const resposne = await getmyprofielinfo();
         return resposne.data.data;
+    }
+    catch (error) {
+        return ThunkApi.rejectWithValue(error.message);
+    }
+})
+
+// logout 
+export const logoutapi = createAsyncThunk("auth/logout", async (token, ThunkApi) => {
+    try {
+        const response = await handlelogout(token);
+        return response.data.data;
     }
     catch (error) {
         return ThunkApi.rejectWithValue(error.message);
@@ -105,6 +116,26 @@ const AuthSlice = createSlice({
             .addCase(handlefetchprofileinfo.rejected, (state, action) => {
                 state.profile.profileloading = false;
                 state.profile.profileerror = action.payload;
+            })
+
+            // logout
+            .addCase(logoutapi.pending, (state) => {
+                state.login.loginloading = true;
+            })
+            .addCase(logoutapi.fulfilled, (state) => {
+                state.login.loginloading = false;
+                state.login.token = null;
+                state.login.logindata = {};
+                state.profile.profiledata = null;
+                state.register.registerloading = false;
+                state.register.token = null;
+                state.register.registerdata = {};
+                state.profile.profiledata = null;
+                sessionStorage.removeItem("token");
+            })
+            .addCase(logoutapi.rejected, (state, action) => {
+                state.login.loginloading = false;
+                state.login.loginerror = action.payload;
             })
     }
 })

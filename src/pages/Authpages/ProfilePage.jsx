@@ -1,28 +1,74 @@
-import { useSelector } from "react-redux";
-import { FiUser } from "react-icons/fi";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
+import ProfileBanner from "../profile/Profilebanner";
+import ProfileSummary from "../profile/Profilesummary";
+import RecentOrders from "../profile/Recentorders";
+import QuickActions from "../profile/Quickactions";
+import OffersBanner from "../profile/Offersbanner";
+import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
+
+const formatMemberSince = (value) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+};
 
 const ProfilePage = () => {
-    const profile = useSelector((state) => state.auth.profile.profiledata);
-    const image = profile?.imageurl || profile?.imageUrl || profile?.profileImage || profile?.avatar;
-    const name = profile?.name || profile?.fullname || profile?.username || "User";
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { profileloading, profiledata: profile, profileerror } = useSelector((state) => state.auth.profile);
+
+    useEffect(() => {
+        if (!profile) dispatch(handlefetchprofileinfo());
+    }, [dispatch, profile]);
+
+    const orders = Array.isArray(profile?.orders) ? profile.orders : [];
+
+    const stats = {
+        orders: profile?.totalOrders ?? orders.length,
+        favourites: profile?.favourites,
+        wallet: profile?.walletBalance,
+        offers: profile?.activeOffers,
+    };
+
+    const comingSoon = () => toast("Coming soon", { id: "profile-toast" });
+
+    const handleQuickAction = (action) => {
+        if (action.to) navigate(action.to);
+        else comingSoon();
+    };
+
+    if (!profile) {
+        return (
+            <main className="mx-auto flex xl:max-w-[90%] flex-col gap-5 px-4 py-6 sm:px-6">
+                <p role={profileerror ? "alert" : undefined} className="text-sm text-gray-600">
+                    {profileerror ? "Unable to load your profile." : profileloading ? "Loading profile..." : "Loading profile..."}
+                </p>
+            </main>
+        );
+    }
 
     return (
-        <main className="mx-auto max-w-3xl px-4 py-12">
-            <div className="border border-gray-200 bg-white p-8 shadow-sm">
-                <div className="flex items-center gap-4">
-                    {image ? (
-                        <img src={image} alt={name} className="h-16 w-16 rounded-full object-cover" />
-                    ) : (
-                        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                            <FiUser className="h-7 w-7" />
-                        </span>
-                    )}
-                    <div>
-                        <h1 className="text-xl font-semibold text-gray-900">{name}</h1>
-                        {profile?.email && <p className="text-sm text-gray-500">{profile.email}</p>}
-                    </div>
-                </div>
-            </div>
+        <main className="mx-auto flex xl:max-w-[90%] flex-col gap-5 px-4 py-6 sm:px-6">
+            <ProfileBanner name={profile.name} />
+            <ProfileSummary
+                name={profile.name}
+                email={profile?.email}
+                phone={profile?.phone}
+                image={profile?.profile_pic}
+                role={profile?.role}
+                memberSince={formatMemberSince(profile?.createdAt)}
+                stats={stats}
+                onEdit={comingSoon}
+                onChangePhoto={comingSoon}
+            />
+            <RecentOrders orders={orders} />
+            <QuickActions onAction={handleQuickAction} />
+            <OffersBanner />
         </main>
     );
 };

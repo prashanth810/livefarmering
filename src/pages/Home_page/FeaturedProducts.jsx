@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiHeart, FiEye, FiArrowRight, FiShoppingCart } from "react-icons/fi";
+import { FiHeart, FiEye, FiArrowRight, FiShoppingCart, FiMinus, FiPlus, FiTrash2 } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { useWishlist } from "../../services/wishlist";
 import { getallcategories, handlegetproductsbycategory } from "../../redux/Slices/ProductSlice";
+import { addtocart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
+import { showErrorToast } from "../../components/Toast";
 import Productloader from "../../reusables/Productloader";
 
 const normalizeProduct = (product) => {
@@ -34,7 +36,38 @@ const normalizeProduct = (product) => {
 
 const ProductCard = ({ product }) => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const { isWishlisted, toggleWishlist } = useWishlist();
+    const cartItem = useSelector((state) => state.cart.carts.cartdata.find(
+        (item) =>
+            String(item.productId?._id ?? item.productId) === String(product.id) &&
+            String(item.weight ?? item.unit ?? "") === String(product.unit ?? "")
+    ));
+    const quantity = Number(cartItem?.quantity) || 0;
+
+    const handleAddToCart = async () => {
+        try {
+            await dispatch(addtocart({
+                productId: product.id,
+                name: product.name,
+                weight: product.unit,
+                quantity: 1,
+            })).unwrap();
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to add this product to your cart");
+        }
+    };
+
+    const handleRemoveFromCart = async () => {
+        try {
+            await dispatch(removetocart({
+                productId: product.id,
+                weight: product.unit,
+            })).unwrap();
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to remove this product from your cart");
+        }
+    };
 
     return (
         <div className="group relative flex flex-col overflow-hidden border border-emerald-400/20 bg-white shadow-sm transition-shadow hover:shadow-md hover:border-emerald-500/30 duration-500 cursor-pointer">
@@ -100,10 +133,38 @@ const ProductCard = ({ product }) => {
                         )}
                     </div>
                     {product.stock > 0 ? (
-                        <button type="button" className="flex items-center gap-1 bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 cursor-pointer">
-                            <FiShoppingCart className="h-3.5 w-3.5" />
-                            Add
-                        </button>
+                        quantity > 0 ? (
+                            <div className="flex h-9 items-center border border-emerald-600 text-emerald-700">
+                                <button
+                                    type="button"
+                                    aria-label={quantity === 1 ? `Remove ${product.name} from cart` : `Decrease ${product.name} quantity`}
+                                    onClick={handleRemoveFromCart}
+                                    className="flex h-full w-9 items-center justify-center hover:bg-emerald-50"
+                                >
+                                    {quantity === 1 ? <FiTrash2 className="h-3.5 w-3.5" /> : <FiMinus className="h-3.5 w-3.5" />}
+                                </button>
+                                <span className="flex h-full w-8 items-center justify-center text-sm font-semibold" aria-live="polite">
+                                    {quantity}
+                                </span>
+                                <button
+                                    type="button"
+                                    aria-label={`Increase ${product.name} quantity`}
+                                    onClick={handleAddToCart}
+                                    className="flex h-full w-9 items-center justify-center hover:bg-emerald-50"
+                                >
+                                    <FiPlus className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleAddToCart}
+                                className="flex items-center gap-1 bg-orange-500 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-600 cursor-pointer"
+                            >
+                                <FiShoppingCart className="h-3.5 w-3.5" />
+                                Add
+                            </button>
+                        )
                     ) : (
                         <button
                             type="button"
@@ -124,6 +185,9 @@ const FeaturedProducts = () => {
     const { categorydata } = useSelector((state) => state.product.category);
     const { productdata, productloading, producterror } = useSelector((state) => state.product.products);
     const selectedCategoryId = useSelector((state) => state.product.selectedCategoryId);
+    const profile = useSelector((state) => state.auth.profile.profiledata);
+    const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
+    const userId = profile?._id || profile?.id || profile?.userId || profile?.user?._id;
 
     useEffect(() => {
         if (categorydata.length === 0) {
@@ -137,12 +201,18 @@ const FeaturedProducts = () => {
         }
     }, [selectedCategoryId, dispatch]);
 
+    useEffect(() => {
+        if (token && userId) {
+            dispatch(getcartitems(userId));
+        }
+    }, [dispatch, token, userId]);
+
     const products = Array.isArray(productdata)
         ? productdata.slice(0, 4).map(normalizeProduct)
         : [];
 
     return (
-        <section className="bg-white px-4 py-12 sm:px-6 lg:px-8 xl:pt-16 xl:pb-30">
+        <section id="featured-products" className="scroll-mt-24 bg-white px-4 py-12 sm:px-6 lg:px-8 xl:pt-16 xl:pb-30">
             <div className="mx-auto max-w-[95%]">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
