@@ -31,6 +31,7 @@ export const getmyprofielinfo = async () => {
     }
     catch (error) {
         console.log(error.message);
+        throw error;
     }
 }
 
@@ -42,5 +43,18 @@ export const handlevendorregister = async (data) => {
     }
     catch (error) {
         console.log(error.message);
+        throw error;
+    }
+}
+
+// logout api
+export const handlelogout = async (token) => {
+    try {
+        const response = await authApi.post("/api/auth/v1/logout", { token });
+        return response;
+    }
+    catch (error) {
+        console.error(error.message);
+        throw error;
     }
 }

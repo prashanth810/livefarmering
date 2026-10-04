@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { handleaddtocart, handlegetcartitems, handleremovecart } from "../services/CartApi";
+import { handleaddtocart, handledeleteproduct, handlegetcartitems, handleremovecart } from "../services/CartApi";
 
 const normalizeCartItem = (item) => {
     if (!item) return null;
@@ -66,6 +66,25 @@ export const getcartitems = createAsyncThunk(
     }
 );
 
+export const deleteproductfromcart = createAsyncThunk(
+    "cart/clear",
+    async ({ productId, weight }, ThunkApi) => {
+        try {
+            const response = await handledeleteproduct({
+                productId,
+                weight,
+            });
+
+            return response?.data?.data ?? {};
+        } catch (error) {
+            return ThunkApi.rejectWithValue(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Failed to remove item from cart"
+            );
+        }
+    }
+);
 const initialState = {
     carts: {
         cartloading: false,
@@ -141,6 +160,32 @@ const AddtocartSlice = createSlice({
                 }
             })
             .addCase(removetocart.rejected, (state, action) => {
+                state.carts.cartloading = false;
+                state.carts.carterror = action.payload;
+            })
+
+            // delete the full product quantity from cart
+            .addCase(deleteproductfromcart.pending, (state) => {
+                state.carts.cartloading = true;
+                state.carts.carterror = null;
+            })
+            .addCase(deleteproductfromcart.fulfilled, (state, action) => {
+                state.carts.cartloading = false;
+                const updatedItems = action.payload?.items;
+
+                if (Array.isArray(updatedItems)) {
+                    state.carts.cartdata = updatedItems.map(normalizeCartItem).filter(Boolean);
+                    return;
+                }
+
+                const productId = getCartProductId(action.meta.arg);
+                const weight = action.meta.arg?.weight ?? action.meta.arg?.unit;
+                state.carts.cartdata = state.carts.cartdata.filter((cartItem) =>
+                    String(getCartProductId(cartItem)) !== String(productId) ||
+                    String(cartItem.weight ?? cartItem.unit ?? "") !== String(weight ?? "")
+                );
+            })
+            .addCase(deleteproductfromcart.rejected, (state, action) => {
                 state.carts.cartloading = false;
                 state.carts.carterror = action.payload;
             })

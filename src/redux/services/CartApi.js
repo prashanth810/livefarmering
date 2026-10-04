@@ -34,3 +34,23 @@ export const handlegetcartitems = async (id) => {
         throw error;
     }
 }
+
+
+export const handledeleteproduct = async ({ productId, weight }) => {
+    try {
+        const response = await cartApi.delete(
+            `${baseurl}/cart/clear/${productId}`,
+            {
+                data: {
+                    weight,
+                },
+            }
+        );
+
+        return response;
+    }
+    catch (error) {
+        console.error("Delete cart item failed:", error.response?.data || error.message);
+        throw error;
+    }
+}

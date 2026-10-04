@@ -37,40 +37,51 @@ const CategorySection = () => {
                     Browse through our wide variety of fresh and organic products
                 </p>
 
-                <div className="mt-8 flex gap-7 overflow-x-auto py-4 pb-3 scrollbar">
-                    {categorydata.map((category) => (
-                        <div
-                            key={category._id}
-                            className={`flex h-28 w-28 shrink-0 items-center justify-center border bg-white px-3 shadow-sm rounded ${selectedCategoryId === category._id
-                                ? "border-orange-500"
-                                : "border-0"
-                                }`} >
-                            <button
-                                type="button"
-                                aria-pressed={selectedCategoryId === category._id}
-                                onClick={() => {
-                                    dispatch(setSelectedCategory(category._id));
-                                    document.getElementById("featured-products")?.scrollIntoView({
-                                        behavior: "smooth",
-                                        block: "start",
-                                    });
-                                }}
-                                className="group flex h-full w-full flex-col items-center justify-center gap-3" >
-                                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm transition-transform group-hover:scale-[1.02]">
-                                    <img
-                                        src={category.imageurl}
-                                        alt={category._id}
-                                        className="h-full w-full object-cover"
-                                    />
-                                </span>
+                {categorydata.length !== 0 ? (
+                    <div className="mt-8 flex gap-5 overflow-x-auto py-4 pb-3 scrollbar">
+                        {categorydata.map((category) => (
+                            <div
+                                key={category._id}
+                                className={`flex h-32 w-32 shrink-0 items-center justify-center rounded border bg-white px-3 hover:shadow-sm transition- duration-500 cursor-pointer ${selectedCategoryId === category._id
+                                    ? "border-orange-500 shadow-md"
+                                    : "border-gray-50 hover:border-orange-300"
+                                    }`}
+                            >
+                                <button
+                                    type="button"
+                                    aria-pressed={selectedCategoryId === category._id}
+                                    onClick={() => {
+                                        dispatch(setSelectedCategory(category._id));
 
-                                <span className="whitespace-nowrap text-xs font-medium text-gray-900">
-                                    {category.name}
-                                </span>
-                            </button>
-                        </div>
-                    ))}
-                </div>
+                                        document
+                                            .getElementById("featured-products")
+                                            ?.scrollIntoView({
+                                                behavior: "smooth",
+                                                block: "start",
+                                            });
+                                    }}
+                                    className="group flex h-full w-full flex-col items-center justify-center gap-3"
+                                >
+                                    <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-50 shadow-sm transition-transform duration-200 group-hover:scale-105">
+                                        <img
+                                            src={category.imageurl}
+                                            alt={category.name}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </span>
+
+                                    <span className="whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {category.name}
+                                    </span>
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="mt-8 text-center text-sm text-gray-500">
+                        Categories not available
+                    </p>
+                )}
             </div>
         </section>
     );

@@ -15,7 +15,7 @@ import {
 import { PiStorefrontLight } from "react-icons/pi";
 import { LuLeaf } from "react-icons/lu";
 import { MdOutlineGridView } from "react-icons/md";
-import { handlefetchprofileinfo, logout } from "../../redux/Slices/AuthSlice";
+import { handlefetchprofileinfo, logoutapi } from "../../redux/Slices/AuthSlice";
 import { clearSearchProducts, handlesearchproducts } from "../../redux/Slices/ProductSlice";
 import { getcartitems } from "../../redux/Slices/AddtocartSlice";
 
@@ -177,7 +177,7 @@ const NavBar = () => {
     }, [dispatch, token, userId]);
 
     const handleLogout = () => {
-        dispatch(logout());
+        dispatch(logoutapi(token));
         setAccountOpen(false);
         navigate("/login");
     };
@@ -251,8 +251,9 @@ const NavBar = () => {
                                             setAccountOpen(false);
                                             navigate("/profile");
                                         }}
-                                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50"
                                     >
+                                        <FiUser />
                                         Profile
                                     </button>
                                     <button

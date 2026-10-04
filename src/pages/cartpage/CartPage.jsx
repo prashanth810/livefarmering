@@ -9,7 +9,7 @@ import {
     FiArrowLeft,
     FiShield,
 } from "react-icons/fi";
-import { addtocart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
+import { addtocart, deleteproductfromcart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
 import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 import { showErrorToast } from "../../components/Toast";
@@ -21,7 +21,8 @@ const CartPage = () => {
     const profile = useSelector((state) => state.auth.profile.profiledata);
     const profileLoading = useSelector((state) => state.auth.profile.profileloading);
     const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
-    const { getcartloading, getcartdata, getcarterror } = useSelector((state) => state.cart.getcart);
+    const { getcartloading, getcarterror } = useSelector((state) => state.cart.getcart);
+    const cartdata = useSelector((state) => state.cart.carts.cartdata);
     const cartloading = useSelector((state) => state.cart.carts.cartloading);
     const userId = profile?._id || profile?.id || profile?.userId || profile?.user?._id;
 
@@ -38,12 +39,8 @@ const CartPage = () => {
     }, [dispatch, userId]);
 
     const rawCartItems = useMemo(() => {
-        return Array.isArray(getcartdata)
-            ? getcartdata
-            : Array.isArray(getcartdata?.items)
-                ? getcartdata.items
-                : [];
-    }, [getcartdata]);
+        return Array.isArray(cartdata) ? cartdata : [];
+    }, [cartdata]);
 
     const cartProductIdsKey = useMemo(() => [...new Set(rawCartItems
         .map((item) => {
@@ -124,7 +121,6 @@ const CartPage = () => {
                     weight: item.unit,
                 })).unwrap();
             }
-            await refreshCart();
         } catch (error) {
             showErrorToast(typeof error === "string" ? error : "Unable to update your cart");
         }
@@ -132,16 +128,12 @@ const CartPage = () => {
 
     const removeItem = async (item) => {
         try {
-            for (let remaining = item.quantity; remaining > 0; remaining -= 1) {
-                await dispatch(removetocart({
-                    productId: item.productId,
-                    weight: item.unit,
-                })).unwrap();
-            }
-            await refreshCart();
+            await dispatch(deleteproductfromcart({
+                productId: item.productId,
+                weight: item.unit,
+            })).unwrap();
         } catch (error) {
             showErrorToast(typeof error === "string" ? error : "Unable to remove this item from your cart");
-            await refreshCart();
         }
     };
 
