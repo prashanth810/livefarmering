@@ -13,11 +13,13 @@ import { addtocart, deleteproductfromcart, getcartitems, removetocart } from "..
 import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 import { showErrorToast } from "../../components/Toast";
+import EmptyCart from "./Emptycart";
 
 const CartPage = () => {
     const dispatch = useDispatch();
     const [promoCode, setPromoCode] = useState("");
     const [productDetailsById, setProductDetailsById] = useState({});
+    const [cartLoadedForUser, setCartLoadedForUser] = useState(null);
     const profile = useSelector((state) => state.auth.profile.profiledata);
     const profileLoading = useSelector((state) => state.auth.profile.profileloading);
     const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
@@ -34,7 +36,9 @@ const CartPage = () => {
 
     useEffect(() => {
         if (userId) {
-            dispatch(getcartitems(userId));
+            dispatch(getcartitems(userId)).then(() => {
+                setCartLoadedForUser(String(userId));
+            });
         }
     }, [dispatch, userId]);
 
@@ -161,37 +165,32 @@ const CartPage = () => {
                 </nav>
 
                 {/* Heading */}
-                <h1 className="mb-6 text-2xl font-bold text-gray-900 sm:text-3xl">
+                <h1 className="mb-6 text-xl font-medium text-gray-800 sm:text-3xl">
                     Your Cart{" "}
                     <span className="text-base font-normal text-gray-400 sm:text-lg">
                         ({cartItems.length} {cartItems.length === 1 ? "item" : "items"})
                     </span>
                 </h1>
 
-                {getcartloading ? (
+                {getcartloading || (token && (!userId || cartLoadedForUser !== String(userId))) ? (
                     <p className="bg-white p-10 text-center text-gray-500">Loading your cart...</p>
                 ) : getcarterror ? (
-                    <p className="bg-white p-10 text-center text-red-600">{getcarterror}</p>
+                    <>
+                        <EmptyCart />
+                    </>
                 ) : cartItems.length === 0 ? (
                     <div className="rounded-xl bg-white p-10 text-center shadow-sm">
-                        <p className="mb-4 text-gray-500">Your cart is empty.</p>
-                        <Link
-                            to="/shop"
-                            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700"
-                        >
-                            <FiArrowLeft className="h-4 w-4" />
-                            Continue Shopping
-                        </Link>
+                        <EmptyCart />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                         {/* Product details */}
                         <div className="rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:col-span-2">
                             <div className="mb-2 hidden items-center justify-between border-b border-gray-100 pb-3 sm:flex">
-                                <span className="text-sm font-semibold text-gray-700">
+                                <span className="text-sm text-gray-600">
                                     Product Details
                                 </span>
-                                <span className="text-sm font-semibold text-gray-700">
+                                <span className="text-sm text-gray-600">
                                     Quantity &amp; Price
                                 </span>
                             </div>

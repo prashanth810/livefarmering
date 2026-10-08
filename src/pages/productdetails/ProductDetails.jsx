@@ -201,6 +201,10 @@ const ProductDetails = () => {
                     weight: selectedWeight,
                 })).unwrap();
             }
+
+            if (userId) {
+                await dispatch(getcartitems(userId)).unwrap();
+            }
         } catch (error) {
             showErrorToast(typeof error === "string" ? error : "Unable to update your cart");
         }

@@ -37,3 +37,11 @@ export const getproductsbysearch = async (search) => {
     });
     return response;
 }
+
+// get all products 
+export const handlegetallproducts = async (page = 1, limit = 10) => {
+    const response = await productApi.get(`${baseurl}/allproducts`, {
+        params: { page, limit },
+    });
+    return response;
+}

@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getproductsbycategory, getproductsbysearch, handlegetcategories, handlegetsingleproduct } from "../services/ProductApi";
+import { getproductsbycategory, getproductsbysearch, handlegetallproducts, handlegetcategories, handlegetsingleproduct } from "../services/ProductApi";
 
 
 // get all categories
@@ -52,6 +52,29 @@ export const handlesearchproducts = createAsyncThunk("get/searchproducts", async
     }
 })
 
+// get all prodcts
+export const getallproducts = createAsyncThunk(
+    "get/allproducts",
+    async ({ page = 1, limit = 10 } = {}, ThunkApi) => {
+        try {
+            const response = await handlegetallproducts(page, limit);
+            return {
+                products: Array.isArray(response?.data?.data) ? response.data.data : [],
+                pagination: response?.data?.pagination || null,
+            };
+        }
+        catch (error) {
+            return ThunkApi.rejectWithValue(error.response?.data?.message || error.message || "Failed to load products");
+        }
+    },
+    {
+        condition: (_arg, { getState }) => {
+            const allproducts = getState().product.allproducts;
+            return !allproducts.allproductsloading && !allproducts.allproductsloaded;
+        },
+    }
+);
+
 
 
 const initialState = {
@@ -76,6 +99,13 @@ const initialState = {
         searchprodloading: false,
         searchproddata: [],
         searchproderror: null,
+    },
+    allproducts: {
+        allproductsdata: [],
+        allproductsloading: false,
+        allproductserror: null,
+        allproductspagination: null,
+        allproductsloaded: false,
     }
 
 };
@@ -154,6 +184,21 @@ const ProductSlice = createSlice({
                 state.searchproducts.searchprodloading = false;
                 state.searchproducts.searchproderror = action.payload;
                 state.searchproducts.searchproddata = [];
+            })
+
+            .addCase(getallproducts.pending, (state) => {
+                state.allproducts.allproductsloading = true;
+                state.allproducts.allproductserror = null;
+            })
+            .addCase(getallproducts.fulfilled, (state, action) => {
+                state.allproducts.allproductsloading = false;
+                state.allproducts.allproductsdata = action.payload.products;
+                state.allproducts.allproductspagination = action.payload.pagination;
+                state.allproducts.allproductsloaded = true;
+            })
+            .addCase(getallproducts.rejected, (state, action) => {
+                state.allproducts.allproductsloading = false;
+                state.allproducts.allproductserror = action.payload || "Failed to load products";
             })
 
     }

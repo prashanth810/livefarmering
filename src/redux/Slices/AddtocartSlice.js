@@ -18,6 +18,18 @@ const isSameCartItem = (item, productId, weight) =>
     String(getCartProductId(item)) === String(productId) &&
     String(getCartItemWeight(item)) === String(weight ?? "");
 
+const extractCartItems = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (!payload || typeof payload !== "object") return null;
+
+    for (const key of ["items", "cartItems", "cartdata", "cartData", "cart", "data", "result"]) {
+        const items = extractCartItems(payload[key]);
+        if (items) return items;
+    }
+
+    return null;
+};
+
 // add to cart
 export const addtocart = createAsyncThunk(
     "cart/add",
@@ -59,7 +71,11 @@ export const getcartitems = createAsyncThunk(
     async (id, { rejectWithValue }) => {
         try {
             const response = await handlegetcartitems(id);
-            return response?.data?.data ?? response?.data ?? {};
+            const items = extractCartItems(response?.data);
+            if (!items) {
+                return rejectWithValue("Unexpected cart response: item list was not found");
+            }
+            return items;
         } catch (error) {
             return rejectWithValue(
                 error?.response?.data?.message ||
@@ -207,12 +223,7 @@ const AddtocartSlice = createSlice({
             .addCase(getcartitems.fulfilled, (state, action) => {
                 state.getcart.getcartloading = false;
                 state.getcart.getcartdata = action.payload;
-                const items = Array.isArray(action.payload)
-                    ? action.payload
-                    : action.payload?.items;
-                state.carts.cartdata = Array.isArray(items)
-                    ? items.map(normalizeCartItem).filter(Boolean)
-                    : [];
+                state.carts.cartdata = action.payload.map(normalizeCartItem).filter(Boolean);
             })
             .addCase(getcartitems.rejected, (state, action) => {
                 state.getcart.getcartloading = false;
