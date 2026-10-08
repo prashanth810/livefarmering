@@ -138,9 +138,7 @@ const NavBar = () => {
     const { searchproddata, searchprodloading } = useSelector((state) => state.product.searchproducts);
     const cartItems = useSelector((state) => state.cart.carts.cartdata);
     const userId = profiledata?._id || profiledata?.id || profiledata?.userId || profiledata?.user?._id;
-    const cartCount = Array.isArray(cartItems)
-        ? cartItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
-        : 0;
+    const cartCount = Array.isArray(cartItems) ? cartItems.length : 0;
 
     const { categoryloading, categorydata, categoryerror } = useSelector((state) => state.product.category);
 
@@ -290,7 +288,7 @@ const NavBar = () => {
                         <span className="relative">
                             <FiShoppingCart className="h-5 w-5" />
                             {cartCount > 0 && (
-                                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+                                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white">
                                     {cartCount > 9 ? "9+" : cartCount}
                                 </span>
                             )}

@@ -22,9 +22,25 @@ const extractCartItems = (payload) => {
     if (Array.isArray(payload)) return payload;
     if (!payload || typeof payload !== "object") return null;
 
-    for (const key of ["items", "cartItems", "cartdata", "cartData", "cart", "data", "result"]) {
+    for (const key of ["items", "cartItems", "cartdata", "cartData", "cart", "data", "result", "item", "cartItem"]) {
         const items = extractCartItems(payload[key]);
         if (items) return items;
+    }
+
+    return null;
+};
+
+const extractCartItem = (payload, productId, weight) => {
+    if (!payload || typeof payload !== "object") return null;
+    if (Array.isArray(payload)) {
+        return payload.find((item) => isSameCartItem(item, productId, weight)) || null;
+    }
+
+    if (isSameCartItem(payload, productId, weight)) return payload;
+
+    for (const key of ["item", "cartItem", "data", "result", "cart"]) {
+        const item = extractCartItem(payload[key], productId, weight);
+        if (item) return item;
     }
 
     return null;
@@ -137,6 +153,12 @@ const AddtocartSlice = createSlice({
                     return;
                 }
 
+                const updatedItems = extractCartItems(action.payload);
+                if (updatedItems) {
+                    state.carts.cartdata = updatedItems.map(normalizeCartItem).filter(Boolean);
+                    return;
+                }
+
                 const existingItem = state.carts.cartdata.find(
                     (cartItem) => isSameCartItem(
                         cartItem,
@@ -144,8 +166,19 @@ const AddtocartSlice = createSlice({
                         getCartItemWeight(requestedItem),
                     )
                 );
+                const serverItem = extractCartItem(
+                    action.payload,
+                    requestedItem.productId,
+                    getCartItemWeight(requestedItem),
+                );
 
-                if (existingItem) {
+                if (serverItem) {
+                    if (existingItem) {
+                        Object.assign(existingItem, normalizeCartItem(serverItem));
+                    } else {
+                        state.carts.cartdata.push(normalizeCartItem(serverItem));
+                    }
+                } else if (existingItem) {
                     existingItem.quantity += requestedItem.quantity;
                 } else {
                     state.carts.cartdata.push(requestedItem);
@@ -163,7 +196,7 @@ const AddtocartSlice = createSlice({
             })
             .addCase(removetocart.fulfilled, (state, action) => {
                 state.carts.cartloading = false;
-                const updatedItems = action.payload?.items;
+                const updatedItems = extractCartItems(action.payload);
 
                 if (Array.isArray(updatedItems)) {
                     state.carts.cartdata = updatedItems.map(normalizeCartItem).filter(Boolean);
@@ -175,8 +208,11 @@ const AddtocartSlice = createSlice({
                 const item = state.carts.cartdata.find(
                     (cartItem) => isSameCartItem(cartItem, productId, weight)
                 );
+                const serverItem = extractCartItem(action.payload, productId, weight);
 
-                if (item && item.quantity > 1) {
+                if (serverItem && item) {
+                    Object.assign(item, normalizeCartItem(serverItem));
+                } else if (item && item.quantity > 1) {
                     item.quantity -= 1;
                 } else {
                     state.carts.cartdata = state.carts.cartdata.filter(
@@ -196,7 +232,7 @@ const AddtocartSlice = createSlice({
             })
             .addCase(deleteproductfromcart.fulfilled, (state, action) => {
                 state.carts.cartloading = false;
-                const updatedItems = action.payload?.items;
+                const updatedItems = extractCartItems(action.payload);
 
                 if (Array.isArray(updatedItems)) {
                     state.carts.cartdata = updatedItems.map(normalizeCartItem).filter(Boolean);
