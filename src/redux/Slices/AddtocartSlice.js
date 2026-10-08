@@ -13,6 +13,10 @@ const normalizeCartItem = (item) => {
 };
 
 const getCartProductId = (item) => item?.productId?._id ?? item?.productId ?? item?._id;
+const getCartItemWeight = (item) => item?.weight ?? item?.unit ?? "";
+const isSameCartItem = (item, productId, weight) =>
+    String(getCartProductId(item)) === String(productId) &&
+    String(getCartItemWeight(item)) === String(weight ?? "");
 
 // add to cart
 export const addtocart = createAsyncThunk(
@@ -118,7 +122,11 @@ const AddtocartSlice = createSlice({
                 }
 
                 const existingItem = state.carts.cartdata.find(
-                    (cartItem) => String(cartItem.productId?._id ?? cartItem.productId) === String(requestedItem.productId)
+                    (cartItem) => isSameCartItem(
+                        cartItem,
+                        requestedItem.productId,
+                        getCartItemWeight(requestedItem),
+                    )
                 );
 
                 if (existingItem) {
@@ -147,15 +155,16 @@ const AddtocartSlice = createSlice({
                 }
 
                 const productId = getCartProductId(action.meta.arg);
+                const weight = getCartItemWeight(action.meta.arg);
                 const item = state.carts.cartdata.find(
-                    (cartItem) => String(getCartProductId(cartItem)) === String(productId)
+                    (cartItem) => isSameCartItem(cartItem, productId, weight)
                 );
 
                 if (item && item.quantity > 1) {
                     item.quantity -= 1;
                 } else {
                     state.carts.cartdata = state.carts.cartdata.filter(
-                        (cartItem) => String(getCartProductId(cartItem)) !== String(productId)
+                        (cartItem) => !isSameCartItem(cartItem, productId, weight)
                     );
                 }
             })

@@ -8,7 +8,13 @@ export const handleRegister = createAsyncThunk("auth/register", async (data, { r
         return response.data;
     }
     catch (error) {
-        return rejectWithValue(error.response?.data?.message || error.message);
+        return rejectWithValue(
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            (typeof error.response?.data === "string" ? error.response.data : null) ||
+            (error.response?.status === 429 ? "Too many requests" : null) ||
+            error.message
+        );
     }
 });
 
@@ -18,7 +24,13 @@ export const handleLogin = createAsyncThunk("auth/login", async (data, { rejectW
         return response.data;
     }
     catch (error) {
-        return rejectWithValue(error.response?.data?.message || error.message);
+        return rejectWithValue(
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            (typeof error.response?.data === "string" ? error.response.data : null) ||
+            (error.response?.status === 429 ? "Too many requests" : null) ||
+            error.message
+        );
     }
 });
 

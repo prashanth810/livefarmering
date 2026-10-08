@@ -20,7 +20,8 @@ import { nutritionRows, ratingBars, reviews, themeVars } from "../../constants/S
 import { FaArrowCircleRight, FaArrowRight } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
-import { addtocart } from "../../redux/Slices/AddtocartSlice";
+import { addtocart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
+import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 import { showErrorToast, showSuccessToast } from "../../components/Toast";
 
 
@@ -83,6 +84,11 @@ const ProductDetails = () => {
     );
     const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
     const cartloading = useSelector((state) => state.cart.carts.cartloading);
+    const cartItems = useSelector((state) => state.cart.carts.cartdata);
+    const getcartloading = useSelector((state) => state.cart.getcart.getcartloading);
+    const profile = useSelector((state) => state.auth.profile.profiledata);
+    const profileLoading = useSelector((state) => state.auth.profile.profileloading);
+    const userId = profile?._id || profile?.id || profile?.userId || profile?.user?._id;
     const [activeThumb, setActiveThumb] = useState(0);
     const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
@@ -97,6 +103,18 @@ const ProductDetails = () => {
             dispatch(getsingleproduct(productId));
         }
     }, [dispatch, productId]);
+
+    useEffect(() => {
+        if (token && !userId && !profileLoading) {
+            dispatch(handlefetchprofileinfo());
+        }
+    }, [dispatch, profileLoading, token, userId]);
+
+    useEffect(() => {
+        if (token && userId) {
+            dispatch(getcartitems(userId));
+        }
+    }, [dispatch, token, userId]);
 
     const variants = Array.isArray(singleproductdata?.variants) ? singleproductdata.variants : [];
     const variant = variants[selectedVariantIndex] || variants[0] || {};
@@ -118,6 +136,18 @@ const ProductDetails = () => {
     const productImages = [...new Set([singleproductdata?.thumbnail, ...(singleproductdata?.images || [])].filter(Boolean))];
     const activeImageIndex = Math.min(activeThumb, Math.max(productImages.length - 1, 0));
     const activeImage = productImages[activeImageIndex];
+    const selectedWeight = variant.weight || product?.unit || "";
+    const selectedCartItem = cartItems.find((item) => {
+        const itemProductId = item.productId?._id ?? item.productId ?? item._id;
+        const itemWeight = item.weight ?? item.unit ?? "";
+        return String(itemProductId) === String(product?.id) &&
+            String(itemWeight) === String(selectedWeight);
+    });
+    const isInCart = Boolean(selectedCartItem);
+    const displayedQuantity = isInCart
+        ? Number(selectedCartItem.quantity) || 1
+        : quantity;
+    const cartIsLoading = cartloading || getcartloading;
 
     const showPreviousImage = () => {
         setActiveThumb((current) => current === 0 ? productImages.length - 1 : current - 1);
@@ -143,10 +173,57 @@ const ProductDetails = () => {
                     quantity,
                 })
             ).unwrap();
+            setQuantity(1);
             showSuccessToast(`${product.name} added to cart`);
         } catch (error) {
             showErrorToast(typeof error === "string" ? error : "Unable to add this item to your cart");
         }
+    };
+
+    const updateCartQuantity = async (delta) => {
+        if (!token) {
+            showErrorToast("Please login to update your cart");
+            navigate("/login");
+            return;
+        }
+
+        try {
+            if (delta > 0) {
+                await dispatch(addtocart({
+                    productId: product.id,
+                    name: product.name,
+                    weight: selectedWeight,
+                    quantity: 1,
+                })).unwrap();
+            } else {
+                await dispatch(removetocart({
+                    productId: product.id,
+                    weight: selectedWeight,
+                })).unwrap();
+            }
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to update your cart");
+        }
+    };
+
+    const decreaseQuantity = () => {
+        if (isInCart) {
+            updateCartQuantity(-1);
+            return;
+        }
+
+        setQuantity((current) => Math.max(1, current - 1));
+    };
+
+    const increaseQuantity = () => {
+        if (variantStock <= 0 || displayedQuantity >= variantStock) return;
+
+        if (isInCart) {
+            updateCartQuantity(1);
+            return;
+        }
+
+        setQuantity((current) => Math.min(variantStock, current + 1));
     };
 
     // Pull in the Inter font used by the design.
@@ -364,20 +441,22 @@ const ProductDetails = () => {
                                 <div className="flex h-12 items-center bg-[#efeeee] border border-[var(--border)] p-1">
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            setQuantity((q) => Math.max(1, q - 1))
-                                        }
+                                        onClick={decreaseQuantity}
+                                        disabled={cartIsLoading || (!isInCart && displayedQuantity <= 1)}
                                         aria-label="Decrease quantity"
-                                        className="flex h-full w-10 items-center justify-center text-[var(--muted-foreground)] bg-white text-[#FF6900] cursor-pointer hover:bg-[#FF690075] hover:text-[#fff] duration-500">
+                                        className="flex h-full w-10 items-center justify-center text-[var(--muted-foreground)] bg-white text-[#FF6900] cursor-pointer hover:bg-[#FF690075] hover:text-[#fff] duration-500 disabled:cursor-not-allowed disabled:opacity-40">
                                         <FiMinus className="h-5 w-5" />
                                     </button>
-                                    <span className="flex w-12 items-center justify-center text-base font-semibold text-[var(--foreground)]">
-                                        {quantity}
+                                    <span
+                                        className="flex w-12 items-center justify-center text-base font-semibold text-[var(--foreground)]"
+                                        aria-live="polite"
+                                    >
+                                        {displayedQuantity}
                                     </span>
                                     <button
                                         type="button"
-                                        disabled={variantStock > 0 && quantity >= variantStock}
-                                        onClick={() => setQuantity((q) => variantStock > 0 ? Math.min(variantStock, q + 1) : q + 1)}
+                                        disabled={cartIsLoading || variantStock <= 0 || displayedQuantity >= variantStock}
+                                        onClick={increaseQuantity}
                                         aria-label="Increase quantity"
                                         className="flex h-full w-10 items-center justify-center text-[var(--muted-foreground)] bg-white text-[#059669] cursor-pointer hover:bg-[#05966875] hover:text-[#fff] duration-500 disabled:cursor-not-allowed disabled:opacity-40"
                                     >
@@ -388,10 +467,12 @@ const ProductDetails = () => {
                                 <button
                                     type="button"
                                     onClick={handleAddToCart}
-                                    disabled={cartloading || (variantStock <= 0 && variants.length > 0)}
+                                    disabled={cartIsLoading || isInCart || (variantStock <= 0 && variants.length > 0)}
                                     className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-6 text-base font-semibold text-[var(--primary-foreground)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer" >
                                     <FiShoppingCart className="h-5 w-5" />
-                                    {cartloading ? "Adding..." : "Add to Cart"}
+                                    {cartloading
+                                        ? isInCart ? "Updating..." : "Adding..."
+                                        : isInCart ? "Added to Cart" : "Add to Cart"}
                                 </button>
 
                                 {variantStock > 0 && (

@@ -8,6 +8,7 @@ export const Registerapi = async (data) => {
     }
     catch (error) {
         console.log("Error in Registerapi", error);
+        throw error;
     }
 }
 

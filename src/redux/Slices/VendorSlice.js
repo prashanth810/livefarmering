@@ -9,7 +9,13 @@ export const vendorregister = createAsyncThunk("register/vendor", async (data, T
         return resopsne.data;
     }
     catch (error) {
-        return ThunkApi.rejectWithValue(error.message);
+        return ThunkApi.rejectWithValue(
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            (typeof error.response?.data === "string" ? error.response.data : null) ||
+            (error.response?.status === 429 ? "Too many requests" : null) ||
+            error.message
+        );
     }
 });
 

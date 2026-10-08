@@ -19,15 +19,8 @@ import { handlefetchprofileinfo, logoutapi } from "../../redux/Slices/AuthSlice"
 import { clearSearchProducts, handlesearchproducts } from "../../redux/Slices/ProductSlice";
 import { getcartitems } from "../../redux/Slices/AddtocartSlice";
 
-const categories = [
-    { label: "All Categories", href: "/shop", hasIcon: true },
-    { label: "Fruits & Vegetables", href: "/category/fruits-vegetables" },
-    { label: "Dairy & Breakfast", href: "/category/dairy-breakfast" },
-    { label: "Meat & Seafood", href: "/category/meat-seafood" },
-    { label: "Bakery & Biscuits", href: "/category/bakery-biscuits" },
-    { label: "Snacks & Branded Foods", href: "/category/snacks-branded-foods" },
-    { label: "Beverages", href: "/category/beverages" },
-];
+
+
 
 const SearchSuggestionLoader = () => (
     <div className="animate-pulse" aria-label="Loading product suggestions">
@@ -148,6 +141,16 @@ const NavBar = () => {
     const cartCount = Array.isArray(cartItems)
         ? cartItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
         : 0;
+
+    const { categoryloading, categorydata, categoryerror } = useSelector((state) => state.product.category);
+
+    const categories = [
+        { label: "All Categories", href: "/shop", hasIcon: true },
+        ...(Array.isArray(categorydata) ? categorydata.map((cat) => ({
+            label: cat.name,
+            href: `/category/${cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-")}`,
+        })) : []),
+    ];
 
     useEffect(() => {
         const query = searchValue.trim();
@@ -333,8 +336,8 @@ const NavBar = () => {
 
             {/* Category row - desktop */}
             <div className="hidden border-t border-gray-200 md:block">
-                <div className="mx-auto flex max-w-[95%] items-center gap-6 px-4 py-4 sm:px-6 lg:px-8">
-                    {categories.map((category) => (
+                <div className="mx-auto flex max-w-[95%] items-center gap-6 px-4 py-4 sm:px-6 lg:px-8 overflow-auto">
+                    {categories.slice(0, 8).map((category) => (
                         <NavLink
                             key={category.label}
                             to={category.href}
@@ -387,7 +390,7 @@ const NavBar = () => {
                             <FiUser className="h-5 w-5" />
                             Login
                         </Link>
-                        {categories.map((category) => (
+                        {categories.slice(0, 5).map((category) => (
                             <Link
                                 key={category.label}
                                 to={category.href}
