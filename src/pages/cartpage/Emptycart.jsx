@@ -181,7 +181,7 @@ const EmptyCart = () => {
     }).filter((product) => product.id);
 
     return (
-        <div className="overflow-hidden bg-white">
+        <div className="overflow-hidden">
             {/* Empty state */}
             <div className="mx-auto flex max-w-2xl flex-col items-center px-4 pt-10 text-center">
                 <div className="relative mb-6 flex h-40 w-40 items-center justify-center rounded-full bg-orange-50">
@@ -201,16 +201,16 @@ const EmptyCart = () => {
                 <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
                     <Link
                         to="/wishlist"
-                        className="flex items-center justify-center gap-2 border border-[#FF6900] py-3 text-sm font-semibold uppercase tracking-wide text-[#FF6900] transition-colors hover:bg-yellow-50"
+                        className="flex items-center justify-center gap-2 border border-[#FF6900] py-3 text-sm font-semibold uppercase tracking-wider text-[#FF6900] transition-colors hover:bg-yellow-50"
                     >
                         <FiHeart className="h-4 w-4" />
                         Go to wishlist
                     </Link>
                     <Link
                         to="/shop"
-                        className="flex items-center justify-center gap-2 bg-[#038432] py-3 text-sm font-semibold uppercase tracking-wider text-white transition-colors hover:bg-transparent hover:text-[#00A63E] hover:ring-1 hover:ring-[#038432] duration-500"
+                        className="flex items-center justify-center gap-2 bg-[#038432] py-3 text-sm font-semibold uppercase tracking-widest text-white transition-colors hover:bg-transparent hover:text-[#00A63E] hover:ring-1 hover:ring-[#038432] duration-500"
                     >
-                        Explore products
+                        Continue shopping
                         <FiArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
@@ -226,30 +226,13 @@ const EmptyCart = () => {
             </div>
 
             {/* Recommended */}
-            <div className="mt-10 bg-pink-50 px-4 py-6 sm:px-6">
+            <div className="mt-10 bg-[#FFF7ED] px-4 py-6 sm:px-6">
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-gray-900 sm:text-xl">
                         Recommended {" "}
                         <span className="font-serif italic text-[#00A63E]"> Products </span>
                     </h3>
-                    <div className="flex gap-2">
-                        <button
-                            type="button"
-                            aria-label="Previous products"
-                            onClick={() => scrollBy(-1)}
-                            className="flex h-8 w-10 items-center justify-center bg-white text-[#00A63E] shadow-sm hover:bg-pink-100"
-                        >
-                            <FiChevronLeft className="h-4 w-4" />
-                        </button>
-                        <button
-                            type="button"
-                            aria-label="Next products"
-                            onClick={() => scrollBy(1)}
-                            className="flex h-8 w-10 items-center justify-center bg-white text-[#00A63E] shadow-sm hover:bg-pink-100"
-                        >
-                            <FiChevronRight className="h-4 w-4" />
-                        </button>
-                    </div>
+
                 </div>
 
                 {allproductsloading ? (
@@ -270,6 +253,25 @@ const EmptyCart = () => {
                         ))}
                     </div>
                 )}
+                <div className="flex gap-4 items-center justify-end mt-4">
+                    <button
+                        type="button"
+                        aria-label="Previous products"
+                        onClick={() => scrollBy(-1)}
+                        className="flex h-10 w-10 items-center justify-center bg-white text-[#008236] shadow-sm rounded-full border hover:bg-green-100 cursor-pointer duration-300"
+                    >
+                        <FiChevronLeft className="h-6 w-6" />
+                    </button>
+                    <button
+                        type="button"
+                        aria-label="Next products"
+                        onClick={() => scrollBy(1)}
+                        className="flex h-10 w-10 items-center justify-center bg-white text-[#FF6900] shadow-sm rounded-full border hover:bg-yellow-100 cursor-pointer duration-300"
+
+                    >
+                        <FiChevronRight className="h-6 w-6" />
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -583,7 +583,7 @@ const SearchResults = () => {
                                 Something went wrong. Please try again.
                             </div>
                         ) : visibleProducts.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                            <div className="grid xl:grid-cols-4 lggrid-cols-3 md:grid-cols-2 grid-cols-1 gap-3 sm:grid-cols-3 ">
                                 {visibleProducts.map((product) => (
                                     <ProductCard key={product.id} product={product} />
                                 ))}

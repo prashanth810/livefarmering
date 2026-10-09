@@ -13,6 +13,7 @@ import {
 } from "../../components/Toast";
 import { LuEyeClosed } from "react-icons/lu";
 import useAuthRateLimit from "../../hooks/useAuthRateLimit";
+import { PiStorefrontLight } from "react-icons/pi";
 
 const UserLogin = () => {
     const dispatch = useDispatch();
@@ -254,15 +255,29 @@ const UserLogin = () => {
                                 </button>
                             </div>
 
-                            <p className="mt-7 text-center text-sm text-[#6B7166]">
-                                Don&apos;t have an account?{" "}
-                                <Link
-                                    to="/register"
-                                    className="font-semibold text-[#1E8449] hover:text-[#166638]"
-                                >
-                                    Sign up
-                                </Link>
-                            </p>
+                            <div className="flex items-center justify-between px-2 mt-7">
+                                <p className="text-sm text-[#6B7166] flex items-center gap-1">
+                                    Vendor Login?
+                                    <Link
+                                        to="/vendor-login"
+                                        className="font-semibold text-[#01441d] hover:text-[#166638]"
+                                    >
+                                        <PiStorefrontLight className="h-5 w-5" />
+                                    </Link>
+                                </p>
+
+                                <p className="text-sm text-[#6B7166]">
+                                    Don&apos;t have an account?{" "}
+                                    <Link
+                                        to="/register"
+                                        className="font-medium text-[#01441d] hover:text-[#166638]"
+                                    >
+                                        Sign up
+                                    </Link>
+                                </p>
+
+                            </div>
+
                         </div>
                     </div>
                 </div>

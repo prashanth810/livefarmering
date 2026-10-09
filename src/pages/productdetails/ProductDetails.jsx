@@ -564,7 +564,7 @@ const ProductDetails = () => {
                                         <IconCircle size={20}>
                                             <FiTruck className="h-5 w-5 text-[var(--muted-foreground)]" />
                                         </IconCircle>
-                                        <span>Free delivery on orders over ₹50</span>
+                                        <span>Free delivery on orders over <spam className="text-green-700 font-semibold text-md"> ₹199 </spam></span>
                                     </div>
                                     <div className="flex items-center gap-3 text-[15px] text-[var(--foreground)]">
                                         <IconCircle size={20}>
