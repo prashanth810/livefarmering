@@ -490,7 +490,7 @@ const ProductDetails = () => {
 
                                 <button
                                     type="button"
-                                    onClick={() => toggleWishlist(product.id)}
+                                    onClick={() => toggleWishlist(product.id, selectedWeight)}
                                     aria-label={`${isWishlisted(product.id) ? "Remove" : "Add"} from wishlist`}
                                     className="flex h-10 w-10 items-center justify-center border border-gray-400 bg-[var(--card)] text-[var(--muted-foreground)] hover:bg-[#059669] hover:text-[#fff] hover:border-[#fff] transition-all duration-300 cursor-pointer"
                                 >

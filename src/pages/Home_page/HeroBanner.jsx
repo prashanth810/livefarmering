@@ -54,7 +54,7 @@ const HeroBanner = () => {
                         {stats.map((stat) => (
                             <div key={stat.label}>
                                 <dt className="sr-only">{stat.label}</dt>
-                                <dd className="text-2xl font-extrabold text-gray-900 sm:text-3xl">
+                                <dd className="font-mono text-2xl font-bold text-gray-900 sm:text-3xl">
                                     {stat.value}
                                 </dd>
                                 <dd className="mt-1 text-xs text-gray-500 sm:text-sm">

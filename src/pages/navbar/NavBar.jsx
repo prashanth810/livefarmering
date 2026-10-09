@@ -16,7 +16,7 @@ import { LuLeaf } from "react-icons/lu";
 import { MdOutlineGridView } from "react-icons/md";
 import { handlefetchprofileinfo, logoutapi } from "../../redux/Slices/AuthSlice";
 import { clearSearchProducts, handlesearchproducts } from "../../redux/Slices/ProductSlice";
-import { getcartitems } from "../../redux/Slices/AddtocartSlice";
+import { getcartitems, getwishlistitems } from "../../redux/Slices/AddtocartSlice";
 
 // Hides the scrollbar in all browsers (works with Tailwind 3.1+)
 const hideScrollbar = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
@@ -136,8 +136,13 @@ const NavBar = () => {
     const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
     const { searchproddata, searchprodloading } = useSelector((state) => state.product.searchproducts);
     const cartItems = useSelector((state) => state.cart.carts.cartdata);
+    const { wishlistdata } = useSelector((state) => state.cart.wishlist);
     const userId = profiledata?._id || profiledata?.id || profiledata?.userId || profiledata?.user?._id;
     const cartCount = Array.isArray(cartItems) ? cartItems.length : 0;
+    const wishlistCount = wishlistdata.reduce(
+        (count, item) => count + (Number(item.quantity) > 0 ? Number(item.quantity) : 1),
+        0
+    );
 
     const { categorydata } = useSelector((state) => state.product.category);
 
@@ -175,6 +180,12 @@ const NavBar = () => {
             dispatch(getcartitems(userId));
         }
     }, [dispatch, token, userId]);
+
+    useEffect(() => {
+        if (token) {
+            dispatch(getwishlistitems({ page: 1, limit: 10 }));
+        }
+    }, [dispatch, token]);
 
     const handleLogout = () => {
         dispatch(logoutapi(token));
@@ -275,15 +286,32 @@ const NavBar = () => {
                             Login
                         </Link>
                     )}
-                    <Link
+
+                    <NavLink
                         to="/wishlist"
-                        className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
+                        aria-label="Wishlist"
+                        className={({ isActive }) =>
+                            `flex items-center gap-1.5 text-sm font-medium transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700 hover:text-[#FF6900]"
+                            }`
+                        }
                     >
-                        <FiHeart className="h-5 w-5" />
-                    </Link>
-                    <Link
+                        <span className="relative">
+                            <FiHeart className="h-5 w-5" />
+                            {token && wishlistCount > 0 && (
+                                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                    {wishlistCount > 9 ? "9+" : wishlistCount}
+                                </span>
+                            )}
+                        </span>
+                    </NavLink>
+
+                    <NavLink
                         to="/cart"
-                        className="flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
+                        aria-label="Cart"
+                        className={({ isActive }) =>
+                            `flex items-center gap-2 text-sm font-medium transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700 hover:text-[#FF6900]"
+                            }`
+                        }
                     >
                         <span className="relative">
                             <FiShoppingCart className="h-5 w-5" />
@@ -293,19 +321,26 @@ const NavBar = () => {
                                 </span>
                             )}
                         </span>
-                    </Link>
+                    </NavLink>
                 </nav>
 
                 {/* Mobile: cart + menu toggle */}
                 <div className="ml-auto flex items-center gap-4 lg:hidden">
-                    <Link to="/cart" className="relative text-gray-700">
+                    <NavLink
+                        to="/cart"
+                        aria-label="Cart"
+                        className={({ isActive }) =>
+                            `relative transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700"}`
+                        }
+                    >
                         <FiShoppingCart className="h-6 w-6" />
                         {cartCount > 0 && (
                             <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
                                 {cartCount > 9 ? "9+" : cartCount}
                             </span>
                         )}
-                    </Link>
+                    </NavLink>
+
                     <button
                         type="button"
                         aria-label={mobileOpen ? "Close menu" : "Open menu"}
@@ -399,14 +434,24 @@ const NavBar = () => {
                             </Link>
                         )}
 
-                        <Link
+                        <NavLink
                             to="/wishlist"
                             onClick={() => setMobileOpen(false)}
-                            className="flex items-center gap-2 py-3 text-sm font-medium text-gray-700"
+                            className={({ isActive }) =>
+                                `flex items-center gap-2 py-3 text-sm font-medium transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700"
+                                }`
+                            }
                         >
-                            <FiHeart className="h-5 w-5" />
+                            <span className="relative">
+                                <FiHeart className="h-5 w-5" />
+                                {token && wishlistCount > 0 && (
+                                    <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                        {wishlistCount > 9 ? "9+" : wishlistCount}
+                                    </span>
+                                )}
+                            </span>
                             Wishlist
-                        </Link>
+                        </NavLink>
 
                         {token && (
                             <button

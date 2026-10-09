@@ -75,8 +75,6 @@ export const getallproducts = createAsyncThunk(
     }
 );
 
-
-
 const initialState = {
     selectedCategoryId: null,
     category: {
@@ -106,7 +104,7 @@ const initialState = {
         allproductserror: null,
         allproductspagination: null,
         allproductsloaded: false,
-    }
+    },
 
 };
 
