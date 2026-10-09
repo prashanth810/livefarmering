@@ -289,6 +289,7 @@ const NavBar = () => {
 
                     <NavLink
                         to="/wishlist"
+                        onClick={() => window.scrollTo(0, 0)}
                         aria-label="Wishlist"
                         className={({ isActive }) =>
                             `flex items-center gap-1.5 text-sm font-medium transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700 hover:text-[#FF6900]"
@@ -307,6 +308,7 @@ const NavBar = () => {
 
                     <NavLink
                         to="/cart"
+                        onClick={() => window.scrollTo(0, 0)}
                         aria-label="Cart"
                         className={({ isActive }) =>
                             `flex items-center gap-2 text-sm font-medium transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700 hover:text-[#FF6900]"
@@ -328,6 +330,7 @@ const NavBar = () => {
                 <div className="ml-auto flex items-center gap-4 lg:hidden">
                     <NavLink
                         to="/cart"
+                        onClick={() => window.scrollTo(0, 0)}
                         aria-label="Cart"
                         className={({ isActive }) =>
                             `relative transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700"}`
@@ -436,7 +439,7 @@ const NavBar = () => {
 
                         <NavLink
                             to="/wishlist"
-                            onClick={() => setMobileOpen(false)}
+                            onClick={() => { setMobileOpen(false), window.scrollTo(0, 0) }}
                             className={({ isActive }) =>
                                 `flex items-center gap-2 py-3 text-sm font-medium transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700"
                                 }`

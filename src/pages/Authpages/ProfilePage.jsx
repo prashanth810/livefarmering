@@ -8,6 +8,7 @@ import ProfileSummary from "../profile/Profilesummary";
 import RecentOrders from "../profile/Recentorders";
 import QuickActions from "../profile/Quickactions";
 import OffersBanner from "../profile/Offersbanner";
+import { DUMMY_ORDERS } from "../profile/Profiledata";
 import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 
 const formatMemberSince = (value) => {
@@ -26,7 +27,7 @@ const ProfilePage = () => {
         if (!profile) dispatch(handlefetchprofileinfo());
     }, [dispatch, profile]);
 
-    const orders = Array.isArray(profile?.orders) ? profile.orders : [];
+    const orders = Array.isArray(profile?.orders) && profile.orders.length ? profile.orders : DUMMY_ORDERS; // dummy until backend sends orders
 
     const stats = {
         orders: profile?.totalOrders ?? orders.length,

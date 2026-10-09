@@ -350,13 +350,15 @@ const CartPage = () => {
                                     </span>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    className="mb-3 flex w-full items-center justify-center gap-2 bg-orange-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
-                                >
-                                    Proceed to Checkout
-                                    <FiArrowRight className="h-4 w-4" />
-                                </button>
+                                <Link to="/checkout">
+                                    <button
+                                        type="button"
+                                        className="mb-3 flex w-full items-center justify-center gap-2 bg-orange-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+                                    >
+                                        Proceed to Checkout
+                                        <FiArrowRight className="h-4 w-4" />
+                                    </button>
+                                </Link>
 
                                 <Link
                                     to="/shop"
