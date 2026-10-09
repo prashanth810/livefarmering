@@ -3,7 +3,7 @@
 @layer base {
     * {
         font-family: Arial, Helvetica, sans-serif;
-        scroll-behavior: auto;
+        scroll-behavior: smooth;
     }
 }
 

@@ -13,6 +13,9 @@ import SearchResults from "./pages/productdetails/SearchResults";
 import ProductDetails from "./pages/productdetails/ProductDetails";
 import CartPage from "./pages/cartpage/CartPage";
 import WishlistPage from "./pages/wishlist/WishlistPage";
+import ContactPage from "./pages/contact/Contactpage";
+import CheckoutPage from "./pages/checkout/Checkoutpage";
+import MyOrdersPage from "./pages/profile/Myorderspage";
 
 // Home
 const Home = () => (
@@ -23,7 +26,7 @@ const Home = () => (
 
 // Placeholder pages
 const About = () => <p>About page</p>;
-const Contact = () => <p>Contact page</p>;
+const Contact = () => <> <ContactPage /> </>;
 
 const useIsAuthenticated = () => {
   const loginToken = useSelector((state) => state.auth.login.token);
@@ -86,6 +89,15 @@ const App = () => {
         />
 
         <Route
+          path="/orders"
+          element={
+            <PrivateRoute>
+              <MyOrdersPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
           path="/register"
           element={
             <PublicOnlyRoute>
@@ -125,6 +137,16 @@ const App = () => {
         <Route
           path="/vendor-login"
           element={<VendorLogin />}
+        />
+
+        {/* check out page */}
+        <Route
+          path="/checkout"
+          element={
+            <PrivateRoute>
+              <CheckoutPage />
+            </PrivateRoute>
+          }
         />
       </Routes>
 
