@@ -18,6 +18,7 @@ import { VendorRegisterimg } from "../../constants/Imageconstants";
 import { FaLeaf } from "react-icons/fa";
 import { vendorregister } from "../../redux/Slices/VendorSlice";
 import { showErrorToast, showSuccessToast } from "../../components/Toast";
+import useAuthRateLimit from "../../hooks/useAuthRateLimit";
 
 const features = [
     { icon: FiPercent, text: "0% Commission for your first 30 days" },
@@ -41,6 +42,7 @@ const VendorRegister = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { registerloading } = useSelector((state) => state.vendor.register);
+    const { remainingSeconds, countdownLabel, startCooldown } = useAuthRateLimit();
 
     const [showPassword, setShowPassword] = useState(false);
     const [form, setForm] = useState({
@@ -57,7 +59,7 @@ const VendorRegister = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (registerloading) return;
+        if (registerloading || remainingSeconds > 0) return;
 
         // Data required by backend
         const vendorData = {
@@ -75,6 +77,7 @@ const VendorRegister = () => {
             showSuccessToast("Vendor account created successfully");
             navigate("/");
         } else {
+            startCooldown(result.payload);
             showErrorToast(result.payload || "Registration failed");
         }
     };
@@ -244,11 +247,13 @@ const VendorRegister = () => {
                             {/* Submit */}
                             <button
                                 type="submit"
-                                disabled={registerloading}
+                                disabled={registerloading || remainingSeconds > 0}
                                 className="flex w-full items-center justify-center gap-2 bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {registerloading ? "Creating account..." : "Create Vendor Account"}
-                                <FiArrowRight className="h-4 w-4" />
+                                {remainingSeconds > 0
+                                    ? `Try again in ${countdownLabel}`
+                                    : registerloading ? "Creating account..." : "Create Vendor Account"}
+                                {remainingSeconds === 0 && <FiArrowRight className="h-4 w-4" />}
                             </button>
                         </form>
 

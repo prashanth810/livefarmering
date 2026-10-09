@@ -99,7 +99,7 @@ const ProductCard = ({ product }) => {
                 <button
                     type="button"
                     aria-label={`${isWishlisted(product.id) ? "Remove" : "Add"} ${product.name} ${isWishlisted(product.id) ? "from" : "to"} wishlist`}
-                    onClick={() => toggleWishlist(product.id)}
+                    onClick={() => toggleWishlist(product.id, product.unit)}
                     className="absolute right-3 top-12 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-400 shadow-sm transition-colors hover:text-red-500"
                 >
                     <FiHeart className={`h-4 w-4 ${isWishlisted(product.id) ? "fill-red-500 text-red-500" : ""}`} />

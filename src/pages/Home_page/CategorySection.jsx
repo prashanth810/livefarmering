@@ -42,7 +42,7 @@ const CategorySection = () => {
                         {categorydata.map((category) => (
                             <div
                                 key={category._id}
-                                className={`flex h-32 w-32 shrink-0 items-center justify-center rounded border bg-white px-3 hover:shadow-sm transition- duration-500 cursor-pointer ${selectedCategoryId === category._id
+                                className={`flex h-32 w-32 shrink-0 items-center justify-center rounded border bg-white px-3 hover:shadow-sm transition- duration-500 ${selectedCategoryId === category._id
                                     ? "border-orange-500 shadow-md"
                                     : "border-gray-50 hover:border-orange-300"
                                     }`}
@@ -60,7 +60,7 @@ const CategorySection = () => {
                                                 block: "start",
                                             });
                                     }}
-                                    className="group flex h-full w-full flex-col items-center justify-center gap-3"
+                                    className="group flex h-full w-full flex-col items-center justify-center gap-3 cursor-pointer"
                                 >
                                     <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-50 shadow-sm transition-transform duration-200 group-hover:scale-105">
                                         <img

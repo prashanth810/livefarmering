@@ -1,4 +1,4 @@
-import { productApi } from "../../services/BaseUrl";
+import { cartApi, productApi } from "../../services/BaseUrl";
 
 const baseurl = `/api/auth/v2`;
 
@@ -26,7 +26,6 @@ export const getproductsbycategory = async (id, page = 1, limit = 10) => {
     }
 }
 
-
 // get single product FiInfo
 export const handlegetsingleproduct = (id) => productApi.get(`${baseurl}/product/${id}`);
 
@@ -37,3 +36,12 @@ export const getproductsbysearch = async (search) => {
     });
     return response;
 }
+
+// get all products 
+export const handlegetallproducts = async (page = 1, limit = 10) => {
+    const response = await productApi.get(`${baseurl}/allproducts`, {
+        params: { page, limit },
+    });
+    return response;
+}
+

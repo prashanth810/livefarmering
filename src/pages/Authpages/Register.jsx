@@ -19,6 +19,7 @@ import {
     showSuccessToast,
     showWarningToast,
 } from "../../components/Toast";
+import useAuthRateLimit from "../../hooks/useAuthRateLimit";
 
 const App = () => {
     const navigate = useNavigate();
@@ -33,6 +34,7 @@ const App = () => {
     });
     const dispatch = useDispatch();
     const { registerloading, registererror } = useSelector((state) => state.auth.register);
+    const { remainingSeconds, countdownLabel, startCooldown } = useAuthRateLimit();
     const [errors, setErrors] = useState({});
 
     const handleChange = (field) => (e) =>
@@ -92,6 +94,7 @@ const App = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (remainingSeconds > 0) return;
 
         // Run validation
         const isValid = handlevalids();
@@ -117,9 +120,11 @@ const App = () => {
                 showSuccessToast("Registration successful");
                 navigate("/");
             } else {
+                startCooldown(result.payload);
                 showErrorToast(result.payload || "Registration failed");
             }
         } catch (error) {
+            startCooldown(error);
             showErrorToast(error.message || "Registration failed");
         }
     };
@@ -323,11 +328,13 @@ const App = () => {
                             {/* Submit */}
                             <button
                                 type="submit"
-                                disabled={registerloading}
+                                disabled={registerloading || remainingSeconds > 0}
                                 className="flex w-full items-center justify-center gap-2 bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {registerloading ? "Creating account..." : "Create Account"}
-                                <FiArrowRight className="h-4 w-4" />
+                                {remainingSeconds > 0
+                                    ? `Try again in ${countdownLabel}`
+                                    : registerloading ? "Creating account..." : "Create Account"}
+                                {remainingSeconds === 0 && <FiArrowRight className="h-4 w-4" />}
                             </button>
                         </form>
 

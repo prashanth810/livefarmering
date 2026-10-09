@@ -137,7 +137,7 @@ const ProductCard = ({ product }) => {
                 <button
                     type="button"
                     aria-label={`${isWishlisted(product.id) ? "Remove" : "Add"} ${product.name} ${isWishlisted(product.id) ? "from" : "to"} wishlist`}
-                    onClick={() => toggleWishlist(product.id)}
+                    onClick={() => toggleWishlist(product.id, product.unit)}
                     className="absolute right-3 top-12 flex h-7 w-7 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm hover:text-red-500 cursor-pointer"
                 >
                     <FiHeart className={`h-4 w-4 ${isWishlisted(product.id) ? "fill-red-500 text-red-500" : ""}`} />
@@ -583,7 +583,7 @@ const SearchResults = () => {
                                 Something went wrong. Please try again.
                             </div>
                         ) : visibleProducts.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                            <div className="grid xl:grid-cols-4 lggrid-cols-3 md:grid-cols-2 grid-cols-1 gap-3 sm:grid-cols-3 ">
                                 {visibleProducts.map((product) => (
                                     <ProductCard key={product.id} product={product} />
                                 ))}

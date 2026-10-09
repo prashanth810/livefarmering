@@ -8,16 +8,21 @@ import {
     FiArrowRight,
     FiArrowLeft,
     FiShield,
+    FiTrash,
+    FiShoppingBag,
+    FiShoppingCart,
 } from "react-icons/fi";
 import { addtocart, deleteproductfromcart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
 import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 import { showErrorToast } from "../../components/Toast";
+import EmptyCart from "./Emptycart";
 
 const CartPage = () => {
     const dispatch = useDispatch();
     const [promoCode, setPromoCode] = useState("");
     const [productDetailsById, setProductDetailsById] = useState({});
+    const [cartLoadedForUser, setCartLoadedForUser] = useState(null);
     const profile = useSelector((state) => state.auth.profile.profiledata);
     const profileLoading = useSelector((state) => state.auth.profile.profileloading);
     const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
@@ -34,7 +39,9 @@ const CartPage = () => {
 
     useEffect(() => {
         if (userId) {
-            dispatch(getcartitems(userId));
+            dispatch(getcartitems(userId)).then(() => {
+                setCartLoadedForUser(String(userId));
+            });
         }
     }, [dispatch, userId]);
 
@@ -149,7 +156,7 @@ const CartPage = () => {
     const total = subtotal + deliveryCharge + tax;
 
     return (
-        <section className="min-h-screen bg-gray-100 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="min-h-screen bg-[#ffffff] px-4 py-6 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[95%]">
                 {/* Breadcrumb */}
                 <nav className="mb-4 flex items-center gap-2 text-xs text-gray-400 sm:text-sm">
@@ -161,39 +168,34 @@ const CartPage = () => {
                 </nav>
 
                 {/* Heading */}
-                <h1 className="mb-6 text-2xl font-bold text-gray-900 sm:text-3xl">
+                <h1 className="mb-6 text-xl font-medium text-gray-800 sm:text-3xl">
                     Your Cart{" "}
                     <span className="text-base font-normal text-gray-400 sm:text-lg">
                         ({cartItems.length} {cartItems.length === 1 ? "item" : "items"})
                     </span>
                 </h1>
 
-                {getcartloading ? (
+                {getcartloading || (token && (!userId || cartLoadedForUser !== String(userId))) ? (
                     <p className="bg-white p-10 text-center text-gray-500">Loading your cart...</p>
                 ) : getcarterror ? (
-                    <p className="bg-white p-10 text-center text-red-600">{getcarterror}</p>
+                    <>
+                        <EmptyCart />
+                    </>
                 ) : cartItems.length === 0 ? (
-                    <div className="rounded-xl bg-white p-10 text-center shadow-sm">
-                        <p className="mb-4 text-gray-500">Your cart is empty.</p>
-                        <Link
-                            to="/shop"
-                            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700"
-                        >
-                            <FiArrowLeft className="h-4 w-4" />
-                            Continue Shopping
-                        </Link>
+                    <div>
+                        <EmptyCart />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                         {/* Product details */}
-                        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:col-span-2">
-                            <div className="mb-2 hidden items-center justify-between border-b border-gray-100 pb-3 sm:flex">
-                                <span className="text-sm font-semibold text-gray-700">
+                        <div className="bg-white p-4 shadow-sm sm:p-6 lg:col-span-2 border border-gray-200">
+                            <div className="mb-2 hidden items-center justify-between border-b-2 border-gray-300 border-dashed pb-3 sm:flex">
+                                <span className="text-md text-gray-800">
                                     Product Details
                                 </span>
-                                <span className="text-sm font-semibold text-gray-700">
-                                    Quantity &amp; Price
-                                </span>
+                                <button className="flex items-center gap-1.5 border border-red-100 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:border-red-400 duration-300 cursor-pointer">
+                                    <span> <FiShoppingCart /> </span> Clear
+                                </button>
                             </div>
 
                             <div className="divide-y divide-gray-100">
@@ -235,12 +237,12 @@ const CartPage = () => {
 
                                         {/* Right: quantity + price */}
                                         <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-center sm:gap-2">
-                                            <div className="text-left sm:text-right">
+                                            <div className="flex items-baseline gap-3">
                                                 <p className="text-base font-bold text-gray-900 sm:text-lg">
-                                                    ${(item.price * item.quantity).toFixed(2)}
+                                                    ₹{(item.price * item.quantity).toFixed(2)}
                                                 </p>
-                                                <p className="text-xs text-gray-400">
-                                                    ${item.price.toFixed(2)} / each
+                                                <p className="text-xs line-through text-red-800">
+                                                    ₹{item.original_price.toFixed(2)}
                                                 </p>
                                             </div>
 
@@ -293,7 +295,7 @@ const CartPage = () => {
 
                         {/* Order summary */}
                         <div className="flex flex-col gap-4 lg:sticky lg:top-24">
-                            <div className="bg-white p-4 shadow-sm sm:p-6">
+                            <div className="bg-white p-4 shadow-sm sm:p-6 border border-gray-200">
                                 <h2 className="mb-4 text-base font-bold text-gray-900 sm:text-lg">
                                     Order Summary
                                 </h2>
@@ -318,7 +320,7 @@ const CartPage = () => {
                                     <div className="flex items-center justify-between">
                                         <span className="text-gray-500">Items Subtotal</span>
                                         <span className="font-semibold text-gray-800">
-                                            ${subtotal.toFixed(2)}
+                                            ₹{subtotal.toFixed(2)}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between">
@@ -326,7 +328,7 @@ const CartPage = () => {
                                         <span className="font-semibold text-green-600">
                                             {deliveryCharge === 0
                                                 ? "Free"
-                                                : `$${deliveryCharge.toFixed(2)}`}
+                                                : `₹${deliveryCharge.toFixed(2)}`}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between">
@@ -334,7 +336,7 @@ const CartPage = () => {
                                             Estimated Tax ({(taxRate * 100).toFixed(0)}%)
                                         </span>
                                         <span className="font-semibold text-gray-800">
-                                            ${tax.toFixed(2)}
+                                            ₹{tax.toFixed(2)}
                                         </span>
                                     </div>
                                 </div>
@@ -344,7 +346,7 @@ const CartPage = () => {
                                         Total Amount
                                     </span>
                                     <span className="text-lg font-bold text-gray-900">
-                                        ${total.toFixed(2)}
+                                        ₹{total.toFixed(2)}
                                     </span>
                                 </div>
 

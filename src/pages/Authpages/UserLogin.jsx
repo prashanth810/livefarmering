@@ -12,11 +12,14 @@ import {
     showWarningToast,
 } from "../../components/Toast";
 import { LuEyeClosed } from "react-icons/lu";
+import useAuthRateLimit from "../../hooks/useAuthRateLimit";
+import { PiStorefrontLight } from "react-icons/pi";
 
 const UserLogin = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loginloading, loginerror } = useSelector((state) => state.auth.login);
+    const { remainingSeconds, countdownLabel, startCooldown } = useAuthRateLimit();
     const [remember, setRemember] = useState(true);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -57,6 +60,7 @@ const UserLogin = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (remainingSeconds > 0) return;
 
         // Run validation
         const isValid = handlevalids();
@@ -78,9 +82,11 @@ const UserLogin = () => {
                 showSuccessToast("Login successful");
                 navigate("/");
             } else {
+                startCooldown(result.payload);
                 showErrorToast(result.payload || "Login failed");
             }
         } catch (error) {
+            startCooldown(error);
             showErrorToast(error.message || "Login failed");
         }
     };
@@ -122,7 +128,7 @@ const UserLogin = () => {
                     </div>
 
                     {/* Center content */}
-                    <div className="flex flex-1 flex-col justify-center py-8 mt-5">
+                    <div className="flex flex-1 flex-col justify-center py-6 mt-3">
                         <div className="mx-auto w-full max-w-lg">
                             <h1 className="text-2xl font-semibold tracking-tight text-[#1B1F17]">
                                 Welcome back
@@ -215,9 +221,12 @@ const UserLogin = () => {
 
                                 <button
                                     type="submit"
-                                    className="mt-1 flex w-full items-center justify-center bg-[#1E8449] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#166638] focus:outline-none focus:ring-2 focus:ring-[#1E8449]/40 focus:ring-offset-2 cursor-pointer"
+                                    disabled={loginloading || remainingSeconds > 0}
+                                    className="mt-1 flex w-full items-center justify-center bg-[#1E8449] py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#166638] focus:outline-none focus:ring-2 focus:ring-[#1E8449]/40 focus:ring-offset-2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    {loginloading ? "Signing in..." : "Sign in"}
+                                    {remainingSeconds > 0
+                                        ? `Try again in ${countdownLabel}`
+                                        : loginloading ? "Signing in..." : "Sign in"}
                                 </button>
                             </form>
 
@@ -246,15 +255,29 @@ const UserLogin = () => {
                                 </button>
                             </div>
 
-                            <p className="mt-7 text-center text-sm text-[#6B7166]">
-                                Don&apos;t have an account?{" "}
-                                <Link
-                                    to="/register"
-                                    className="font-semibold text-[#1E8449] hover:text-[#166638]"
-                                >
-                                    Sign up
-                                </Link>
-                            </p>
+                            <div className="flex items-center justify-between px-2 mt-7">
+                                <p className="text-sm text-[#6B7166] flex items-center gap-1">
+                                    Vendor Login?
+                                    <Link
+                                        to="/vendor-login"
+                                        className="font-semibold text-[#01441d] hover:text-[#166638]"
+                                    >
+                                        <PiStorefrontLight className="h-5 w-5" />
+                                    </Link>
+                                </p>
+
+                                <p className="text-sm text-[#6B7166]">
+                                    Don&apos;t have an account?{" "}
+                                    <Link
+                                        to="/register"
+                                        className="font-medium text-[#01441d] hover:text-[#166638]"
+                                    >
+                                        Sign up
+                                    </Link>
+                                </p>
+
+                            </div>
+
                         </div>
                     </div>
                 </div>

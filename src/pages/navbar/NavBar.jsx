@@ -12,22 +12,14 @@ import {
     FiHeart,
     FiLogOut,
 } from "react-icons/fi";
-import { PiStorefrontLight } from "react-icons/pi";
 import { LuLeaf } from "react-icons/lu";
 import { MdOutlineGridView } from "react-icons/md";
 import { handlefetchprofileinfo, logoutapi } from "../../redux/Slices/AuthSlice";
 import { clearSearchProducts, handlesearchproducts } from "../../redux/Slices/ProductSlice";
-import { getcartitems } from "../../redux/Slices/AddtocartSlice";
+import { getcartitems, getwishlistitems } from "../../redux/Slices/AddtocartSlice";
 
-const categories = [
-    { label: "All Categories", href: "/shop", hasIcon: true },
-    { label: "Fruits & Vegetables", href: "/category/fruits-vegetables" },
-    { label: "Dairy & Breakfast", href: "/category/dairy-breakfast" },
-    { label: "Meat & Seafood", href: "/category/meat-seafood" },
-    { label: "Bakery & Biscuits", href: "/category/bakery-biscuits" },
-    { label: "Snacks & Branded Foods", href: "/category/snacks-branded-foods" },
-    { label: "Beverages", href: "/category/beverages" },
-];
+// Hides the scrollbar in all browsers (works with Tailwind 3.1+)
+const hideScrollbar = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
 
 const SearchSuggestionLoader = () => (
     <div className="animate-pulse" aria-label="Loading product suggestions">
@@ -144,10 +136,23 @@ const NavBar = () => {
     const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
     const { searchproddata, searchprodloading } = useSelector((state) => state.product.searchproducts);
     const cartItems = useSelector((state) => state.cart.carts.cartdata);
+    const { wishlistdata } = useSelector((state) => state.cart.wishlist);
     const userId = profiledata?._id || profiledata?.id || profiledata?.userId || profiledata?.user?._id;
-    const cartCount = Array.isArray(cartItems)
-        ? cartItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0)
-        : 0;
+    const cartCount = Array.isArray(cartItems) ? cartItems.length : 0;
+    const wishlistCount = wishlistdata.reduce(
+        (count, item) => count + (Number(item.quantity) > 0 ? Number(item.quantity) : 1),
+        0
+    );
+
+    const { categorydata } = useSelector((state) => state.product.category);
+
+    const categories = [
+        { label: "All Categories", href: "/shop", hasIcon: true },
+        ...(Array.isArray(categorydata) ? categorydata.map((cat) => ({
+            label: cat.name,
+            href: `/category/${cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-")}`,
+        })) : []),
+    ];
 
     useEffect(() => {
         const query = searchValue.trim();
@@ -176,14 +181,26 @@ const NavBar = () => {
         }
     }, [dispatch, token, userId]);
 
+    useEffect(() => {
+        if (token) {
+            dispatch(getwishlistitems({ page: 1, limit: 10 }));
+        }
+    }, [dispatch, token]);
+
     const handleLogout = () => {
         dispatch(logoutapi(token));
         setAccountOpen(false);
+        setMobileOpen(false);
         navigate("/login");
     };
 
     const profileName = profiledata?.name || profiledata?.fullname || profiledata?.username || "Account";
-    const profileImage = profiledata?.imageurl || profiledata?.imageUrl || profiledata?.profileImage || profiledata?.avatar;
+    const profileImage =
+        profiledata?.profile_pic ||
+        profiledata?.profileImage ||
+        profiledata?.avatar ||
+        profiledata?.image ||
+        "";
 
     const handleSearchSubmit = () => { };
     const handleSearchComplete = () => setSearchValue("");
@@ -219,19 +236,12 @@ const NavBar = () => {
 
                 {/* Right actions - desktop */}
                 <nav className="ml-auto hidden items-center gap-6 lg:flex">
-                    <Link
-                        to="/vendor-register"
-                        className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
-                    >
-                        <PiStorefrontLight className="h-5 w-5" />
-                        Vendors
-                    </Link>
                     {token ? (
                         <div className="relative">
                             <button
                                 type="button"
                                 onClick={() => setAccountOpen((open) => !open)}
-                                className="flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
+                                className="flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-green-600 cursor-pointer"
                                 aria-expanded={accountOpen}
                                 aria-label="Open account menu"
                             >
@@ -244,14 +254,14 @@ const NavBar = () => {
                                 <FiChevronDown className="h-3.5 w-3.5" />
                             </button>
                             {accountOpen && (
-                                <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden border border-gray-200 bg-white py-1 shadow-lg">
+                                <div className="absolute left-6 top-full z-50 mt-1 w-30 rounded overflow-hidden border border-gray-200 bg-white py-1 shadow-lg">
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setAccountOpen(false);
                                             navigate("/profile");
                                         }}
-                                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50"
+                                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 cursor-pointer"
                                     >
                                         <FiUser />
                                         Profile
@@ -259,7 +269,7 @@ const NavBar = () => {
                                     <button
                                         type="button"
                                         onClick={handleLogout}
-                                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 cursor-pointer"
                                     >
                                         <FiLogOut className="h-4 w-4" />
                                         Logout
@@ -276,35 +286,61 @@ const NavBar = () => {
                             Login
                         </Link>
                     )}
-                    <Link
+
+                    <NavLink
                         to="/wishlist"
-                        className="flex items-center gap-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-green-600">
-                        <FiHeart className="h-5 w-5" />                    </Link>
-                    <Link
+                        aria-label="Wishlist"
+                        className={({ isActive }) =>
+                            `flex items-center gap-1.5 text-sm font-medium transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700 hover:text-[#FF6900]"
+                            }`
+                        }
+                    >
+                        <span className="relative">
+                            <FiHeart className="h-5 w-5" />
+                            {token && wishlistCount > 0 && (
+                                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                    {wishlistCount > 9 ? "9+" : wishlistCount}
+                                </span>
+                            )}
+                        </span>
+                    </NavLink>
+
+                    <NavLink
                         to="/cart"
-                        className="flex items-center gap-2 text-sm font-medium text-gray-700 transition-colors hover:text-green-600"
+                        aria-label="Cart"
+                        className={({ isActive }) =>
+                            `flex items-center gap-2 text-sm font-medium transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700 hover:text-[#FF6900]"
+                            }`
+                        }
                     >
                         <span className="relative">
                             <FiShoppingCart className="h-5 w-5" />
                             {cartCount > 0 && (
-                                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+                                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white">
                                     {cartCount > 9 ? "9+" : cartCount}
                                 </span>
                             )}
                         </span>
-                    </Link>
+                    </NavLink>
                 </nav>
 
                 {/* Mobile: cart + menu toggle */}
                 <div className="ml-auto flex items-center gap-4 lg:hidden">
-                    <Link to="/cart" className="relative text-gray-700">
+                    <NavLink
+                        to="/cart"
+                        aria-label="Cart"
+                        className={({ isActive }) =>
+                            `relative transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700"}`
+                        }
+                    >
                         <FiShoppingCart className="h-6 w-6" />
                         {cartCount > 0 && (
                             <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
                                 {cartCount > 9 ? "9+" : cartCount}
                             </span>
                         )}
-                    </Link>
+                    </NavLink>
+
                     <button
                         type="button"
                         aria-label={mobileOpen ? "Close menu" : "Open menu"}
@@ -331,29 +367,30 @@ const NavBar = () => {
                 mobile
             />
 
-            {/* Category row - desktop */}
-            <div className="hidden border-t border-gray-200 md:block">
-                <div className="mx-auto flex max-w-[95%] items-center gap-6 px-4 py-4 sm:px-6 lg:px-8">
-                    {categories.map((category) => (
+            {/* Category row - desktop + mobile (swipe scroll, hidden scrollbar) */}
+            <div className="border-t border-gray-200">
+                <div
+                    className={`mx-auto flex max-w-[95%] items-center gap-6 overflow-x-auto px-4 py-3 sm:px-6 md:py-4 lg:px-8 ${hideScrollbar}`}
+                >
+                    {categories.slice(0, 8).map((category) => (
                         <NavLink
                             key={category.label}
                             to={category.href}
+                            onClick={() => window.scrollTo(0, 0)}
                             className={({ isActive }) =>
-                                `flex shrink-0 items-center gap-4 whitespace-nowrap text-sm font-medium  transition-colors ${isActive
+                                `flex shrink-0 items-center gap-2 whitespace-nowrap text-sm font-medium transition-colors ${isActive
                                     ? "text-green-700"
                                     : "text-gray-700 hover:text-green-600"
                                 }`
-                            } onClick={() => window.scrollTo(0, 0)}>
-                            {category.hasIcon && < MdOutlineGridView className="h-4 w-4" />}
+                            }
+                        >
+                            {category.hasIcon && <MdOutlineGridView className="h-4 w-4" />}
                             {category.label}
-                            {/* {category.label === "All Categories" && (
-                                <FiChevronDown className="h-3.5 w-3.5" />
-                            )} */}
                         </NavLink>
                     ))}
                     <Link
                         to="/special-offers"
-                        className="ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap text-sm font-medium text-orange-600 transition-colors hover:text-orange-500"
+                        className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-sm font-medium text-orange-600 transition-colors hover:text-orange-500 md:ml-auto"
                     >
                         <FiTag className="h-4 w-4" />
                         Special Offers
@@ -361,50 +398,71 @@ const NavBar = () => {
                 </div>
             </div>
 
-            {/* Mobile menu panel */}
+            {/* Mobile menu panel (account only, no categories) */}
             {mobileOpen && (
-                <div className="border-t border-gray-100 bg-white px-4 pb-4 md:hidden">
+                <div className="border-t border-gray-100 bg-white px-4 pb-4 lg:hidden">
                     <nav className="flex flex-col divide-y divide-gray-100">
-                        <Link
+                        {token ? (
+                            <Link
+                                to="/profile"
+                                onClick={() => setMobileOpen(false)}
+                                className="flex items-center gap-3 py-3 text-sm font-medium text-gray-700"
+                            >
+                                {profileImage ? (
+                                    <img
+                                        src={profileImage}
+                                        alt=""
+                                        className="h-9 w-9 rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-50 text-green-600">
+                                        <FiUser className="h-5 w-5" />
+                                    </span>
+                                )}
+                                <span className="truncate">
+                                    {profileloading ? "Loading..." : profileName}
+                                </span>
+                            </Link>
+                        ) : (
+                            <Link
+                                to="/login"
+                                onClick={() => setMobileOpen(false)}
+                                className="flex items-center gap-2 py-3 text-sm font-medium text-gray-700"
+                            >
+                                <FiUser className="h-5 w-5" />
+                                Login
+                            </Link>
+                        )}
+
+                        <NavLink
                             to="/wishlist"
                             onClick={() => setMobileOpen(false)}
-                            className="flex items-center gap-2 py-3 text-sm font-medium text-gray-700">
-                            <FiHeart className="h-5 w-5" />
-                        </Link>
-                        <Link
-                            to="/vendors"
-                            onClick={() => setMobileOpen(false)}
-                            className="flex items-center gap-2 py-3 text-sm font-medium text-gray-700"
+                            className={({ isActive }) =>
+                                `flex items-center gap-2 py-3 text-sm font-medium transition-colors ${isActive ? "text-[#FF6900]" : "text-gray-700"
+                                }`
+                            }
                         >
-                            <PiStorefrontLight className="h-5 w-5" />
-                            Vendors
-                        </Link>
-                        <Link
-                            to="/account"
-                            onClick={() => setMobileOpen(false)}
-                            className="flex items-center gap-2 py-3 text-sm font-medium text-gray-700"
-                        >
-                            <FiUser className="h-5 w-5" />
-                            Login
-                        </Link>
-                        {categories.map((category) => (
-                            <Link
-                                key={category.label}
-                                to={category.href}
-                                onClick={() => setMobileOpen(false)}
-                                className="py-3 text-sm font-medium text-gray-700"
+                            <span className="relative">
+                                <FiHeart className="h-5 w-5" />
+                                {token && wishlistCount > 0 && (
+                                    <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                        {wishlistCount > 9 ? "9+" : wishlistCount}
+                                    </span>
+                                )}
+                            </span>
+                            Wishlist
+                        </NavLink>
+
+                        {token && (
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 py-3 text-left text-sm font-medium text-red-600"
                             >
-                                {category.label}
-                            </Link>
-                        ))}
-                        <Link
-                            to="/special-offers"
-                            onClick={() => setMobileOpen(false)}
-                            className="flex items-center gap-2 py-3 text-sm font-medium text-orange-600"
-                        >
-                            <FiTag className="h-4 w-4" />
-                            Special Offers
-                        </Link>
+                                <FiLogOut className="h-5 w-5" />
+                                Logout
+                            </button>
+                        )}
                     </nav>
                 </div>
             )}

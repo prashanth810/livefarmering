@@ -10,8 +10,10 @@ import {
 import { FaLeaf } from "react-icons/fa";
 import { vendorlogin } from "../../constants/Imageconstants";
 import { Link } from "react-router-dom";
+import useAuthRateLimit from "../../hooks/useAuthRateLimit";
 
 export default function FreshiesVendorLogin() {
+    const { remainingSeconds, countdownLabel } = useAuthRateLimit();
     const [showPassword, setShowPassword] = useState(false);
     const [remember, setRemember] = useState(true);
     const [email, setEmail] = useState("");
@@ -180,13 +182,13 @@ export default function FreshiesVendorLogin() {
                                 {/* Button */}
                                 <button
                                     type="submit"
-                                    className="flex h-10 w-full items-center justify-center bg-[#FF542D] text-sm font-semibold text-white transition hover:bg-[#E94824]"
+                                    disabled={remainingSeconds > 0}
+                                    className="flex h-10 w-full items-center justify-center bg-[#FF542D] text-sm font-semibold text-white transition hover:bg-[#E94824] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    Sign In
-                                    <FiArrowRight
-                                        size={16}
-                                        className="ml-2"
-                                    />
+                                    {remainingSeconds > 0 ? `Try again in ${countdownLabel}` : "Sign In"}
+                                    {remainingSeconds === 0 && (
+                                        <FiArrowRight size={16} className="ml-2" />
+                                    )}
                                 </button>
 
                             </form>
