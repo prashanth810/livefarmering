@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { FiCreditCard, FiInfo, FiLock, FiPlus } from "react-icons/fi";
+import { FiCreditCard, FiInfo, FiLock, FiPlus, FiMapPin } from "react-icons/fi";
 import { getcartitems } from "../../redux/Slices/AddtocartSlice";
 import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 import { showErrorToast, showSuccessToast, showWarningToast } from "../../components/Toast";
 import AddressModal from "../../reusables/Addressmodal";
+import { MdEdit } from "react-icons/md";
+import { FaRegTrashCan } from "react-icons/fa6";
+import { createaddress, deleteaddress, getalladdress } from "../../redux/Slices/AddressSlice";
+import DeleteConfirmModal from "../../reusables/DeleteConfirmModal";
 
 // ---------- config (change as per your business rules) ----------
 const TAX_RATE = 0.05;
+const MAX_ADDRESSES = 3;
 
 const deliveryOptions = [
-    { id: "free", label: "Free Delivery", price: 0, days: 2 - 3, note: "Estimated delivery in 2-3 business days." },
-    { id: "standard", label: "Standard Delivery", price: 40, days: 2, note: "Estimated delivery in 2-3 business days." },
+    { id: "free", label: "Free Delivery", price: 0, days: 3, note: "Estimated delivery in 2 - 3 business days." },
+    { id: "standard", label: "Standard Delivery", price: 40, days: 2, note: "Estimated delivery in 1 - 2 business days." },
     { id: "express", label: "Express Delivery", price: 99, days: 1, note: "Next day delivery." },
 ];
 
@@ -23,33 +28,15 @@ const paymentOptions = [
     { id: "cod", label: "Cash on Delivery", note: "Pay with cash when your order is delivered" },
 ];
 
-// TODO: replace with addresses coming from your address API / profile
-const sampleAddresses = [
-    {
-        id: "addr-1",
-        label: "Home",
-        isDefault: true,
-        lines: ["123 Green Meadow Lane", "Apartment 4B", "Hyderabad, Telangana 500001"],
-        phone: "+91 98765 43210",
-    },
-    {
-        id: "addr-2",
-        label: "Office",
-        isDefault: false,
-        lines: ["4500 Tech Boulevard", "Suite 200", "Hyderabad, Telangana 500081"],
-        phone: "+91 98765 65432",
-    },
-];
-
 const formatPrice = (value) => `₹${Number(value || 0).toFixed(2)}`;
-// Hides the scrollbar in all browsers (Tailwind 3.1+)
-const hideScrollbar = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
 
 const formatArrival = (days) => {
     const date = new Date();
     date.setDate(date.getDate() + days);
     return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 };
+
+const capitalize = (text) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : "");
 
 // ---------- small reusable pieces ----------
 const Radio = ({ checked }) => (
@@ -67,13 +54,16 @@ const optionClass = (selected) =>
         : "border-gray-200 bg-white hover:border-gray-300"
     }`;
 
-const Section = ({ step, title, children }) => (
+const Section = ({ step, title, action, children }) => (
     <section className="rounded-lg border border-gray-200 bg-white">
-        <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
-                {step}
-            </span>
-            <h2 className="text-base font-bold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+            <div className="flex items-center gap-3">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
+                    {step}
+                </span>
+                <h2 className="text-base font-bold text-gray-900">{title}</h2>
+            </div>
+            {action}
         </div>
         <div className="space-y-3 p-5">{children}</div>
     </section>
@@ -99,18 +89,75 @@ const CheckoutPage = () => {
     const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
     const cartdata = useSelector((state) => state.cart.carts.cartdata);
     const { getcartloading } = useSelector((state) => state.cart.getcart);
+    const { addressloading, addressdata, addresserror } = useSelector((state) => state.address.address);
+    const { createaddressloading } = useSelector((state) => state.address.createaddress);
     const userId = profile?._id || profile?.id || profile?.userId || profile?.user?._id;
 
     const [productDetailsById, setProductDetailsById] = useState({});
-    const [addressId, setAddressId] = useState(sampleAddresses[0].id);
+    const [addressId, setAddressId] = useState(null);
     const [deliveryId, setDeliveryId] = useState("standard");
     const [paymentId, setPaymentId] = useState("card");
     const [placing, setPlacing] = useState(false);
     const [addressmodel, setAddressmodel] = useState(false);
     const [card, setCard] = useState({ number: "", expiry: "", cvv: "", name: "" });
+    // delete address
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
-    const handleopenaddress = () => setAddressmodel(true);
+    // ---- addresses straight from the API ----
+    // works whether the slice stores the whole response ({ data: [...] }) or just the array
+    const addresses = useMemo(() => {
+        if (Array.isArray(addressdata)) return addressdata;
+        if (Array.isArray(addressdata?.data)) return addressdata.data;
+        return [];
+    }, [addressdata]);
+
+    const canAddAddress = addresses.length < MAX_ADDRESSES;
+
+    // selected address: user's pick, otherwise the default one, otherwise the first one
+    const selectedAddressId =
+        addressId && addresses.some((a) => a._id === addressId)
+            ? addressId
+            : (addresses.find((a) => a.is_default) || addresses[0])?._id || null;
+
+    const handleopenaddress = () => {
+        if (!canAddAddress) {
+            showWarningToast(`You can save up to ${MAX_ADDRESSES} addresses. Delete one to add a new address.`);
+            return;
+        }
+        setAddressmodel(true);
+    };
     const handlecloseaddress = () => setAddressmodel(false);
+    const handleAddAddress = async (address) => {
+        await dispatch(createaddress(address)).unwrap();
+        showSuccessToast("Address added successfully");
+        handlecloseaddress();
+        dispatch(getalladdress());
+    };
+
+    // ---- delete address (opens confirm modal, API call only on confirm) ----
+    const handleopendelete = (address) => setDeleteTarget(address);
+    const handleclosedelete = () => {
+        if (!deleting) setDeleteTarget(null);
+    };
+    const handleconfirmdelete = async () => {
+        if (!deleteTarget) return;
+
+        setDeleting(true);
+        try {
+            await dispatch(deleteaddress(deleteTarget._id)).unwrap();
+            showSuccessToast("Address deleted successfully");
+            setDeleteTarget(null);
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : error?.message || "Unable to delete address");
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    useEffect(() => {
+        dispatch(getalladdress());
+    }, [dispatch]);
 
     useEffect(() => {
         if (token && !userId && !profileLoading) {
@@ -222,6 +269,11 @@ const CheckoutPage = () => {
             return;
         }
 
+        if (!selectedAddressId) {
+            showWarningToast("Please select a shipping address");
+            return;
+        }
+
         if (paymentId === "card") {
             const cardError = validateCard();
             if (cardError) {
@@ -233,7 +285,7 @@ const CheckoutPage = () => {
         setPlacing(true);
         try {
             // TODO: replace with your order API, e.g.
-            // await dispatch(placeorder({ addressId, deliveryId, paymentId, items: orderItems })).unwrap();
+            // await dispatch(placeorder({ addressId: selectedAddressId, deliveryId, paymentId, items: orderItems })).unwrap();
             await new Promise((resolve) => setTimeout(resolve, 800));
             showSuccessToast("Order placed successfully!");
             navigate("/");
@@ -262,72 +314,142 @@ const CheckoutPage = () => {
     return (
         <main className="bg-[#f6f7f5] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
             <div className="mx-auto w-full max-w-[90%]">
-                <h1 className="mb-5 text-2xl font-bold text-gray-900">Checkout</h1>
+                <h1 className="mb-5 text-2xl font-semibold text-gray-800">Checkout</h1>
 
                 <div className="grid items-start gap-6 lg:grid-cols-[1fr_340px]">
                     {/* ---------- left column ---------- */}
                     <div className="space-y-5">
                         {/* 1. Shipping address */}
-                        <Section step={1} title="Shipping Address">
-                            <div className={`-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 ${hideScrollbar}`}>
-                                {sampleAddresses.map((address) => {
-                                    const selected = addressId === address.id;
+                        <Section
+                            step={1}
+                            title="Shipping Address"
+                            action={
+                                addresses.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={handleopenaddress}
+                                        className="flex cursor-pointer items-center gap-1.5 border border-emerald-600 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-600 hover:text-white duration-500"
+                                    >
+                                        <FiPlus className="h-3.5 w-3.5" />
+                                        Add New Address
+                                    </button>
+                                )
+                            }
+                        >
+
+                            {/* empty state: no saved addresses */}
+                            {!addressloading && !addresserror && addresses.length === 0 && (
+                                <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-gray-300 bg-white px-4 py-10 text-center">
+                                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                                        <FiMapPin className="h-5 w-5" />
+                                    </span>
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900">No address found</p>
+                                        <p className="mt-1 text-xs text-slate-400">
+                                            Add a shipping address to continue with your order.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleopenaddress}
+                                        className="flex cursor-pointer items-center gap-1.5 border border-emerald-600 px-4 py-2 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-600 hover:text-white duration-500"
+                                    >
+                                        <FiPlus className="h-3.5 w-3.5" />
+                                        Add New Address
+                                    </button>
+                                </div>
+                            )}
+
+
+                            {addressloading && addresses.length === 0 && (
+                                <p className="text-xs text-slate-400">Loading addresses...</p>
+                            )}
+
+                            {addresserror && addresses.length === 0 && !addressloading && (
+                                <p className="text-xs text-red-500">
+                                    {typeof addresserror === "string" ? addresserror : "Unable to load addresses"}
+                                </p>
+                            )}
+
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {addresses.slice(0, MAX_ADDRESSES).map((address) => {
+                                    const selected = selectedAddressId === address._id;
                                     return (
                                         <div
-                                            key={address.id}
+                                            key={address._id}
                                             role="radio"
                                             aria-checked={selected}
                                             tabIndex={0}
-                                            onClick={() => setAddressId(address.id)}
+                                            onClick={() => setAddressId(address._id)}
                                             onKeyDown={(event) => {
-                                                if (event.key === "Enter" || event.key === " ") setAddressId(address.id);
+                                                if (event.key === "Enter" || event.key === " ") setAddressId(address._id);
                                             }}
-                                            className={`${optionClass(selected)} w-[260px] shrink-0 snap-start sm:w-[290px]`}
+                                            className={optionClass(selected)}
                                         >
                                             <div className="flex items-start gap-3">
                                                 <Radio checked={selected} />
                                                 <div className="min-w-0 flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-sm font-semibold text-gray-900">{address.label}</p>
-                                                        {address.isDefault && (
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <p className="truncate text-sm font-semibold text-gray-900">
+                                                            {address.full_name}
+                                                        </p>
+                                                        {address.address_type && (
+                                                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                                                                {capitalize(address.address_type)}
+                                                            </span>
+                                                        )}
+                                                        {address.is_default && (
                                                             <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white">
                                                                 Default
                                                             </span>
                                                         )}
                                                     </div>
                                                     <div className="mt-1.5 space-y-0.5 text-xs text-slate-400">
-                                                        {address.lines.map((line) => (
-                                                            <p key={line}>{line}</p>
-                                                        ))}
+                                                        <p>{address.building_number}</p>
+                                                        <p>{address.street}</p>
+                                                        {address.landmark && <p>{address.landmark}</p>}
+                                                        <p>{address.city}, {address.state} {address.pincode}</p>
+                                                        <p>{address.country}</p>
                                                         <p>{address.phone}</p>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        // TODO: open edit address form
-                                                    }}
-                                                    className={`cursor-pointer text-xs font-medium ${selected ? "text-emerald-600" : "text-slate-400"
-                                                        } hover:underline`}
-                                                >
-                                                    Edit
-                                                </button>
+
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            // TODO: open edit address form
+                                                        }}
+                                                        className={`cursor-pointer text-xs font-medium hover:text-emerald-600 duration-300 ${selected ? "text-emerald-600" : "text-slate-400"
+                                                            } hover:underline`}
+                                                    >
+                                                        <MdEdit className="h-4 w-4" />
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            handleopendelete(address);
+                                                        }}
+                                                        className={`cursor-pointer text-xs font-medium hover:text-red-500 duration-300 ${selected ? "text-red-600" : "text-slate-400"
+                                                            } hover:underline`}
+                                                    >
+                                                        <FaRegTrashCan className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     );
                                 })}
-
-                                {/* Add new address as the last card in the row */}
-                                <button
-                                    type="button"
-                                    onClick={handleopenaddress}
-                                    className="flex w-[160px] shrink-0 cursor-pointer snap-start flex-col items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 bg-white text-xs font-medium text-gray-700 transition-colors hover:border-emerald-500 hover:text-emerald-600"
-                                >
-                                    <FiPlus className="h-4 w-4" />
-                                    Add New Address
-                                </button>
                             </div>
+
+                            {!canAddAddress && (
+                                <p className="text-[11px] text-slate-400">
+                                    You have reached the limit of {MAX_ADDRESSES} saved addresses. Delete one to add a new address.
+                                </p>
+                            )}
                         </Section>
 
                         {/* 2. Delivery method */}
@@ -538,8 +660,22 @@ const CheckoutPage = () => {
                 <AddressModal
                     open={addressmodel}
                     onClose={handlecloseaddress}
+                    onSubmit={handleAddAddress}
+                    loading={createaddressloading}
                 />
             )}
+
+            <DeleteConfirmModal
+                open={Boolean(deleteTarget)}
+                onClose={handleclosedelete}
+                onConfirm={handleconfirmdelete}
+                loading={deleting}
+                message={
+                    deleteTarget
+                        ? `Are you sure you want to delete the address of ${deleteTarget.full_name}? This action cannot be undone.`
+                        : undefined
+                }
+            />
         </main>
     );
 };

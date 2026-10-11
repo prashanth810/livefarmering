@@ -3,6 +3,7 @@ import AuthSlice from "../Slices/AuthSlice.js";
 import ProductSlice from '../Slices/ProductSlice.js';
 import VendorSlice from '../Slices/VendorSlice.js';
 import AddtocartSlice from '../Slices/AddtocartSlice.js';
+import AddressSlice from '../Slices/AddressSlice.js';
 
 const Mystore = configureStore({
     reducer: {
@@ -10,6 +11,7 @@ const Mystore = configureStore({
         product: ProductSlice,
         vendor: VendorSlice,
         cart: AddtocartSlice,
+        address: AddressSlice,
     }
 })
 
