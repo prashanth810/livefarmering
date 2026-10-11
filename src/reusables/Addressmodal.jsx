@@ -20,7 +20,7 @@ export const emptyAddress = {
 
 const addressTypes = [
     { value: "Home", icon: FiHome },
-    { value: "Office", icon: FiBriefcase },
+    { value: "work", icon: FiBriefcase },
     { value: "Other", icon: FiMapPin },
 ];
 
@@ -89,6 +89,7 @@ const AddressModal = ({
 }) => {
     const [values, setValues] = useState(emptyAddress);
     const [errors, setErrors] = useState({});
+    const [submitError, setSubmitError] = useState("");
     const firstInputRef = useRef(null);
     const isEdit = Boolean(initialData);
 
@@ -97,6 +98,7 @@ const AddressModal = ({
         if (open) {
             setValues({ ...emptyAddress, ...(initialData || {}) });
             setErrors({});
+            setSubmitError("");
             const timer = window.setTimeout(() => firstInputRef.current?.focus(), 50);
             return () => window.clearTimeout(timer);
         }
@@ -131,6 +133,7 @@ const AddressModal = ({
 
         setValues((prev) => ({ ...prev, [name]: next }));
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+        if (submitError) setSubmitError("");
     };
 
     const handleSubmit = async (event) => {
@@ -139,7 +142,7 @@ const AddressModal = ({
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) return;
 
-        await onSubmit({
+        const address = {
             ...values,
             full_name: values.full_name.trim(),
             phone: values.phone.trim(),
@@ -150,7 +153,23 @@ const AddressModal = ({
             state: values.state.trim(),
             pincode: values.pincode.trim(),
             country: values.country.trim(),
-        });
+        };
+
+        if (!onSubmit) {
+            setSubmitError("Address saving is unavailable. Please try again later.");
+            return;
+        }
+
+        setSubmitError("");
+        try {
+            await onSubmit(address);
+        } catch (error) {
+            setSubmitError(
+                typeof error === "string"
+                    ? error
+                    : error?.message || error?.error || "Unable to save this address"
+            );
+        }
     };
 
     return (
@@ -193,6 +212,11 @@ const AddressModal = ({
                 {/* Form */}
                 <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
                     <div className={`flex-1 space-y-4 overflow-y-auto px-5 py-5 ${hideScrollbar}`}>
+                        {submitError && (
+                            <p role="alert" className="text-sm text-red-600">
+                                {submitError}
+                            </p>
+                        )}
                         {/* Address type */}
                         <Field label="Address Type">
                             <div className="flex gap-2">
@@ -234,6 +258,8 @@ const AddressModal = ({
                                 <input
                                     type="tel"
                                     name="phone"
+                                    maxLength={10}
+                                    minLength={10}
                                     value={values.phone}
                                     onChange={handleChange}
                                     autoComplete="tel"

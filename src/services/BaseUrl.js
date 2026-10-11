@@ -11,6 +11,7 @@ const authApi = createApiClient(import.meta.env.VITE_AUTH_API_URL);
 const productApi = createApiClient(import.meta.env.VITE_PRODUCT_API_URL);
 const categoryApi = createApiClient(import.meta.env.VITE_CATEGORY_API_URL);
 const cartApi = createApiClient(import.meta.env.VITE_CART_API_URL);
+const addressApi = createApiClient(import.meta.env.VITE_ADDRESS_API_URL);
 
 const attachInterceptors = (api) => {
     api.interceptors.request.use(
@@ -43,6 +44,7 @@ attachInterceptors(authApi);
 attachInterceptors(productApi);
 attachInterceptors(categoryApi);
 attachInterceptors(cartApi);
+attachInterceptors(addressApi);
 
-export { authApi, productApi, categoryApi, cartApi };
+export { authApi, productApi, categoryApi, cartApi, addressApi };
 export default authApi;
