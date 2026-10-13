@@ -10,7 +10,7 @@ const RecentOrders = ({ orders = [] }) => {
     const recent = orders.slice(0, 4).map(normalizeOrder);
 
     return (
-        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <section className="border border-gray-100 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
                 <h2 className="text-base font-semibold text-gray-900">Recent Orders</h2>
                 <Link to="/orders" className="flex items-center gap-1 text-sm font-medium text-green-700 hover:text-green-800">
@@ -31,7 +31,7 @@ const RecentOrders = ({ orders = [] }) => {
                                 onClick={() => navigate("/orders")}
                                 className="flex items-center gap-3 text-left lg:border-r lg:border-gray-100 lg:px-4 lg:first:pl-0 lg:last:border-r-0"
                             >
-                                <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-3xl">
+                                <span className="flex h-16 w-16 shrink-0 items-center justify-center bg-gray-50 text-3xl">
                                     {order.emoji}
                                 </span>
                                 <div className="min-w-0 flex-1">

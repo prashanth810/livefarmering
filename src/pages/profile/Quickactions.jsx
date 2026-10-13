@@ -39,7 +39,7 @@ const ACTIONS = [
 
 // onAction(action) is called for every card; the parent decides whether to navigate.
 const QuickActions = ({ onAction }) => (
-    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <section className="border border-gray-100 bg-white p-5 shadow-sm">
         <h2 className="mb-4 text-base font-semibold text-gray-900">Quick Actions</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {ACTIONS.map((action) => {
@@ -49,9 +49,9 @@ const QuickActions = ({ onAction }) => (
                         key={action.key}
                         type="button"
                         onClick={() => onAction(action)}
-                        className={`flex items-center gap-3 rounded-xl p-4 text-left transition hover:shadow-md ${action.card}`}
+                        className={`flex items-center gap-3 p-4 text-left transition hover:shadow-md ${action.card}`}
                     >
-                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${action.iconBox}`}>
+                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center ${action.iconBox}`}>
                             <Icon className="h-5 w-5" />
                         </span>
                         <span className="min-w-0 flex-1">

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 const OffersBanner = () => (
-    <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-50 to-amber-100 px-6 py-7 sm:px-8">
+    <section className="relative overflow-hidden bg-gradient-to-r from-orange-50 to-amber-100 px-6 py-7 sm:px-8">
         <div className="relative z-10 max-w-md">
             <h2 className="text-xl font-bold text-gray-900">Get Special Offers &amp; Discounts</h2>
             <p className="mt-1 text-sm text-gray-600">
@@ -9,7 +9,7 @@ const OffersBanner = () => (
             </p>
             <Link
                 to="/shop"
-                className="mt-4 inline-block rounded-md bg-amber-800 px-6 py-2.5 text-sm font-semibold text-white hover:bg-amber-900 sm:hidden"
+                className="mt-4 inline-block bg-amber-800 px-6 py-2.5 text-sm font-semibold text-white hover:bg-amber-900 sm:hidden"
             >
                 Shop Now
             </Link>
@@ -19,7 +19,7 @@ const OffersBanner = () => (
             <Link
                 to="/shop"
                 onClick={() => window.screenTop(0, 0)}
-                className="rounded-md bg-amber-800 px-8 py-2.5 text-sm font-semibold text-white hover:bg-amber-900"
+                className=" bg-amber-800 px-8 py-2.5 text-sm font-semibold text-white hover:bg-amber-900"
             >
                 Shop Now
             </Link>

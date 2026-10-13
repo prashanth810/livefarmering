@@ -36,3 +36,25 @@ export const handledeleteaddress = async (id) => {
         throw error;
     }
 }
+
+// make defaukt address for placing order selected address only
+export const makeitdefalut = async (data) => {
+    try {
+        const response = await addressApi.put(`${baseurl}/address/make-default`, data);
+        return response;
+    }
+    catch (error) {
+        console.error("Failed update default", error.response?.data || error.message);
+    }
+}
+
+// update address 
+export const handleeditaddress = async ({ id, data }) => {
+    try {
+        const response = await addressApi.put(`${baseurl}/address/update/${id}`, data);
+        return response;
+    }
+    catch (error) {
+        console.error("Failed to update address", error.response?.data || error.message);
+    }
+}

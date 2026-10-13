@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { handleaddaddress, handledeleteaddress, handlegetaddresses } from "../services/CheckoutApi";
+import { handleaddaddress, handledeleteaddress, handleeditaddress, handlegetaddresses, makeitdefalut } from "../services/CheckoutApi";
 
 // get all address specific user
 export const getalladdress = createAsyncThunk("address/getall", async (_, ThunkAPI) => {
@@ -34,6 +34,28 @@ export const deleteaddress = createAsyncThunk("delete/address", async (id, Thunk
     }
 })
 
+// make it defaukt change
+export const handlemakedefault = createAsyncThunk("put/default", async (data, ThunkApi) => {
+    try {
+        const response = await makeitdefalut(data);
+        return response.data.data;
+    }
+    catch (error) {
+        return ThunkApi.rejectWithValue(error.message);
+    }
+});
+
+// update address 
+export const updateaddress = createAsyncThunk("address/update", async ({ id, data }, ThunkApi) => {
+    try {
+        const response = await handleeditaddress({ id, data });
+        return response.data.data;
+    }
+    catch (error) {
+        return ThunkApi.rejectWithValue(error.message);
+    }
+})
+
 const initialState = {
     address: {
         addressloading: false,
@@ -45,10 +67,19 @@ const initialState = {
         createaddressdata: [],
         createaddresserror: null,
     },
+    updateaddress: {
+        updateaddressloading: false,
+        updateaddresserror: null,
+    },
     deleteaddress: {
         deleteaddressloading: false,
         deleteaddresserror: null,
     },
+    makedefault: {
+        makedefaultloading: false,
+        makedefaultdata: {},
+        makedefaulterror: null,
+    }
 };
 
 const AddressSlice = createSlice({
@@ -100,7 +131,41 @@ const AddressSlice = createSlice({
             .addCase(deleteaddress.rejected, (state, action) => {
                 state.deleteaddress.deleteaddressloading = false;
                 state.deleteaddress.deleteaddresserror = action.payload;
-            });
+            })
+
+            // make default
+            .addCase(handlemakedefault.pending, (state) => {
+                state.makedefault.makedefaultloading = true;
+                state.makedefault.makedefaulterror = null;
+            })
+            .addCase(handlemakedefault.fulfilled, (state, action) => {
+                state.makedefault.makedefaultloading = false;
+                state.makedefault.makedefaultdata = action.payload;
+
+                const selectedAddressId = action.meta.arg.addressId;
+
+                state.address.addressdata = state.address.addressdata.map((address) => ({
+                    ...address,
+                    is_default: address._id === selectedAddressId,
+                }));
+            })
+            .addCase(handlemakedefault.rejected, (state, action) => {
+                state.makedefault.makedefaultloading = false;
+                state.makedefault.makedefaulterror = action.payload;
+            })
+
+            // update address
+            .addCase(updateaddress.pending, (state) => {
+                state.updateaddress.updateaddressloading = true;
+                state.updateaddress.updateaddresserror = null;
+            })
+            .addCase(updateaddress.fulfilled, (state) => {
+                state.updateaddress.updateaddressloading = false;
+            })
+            .addCase(updateaddress.rejected, (state, action) => {
+                state.updateaddress.updateaddressloading = false;
+                state.updateaddress.updateaddresserror = action.payload;
+            })
     },
 });
 

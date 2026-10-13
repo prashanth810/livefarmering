@@ -11,7 +11,7 @@ const StatItem = ({ icon: Icon, value, label, iconClass }) => (
 
 const ProfileSummary = ({ name, email, phone, image, role, memberSince, stats, onEdit, onChangePhoto }) => {
     return (
-        <section className="grid gap-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] lg:items-center">
+        <section className="grid gap-6 border border-gray-100 bg-white p-5 shadow-sm lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] lg:items-center">
             {/* User info */}
             <div className="flex items-center gap-4">
                 <div className="relative shrink-0">

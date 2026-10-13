@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { FiCreditCard, FiInfo, FiLock, FiPlus, FiMapPin } from "react-icons/fi";
@@ -9,8 +9,15 @@ import { showErrorToast, showSuccessToast, showWarningToast } from "../../compon
 import AddressModal from "../../reusables/Addressmodal";
 import { MdEdit } from "react-icons/md";
 import { FaRegTrashCan } from "react-icons/fa6";
-import { createaddress, deleteaddress, getalladdress } from "../../redux/Slices/AddressSlice";
+import {
+    createaddress,
+    deleteaddress,
+    getalladdress,
+    handlemakedefault,
+    updateaddress,
+} from "../../redux/Slices/AddressSlice";
 import DeleteConfirmModal from "../../reusables/DeleteConfirmModal";
+import CheckoutSkeleton from "../../reusables/CheckoutSkeleton";
 
 // ---------- config (change as per your business rules) ----------
 const TAX_RATE = 0.05;
@@ -38,6 +45,9 @@ const formatArrival = (days) => {
 
 const capitalize = (text) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : "");
 
+const getErrorMessage = (error, fallback) =>
+    typeof error === "string" ? error : error?.message || fallback;
+
 // ---------- small reusable pieces ----------
 const Radio = ({ checked }) => (
     <span
@@ -49,13 +59,13 @@ const Radio = ({ checked }) => (
 );
 
 const optionClass = (selected) =>
-    `block w-full cursor-pointer rounded-md border p-4 text-left transition-colors ${selected
+    `block w-full cursor-pointer border p-4 text-left transition-colors ${selected
         ? "border-emerald-500 bg-[#dff7e9]"
         : "border-gray-200 bg-white hover:border-gray-300"
     }`;
 
 const Section = ({ step, title, action, children }) => (
-    <section className="rounded-lg border border-gray-200 bg-white">
+    <section className="border border-gray-200 bg-white">
         <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
             <div className="flex items-center gap-3">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
@@ -77,7 +87,7 @@ const CardInput = ({ label, className = "", children }) => (
 );
 
 const cardInputClass =
-    "w-full rounded-md border border-transparent bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none";
+    "w-full border border-transparent bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none";
 
 // ---------- page ----------
 const CheckoutPage = () => {
@@ -85,27 +95,33 @@ const CheckoutPage = () => {
     const navigate = useNavigate();
 
     const profile = useSelector((state) => state.auth.profile.profiledata);
-    const profileLoading = useSelector((state) => state.auth.profile.profileloading);
     const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
     const cartdata = useSelector((state) => state.cart.carts.cartdata);
     const { getcartloading } = useSelector((state) => state.cart.getcart);
     const { addressloading, addressdata, addresserror } = useSelector((state) => state.address.address);
     const { createaddressloading } = useSelector((state) => state.address.createaddress);
+    const { updateaddressloading } = useSelector((state) => state.address.updateaddress);
     const userId = profile?._id || profile?.id || profile?.userId || profile?.user?._id;
 
+    const profileRequestedRef = useRef(false);
+    const [profileSettled, setProfileSettled] = useState(false);
+    const [cartLoadedForUser, setCartLoadedForUser] = useState(null);
     const [productDetailsById, setProductDetailsById] = useState({});
     const [addressId, setAddressId] = useState(null);
     const [deliveryId, setDeliveryId] = useState("standard");
     const [paymentId, setPaymentId] = useState("card");
     const [placing, setPlacing] = useState(false);
-    const [addressmodel, setAddressmodel] = useState(false);
     const [card, setCard] = useState({ number: "", expiry: "", cvv: "", name: "" });
+
+    // add / edit address modal
+    const [addressmodel, setAddressmodel] = useState(false);
+    const [editTarget, setEditTarget] = useState(null); // null = add mode, address object = edit mode
+
     // delete address
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
     // ---- addresses straight from the API ----
-    // works whether the slice stores the whole response ({ data: [...] }) or just the array
     const addresses = useMemo(() => {
         if (Array.isArray(addressdata)) return addressdata;
         if (Array.isArray(addressdata?.data)) return addressdata.data;
@@ -120,19 +136,43 @@ const CheckoutPage = () => {
             ? addressId
             : (addresses.find((a) => a.is_default) || addresses[0])?._id || null;
 
+    // ---- add / edit address ----
     const handleopenaddress = () => {
         if (!canAddAddress) {
             showWarningToast(`You can save up to ${MAX_ADDRESSES} addresses. Delete one to add a new address.`);
             return;
         }
+        setEditTarget(null);
         setAddressmodel(true);
     };
-    const handlecloseaddress = () => setAddressmodel(false);
-    const handleAddAddress = async (address) => {
-        await dispatch(createaddress(address)).unwrap();
-        showSuccessToast("Address added successfully");
-        handlecloseaddress();
-        dispatch(getalladdress());
+
+    const handleopenedit = (address) => {
+        setEditTarget(address);
+        setAddressmodel(true);
+    };
+
+    const handlecloseaddress = () => {
+        setAddressmodel(false);
+        setEditTarget(null);
+    };
+
+    // one submit handler for both modes
+    const handleSubmitAddress = async (formData) => {
+        try {
+            if (editTarget) {
+                await dispatch(updateaddress({ id: editTarget._id, data: formData })).unwrap();
+                showSuccessToast("Address updated successfully");
+            } else {
+                await dispatch(createaddress(formData)).unwrap();
+                showSuccessToast("Address added successfully");
+            }
+            dispatch(getalladdress());
+            handlecloseaddress();
+        } catch (error) {
+            showErrorToast(
+                getErrorMessage(error, editTarget ? "Unable to update address" : "Unable to add address")
+            );
+        }
     };
 
     // ---- delete address (opens confirm modal, API call only on confirm) ----
@@ -140,6 +180,7 @@ const CheckoutPage = () => {
     const handleclosedelete = () => {
         if (!deleting) setDeleteTarget(null);
     };
+
     const handleconfirmdelete = async () => {
         if (!deleteTarget) return;
 
@@ -149,26 +190,57 @@ const CheckoutPage = () => {
             showSuccessToast("Address deleted successfully");
             setDeleteTarget(null);
         } catch (error) {
-            showErrorToast(typeof error === "string" ? error : error?.message || "Unable to delete address");
+            showErrorToast(getErrorMessage(error, "Unable to delete address"));
         } finally {
             setDeleting(false);
         }
     };
 
+    // ---- select address (calls the default API only if it isn't already the default) ----
+    const handleSelectAddress = async (address) => {
+        setAddressId(address._id);
+
+        if (address.is_default) return;
+
+        try {
+            await dispatch(
+                handlemakedefault({
+                    addressId: address._id,
+                    is_default: true,
+                })
+            ).unwrap();
+
+            showSuccessToast("Default address updated successfully");
+        } catch (error) {
+            showErrorToast(getErrorMessage(error, "Unable to update default address"));
+        }
+    };
+
+    // ---- data fetching ----
     useEffect(() => {
         dispatch(getalladdress());
     }, [dispatch]);
 
+    // fetch profile only ONCE (no retry loop on failure / 429)
     useEffect(() => {
-        if (token && !userId && !profileLoading) {
-            dispatch(handlefetchprofileinfo());
-        }
-    }, [dispatch, profileLoading, token, userId]);
+        if (!token || userId || profileRequestedRef.current) return;
 
+        profileRequestedRef.current = true;
+        dispatch(handlefetchprofileinfo()).finally(() => setProfileSettled(true));
+    }, [dispatch, token, userId]);
+
+    // fetch cart once the user id is known
     useEffect(() => {
-        if (userId) {
-            dispatch(getcartitems(userId));
-        }
+        if (!userId) return;
+
+        let active = true;
+        dispatch(getcartitems(userId)).finally(() => {
+            if (active) setCartLoadedForUser(String(userId));
+        });
+
+        return () => {
+            active = false;
+        };
     }, [dispatch, userId]);
 
     const rawCartItems = useMemo(() => (Array.isArray(cartdata) ? cartdata : []), [cartdata]);
@@ -290,13 +362,23 @@ const CheckoutPage = () => {
             showSuccessToast("Order placed successfully!");
             navigate("/");
         } catch (error) {
-            showErrorToast(typeof error === "string" ? error : "Unable to place your order");
+            showErrorToast(getErrorMessage(error, "Unable to place your order"));
         } finally {
             setPlacing(false);
         }
     };
 
-    if (!getcartloading && orderItems.length === 0) {
+    // ---- loading / empty states ----
+    const showSkeleton =
+        getcartloading ||
+        (token && !userId && !profileSettled) ||
+        (userId && cartLoadedForUser !== String(userId));
+
+    if (showSkeleton) {
+        return <CheckoutSkeleton />;
+    }
+
+    if (orderItems.length === 0) {
         return (
             <main className="bg-[#f6f7f5] px-4 py-16 text-center">
                 <h1 className="text-2xl font-bold text-gray-900">Your cart is empty</h1>
@@ -316,7 +398,7 @@ const CheckoutPage = () => {
             <div className="mx-auto w-full max-w-[90%]">
                 <h1 className="mb-5 text-2xl font-semibold text-gray-800">Checkout</h1>
 
-                <div className="grid items-start gap-6 lg:grid-cols-[1fr_340px]">
+                <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
                     {/* ---------- left column ---------- */}
                     <div className="space-y-5">
                         {/* 1. Shipping address */}
@@ -336,7 +418,6 @@ const CheckoutPage = () => {
                                 )
                             }
                         >
-
                             {/* empty state: no saved addresses */}
                             {!addressloading && !addresserror && addresses.length === 0 && (
                                 <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-gray-300 bg-white px-4 py-10 text-center">
@@ -360,7 +441,6 @@ const CheckoutPage = () => {
                                 </div>
                             )}
 
-
                             {addressloading && addresses.length === 0 && (
                                 <p className="text-xs text-slate-400">Loading addresses...</p>
                             )}
@@ -380,11 +460,14 @@ const CheckoutPage = () => {
                                             role="radio"
                                             aria-checked={selected}
                                             tabIndex={0}
-                                            onClick={() => setAddressId(address._id)}
-                                            onKeyDown={(event) => {
-                                                if (event.key === "Enter" || event.key === " ") setAddressId(address._id);
-                                            }}
                                             className={optionClass(selected)}
+                                            onClick={() => handleSelectAddress(address)}
+                                            onKeyDown={(event) => {
+                                                if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+                                                    event.preventDefault();
+                                                    handleSelectAddress(address);
+                                                }
+                                            }}
                                         >
                                             <div className="flex items-start gap-3">
                                                 <Radio checked={selected} />
@@ -417,9 +500,10 @@ const CheckoutPage = () => {
                                                 <div className="flex gap-2">
                                                     <button
                                                         type="button"
+                                                        aria-label={`Edit address of ${address.full_name}`}
                                                         onClick={(event) => {
                                                             event.stopPropagation();
-                                                            // TODO: open edit address form
+                                                            handleopenedit(address);
                                                         }}
                                                         className={`cursor-pointer text-xs font-medium hover:text-emerald-600 duration-300 ${selected ? "text-emerald-600" : "text-slate-400"
                                                             } hover:underline`}
@@ -429,6 +513,7 @@ const CheckoutPage = () => {
 
                                                     <button
                                                         type="button"
+                                                        aria-label={`Delete address of ${address.full_name}`}
                                                         onClick={(event) => {
                                                             event.stopPropagation();
                                                             handleopendelete(address);
@@ -588,7 +673,7 @@ const CheckoutPage = () => {
                     </div>
 
                     {/* ---------- order summary ---------- */}
-                    <aside className="rounded-lg border border-gray-200 bg-white lg:sticky lg:top-40">
+                    <aside className="border border-gray-200 bg-white lg:sticky lg:top-40">
                         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
                             <h2 className="text-base font-bold text-gray-900">Order Summary</h2>
                             <span className="text-xs text-slate-400">
@@ -602,7 +687,7 @@ const CheckoutPage = () => {
                                     <img
                                         src={item.image}
                                         alt={item.name}
-                                        className="h-11 w-11 shrink-0 rounded border border-gray-100 bg-gray-50 object-contain"
+                                        className="h-11 w-11 shrink-0 border border-gray-100 bg-gray-50 object-contain"
                                     />
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-xs font-semibold text-gray-900">{item.name}</p>
@@ -642,7 +727,7 @@ const CheckoutPage = () => {
                                 type="button"
                                 onClick={handlePlaceOrder}
                                 disabled={placing || orderItems.length === 0}
-                                className="mt-4 w-full cursor-pointer rounded-md bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+                                className="mt-4 w-full cursor-pointer bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
                             >
                                 {placing ? "Placing order..." : "Place Order"}
                             </button>
@@ -659,9 +744,11 @@ const CheckoutPage = () => {
             {addressmodel && (
                 <AddressModal
                     open={addressmodel}
+                    mode={editTarget ? "edit" : "add"}
+                    initialData={editTarget}
                     onClose={handlecloseaddress}
-                    onSubmit={handleAddAddress}
-                    loading={createaddressloading}
+                    onSubmit={handleSubmitAddress}
+                    loading={createaddressloading || updateaddressloading}
                 />
             )}
 
