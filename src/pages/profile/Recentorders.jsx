@@ -1,23 +1,15 @@
-import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { FiArrowRight, FiChevronRight } from "react-icons/fi";
 import { ORDER_STATUS_STYLES } from "./Profiledata";
 import { normalizeOrder } from "./Orderutils";
-import { getmyorders } from "../../redux/Slices/OrderSlice";
 import RecentOrdersSkeleton from "../../reusables/RecentOrdersSkeleton";
 
 const STATUS_LABEL = { completed: "Delivered", processing: "Processing", cancelled: "Cancelled" };
 
 const RecentOrders = () => {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
     const { ordersloading, ordersdata, orderserror } = useSelector((state) => state.order.myorders);
-
-    // latest 4 orders (API is sorted newest first)
-    useEffect(() => {
-        dispatch(getmyorders({ page: 1, limit: 4 }));
-    }, [dispatch]);
 
     const recent = (Array.isArray(ordersdata) ? ordersdata : []).slice(0, 4).map(normalizeOrder);
 

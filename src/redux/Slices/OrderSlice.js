@@ -3,6 +3,7 @@ import {
     handleplaceorder,
     handlegetmyorders,
     handlegetsingleorder,
+    handledownloadinvoice,
     handleverifypayment,
     handlecancelorder
 } from "../../services/OrderApi";
@@ -31,7 +32,15 @@ export const verifypayment = createAsyncThunk("order/verify", async (data, { rej
 export const getmyorders = createAsyncThunk("order/mine", async ({ limit = 10, page = 1 }, { rejectWithValue }) => {
     try {
         const response = await handlegetmyorders({ limit, page });
-        return response.data.data;
+        const orders = response.data?.data;
+        if (!Array.isArray(orders)) {
+            return rejectWithValue("Unexpected orders response: order list was not found");
+        }
+
+        return {
+            orders,
+            pagination: response.data.pagination ?? null,
+        };
     } catch (error) {
         return rejectWithValue(errMsg(error, "Unable to load orders"));
     }
@@ -45,6 +54,50 @@ export const getsingleorder = createAsyncThunk("order/single", async (orderId, {
         return rejectWithValue(errMsg(error, "Unable to load order"));
     }
 });
+
+export const downloadinvoice = createAsyncThunk(
+    "order/downloadInvoice",
+    async (orderId, { rejectWithValue }) => {
+        try {
+            const response = await handledownloadinvoice(orderId);
+            const blob = response.data;
+            const contentDisposition = response.headers["content-disposition"] || "";
+            const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
+            const filename = filenameMatch
+                ? decodeURIComponent(filenameMatch[1].replace(/"$/, ""))
+                : `invoice-${orderId}.pdf`;
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = downloadUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+
+            return { orderId };
+        } catch (error) {
+            const responseData = error.response?.data;
+            let message = errMsg(error, "Unable to download invoice");
+
+            if (responseData instanceof Blob) {
+                try {
+                    const parsed = JSON.parse(await responseData.text());
+                    message = parsed.message || message;
+                } catch {
+                    // Use the request error message when the server response is not JSON.
+                }
+            } else if (typeof responseData === "string") {
+                message = responseData;
+            } else if (responseData?.message) {
+                message = responseData.message;
+            }
+
+            return rejectWithValue(message);
+        }
+    }
+);
 
 // cancel an unpaid online order (popup closed / payment not completed)
 export const cancelorder = createAsyncThunk("order/cancel", async (orderId, { rejectWithValue }) => {
@@ -119,7 +172,7 @@ const OrderSlice = createSlice({
             })
             .addCase(getmyorders.fulfilled, (state, action) => {
                 state.myorders.ordersloading = false;
-                state.myorders.ordersdata = action.payload;
+                state.myorders.ordersdata = action.payload.orders;
                 state.myorders.orderspagination = action.payload.pagination;
             })
             .addCase(getmyorders.rejected, (state, action) => {

@@ -3,7 +3,7 @@ import { ORDER_BADGE } from "./Profiledata";
 
 const ICONS = { completed: FiCheckCircle, processing: FiPackage, cancelled: FiXCircle };
 
-const OrderCard = ({ order, onInvoice, onDetails, onTrack }) => {
+const OrderCard = ({ order, onInvoice, invoiceLoading = false, onDetails, onTrack }) => {
     const badge = ORDER_BADGE[order.group] || ORDER_BADGE.processing;
     const Icon = ICONS[order.group] || FiPackage;
     const badgeText = order.group === "cancelled" ? badge.prefix : `${badge.prefix} ${order.statusDate}`.trim();
@@ -22,9 +22,10 @@ const OrderCard = ({ order, onInvoice, onDetails, onTrack }) => {
                 <button
                     type="button"
                     onClick={() => onInvoice?.(order)}
-                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                    disabled={invoiceLoading}
+                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    <FiFileText className="h-4 w-4" /> Download Invoice
+                    <FiFileText className="h-4 w-4" /> {invoiceLoading ? "Downloading..." : "Download Invoice"}
                 </button>
             </div>
 

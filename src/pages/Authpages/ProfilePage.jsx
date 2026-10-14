@@ -8,8 +8,9 @@ import ProfileSummary from "../profile/Profilesummary";
 import RecentOrders from "../profile/Recentorders";
 import QuickActions from "../profile/Quickactions";
 import OffersBanner from "../profile/Offersbanner";
-import { DUMMY_ORDERS } from "../profile/Profiledata";
 import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
+import { getwishlistcount } from "../../redux/Slices/AddtocartSlice";
+import { getmyorders } from "../../redux/Slices/OrderSlice";
 import ProfileSummarySkeleton from "../../reusables/ProfileSummarySkeleton";
 import RecentOrdersSkeleton from "../../reusables/RecentOrdersSkeleton";
 import QuickActionsSkeleton from "../../reusables/QuickActionsSkeleton";
@@ -24,17 +25,25 @@ const formatMemberSince = (value) => {
 const ProfilePage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { profileloading, profiledata: profile, profileerror } = useSelector((state) => state.auth.profile);
+    const { profiledata: profile, profileerror } = useSelector((state) => state.auth.profile);
+    const token = useSelector((state) => state.auth.login.token) || sessionStorage.getItem("token");
+    const orderspagination = useSelector((state) => state.order.myorders.orderspagination);
+    const wishlistcount = useSelector((state) => state.cart.wishlist.wishlistcount);
 
     useEffect(() => {
         if (!profile) dispatch(handlefetchprofileinfo());
     }, [dispatch, profile]);
 
-    const orders = Array.isArray(profile?.orders) && profile.orders.length ? profile.orders : DUMMY_ORDERS; // dummy until backend sends orders
+    useEffect(() => {
+        if (token) {
+            dispatch(getmyorders({ page: 1, limit: 4 }));
+            dispatch(getwishlistcount());
+        }
+    }, [dispatch, token]);
 
     const stats = {
-        orders: profile?.totalOrders ?? orders.length,
-        favourites: profile?.favourites,
+        orders: orderspagination?.totalItems ?? "—",
+        favourites: wishlistcount ?? "—",
         wallet: profile?.walletBalance,
         offers: profile?.activeOffers,
     };
@@ -101,7 +110,7 @@ const ProfilePage = () => {
                 onEdit={comingSoon}
                 onChangePhoto={comingSoon}
             />
-            <RecentOrders orders={orders} />
+            <RecentOrders />
             <QuickActions onAction={handleQuickAction} />
             <OffersBanner />
         </main>

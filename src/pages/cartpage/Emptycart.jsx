@@ -7,6 +7,7 @@ import {
     FiChevronLeft,
     FiChevronRight,
     FiHeart,
+    FiHome,
     FiLock,
     FiMinus,
     FiPlus,
@@ -152,7 +153,7 @@ const RecommendedProductCard = ({ product }) => {
     );
 };
 
-const EmptyCart = () => {
+const EmptyCart = ({ name }) => {
     const scrollRef = useRef(null);
     const dispatch = useDispatch();
     const { allproductsdata, allproductsloading, allproductserror } = useSelector((state) => state.product.allproducts);
@@ -185,14 +186,18 @@ const EmptyCart = () => {
             {/* Empty state */}
             <div className="mx-auto flex max-w-2xl flex-col items-center px-4 pt-10 text-center">
                 <div className="relative mb-6 flex h-40 w-40 items-center justify-center rounded-full bg-orange-50">
-                    <FiShoppingBag className="h-20 w-20 text-[#FF6900]" strokeWidth={1.5} />
+                    {name === "Wishlist" ? (
+                        <FiHeart className="mx-auto mb-4 h-18 w-18 text-[#FF6900]" strokeWidth={1.5} />
+                    ) : (
+                        <FiShoppingBag className="h-20 w-20 text-[#FF6900]" strokeWidth={1.5} />
+                    )}
                     <FiStar className="absolute left-2 top-6 h-5 w-5 fill-[#FF6900] text-[#FF6900]" />
                     <FiStar className="absolute right-3 top-3 h-3 w-3 fill-[#FF6900] text-[#FF6900]" />
                     <FiStar className="absolute bottom-6 right-1 h-4 w-4 fill-[#FF6900] text-[#FF6900]" />
                 </div>
 
                 <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
-                    Oops! Your cart feels a bit lonely!
+                    Oops! Your {name} feels a bit lonely!
                 </h2>
                 <p className="mt-2 text-sm text-gray-600">
                     You haven't picked anything yet. Find something you love and add it here!
@@ -200,11 +205,11 @@ const EmptyCart = () => {
 
                 <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
                     <Link
-                        to="/wishlist"
+                        to={name === "Wishlist" ? ("/") : ("/wishlist")}
                         className="flex items-center justify-center gap-2 border border-[#FF6900] py-3 text-sm font-semibold uppercase tracking-wider text-[#FF6900] transition-colors hover:bg-yellow-50"
                     >
-                        <FiHeart className="h-4 w-4" />
-                        Go to wishlist
+                        {name === "Wishlist" ? (<FiHome className="h-4 w-4" />) : (<FiHeart className="h-4 w-4" />)}
+                        {name === "Wishlist" ? ("Go to Home") : ("Go to wishlist")}
                     </Link>
                     <Link
                         to="/shop"
