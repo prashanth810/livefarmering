@@ -195,6 +195,26 @@ export const getwishlistitems = createAsyncThunk(
     }
 );
 
+export const getwishlistcount = createAsyncThunk(
+    "wishlist/count",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await handlegetwhichitems(1, 1);
+            const count = Number(response?.data?.pagination?.totalItems);
+            if (!Number.isFinite(count)) {
+                return rejectWithValue("Unexpected wishlist response: item count was not found");
+            }
+            return count;
+        } catch (error) {
+            return rejectWithValue(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Failed to load wishlist count"
+            );
+        }
+    }
+);
+
 // add items in whish list
 export const addwichlist = createAsyncThunk(
     "wishlist/add",
@@ -292,6 +312,9 @@ const initialState = {
         wishlisterror: null,
         wishlistpagination: null,
         wishlistupdating: false,
+        wishlistcount: null,
+        wishlistcountloading: false,
+        wishlistcounterror: null,
     },
 };
 
@@ -450,10 +473,25 @@ const AddtocartSlice = createSlice({
                 state.wishlist.wishlistloading = false;
                 state.wishlist.wishlistdata = action.payload.wishlistdata;
                 state.wishlist.wishlistpagination = action.payload.pagination;
+                if (Number.isFinite(Number(action.payload.pagination?.totalItems))) {
+                    state.wishlist.wishlistcount = Number(action.payload.pagination.totalItems);
+                }
             })
             .addCase(getwishlistitems.rejected, (state, action) => {
                 state.wishlist.wishlistloading = false;
                 state.wishlist.wishlisterror = action.payload || "Failed to load wishlist items";
+            })
+            .addCase(getwishlistcount.pending, (state) => {
+                state.wishlist.wishlistcountloading = true;
+                state.wishlist.wishlistcounterror = null;
+            })
+            .addCase(getwishlistcount.fulfilled, (state, action) => {
+                state.wishlist.wishlistcountloading = false;
+                state.wishlist.wishlistcount = action.payload;
+            })
+            .addCase(getwishlistcount.rejected, (state, action) => {
+                state.wishlist.wishlistcountloading = false;
+                state.wishlist.wishlistcounterror = action.payload || "Failed to load wishlist count";
             })
             .addCase(addwichlist.pending, (state) => {
                 state.wishlist.wishlistupdating = true;
@@ -497,6 +535,9 @@ const AddtocartSlice = createSlice({
                         state.wishlist.wishlistpagination.totalItems / limit
                     );
                 }
+                if (state.wishlist.wishlistcount != null) {
+                    state.wishlist.wishlistcount += 1;
+                }
             })
             .addCase(addwichlist.rejected, (state, action) => {
                 state.wishlist.wishlistupdating = false;
@@ -534,6 +575,9 @@ const AddtocartSlice = createSlice({
                             state.wishlist.wishlistpagination.totalItems / limit
                         );
                     }
+                    if (state.wishlist.wishlistcount != null) {
+                        state.wishlist.wishlistcount = Math.max(0, state.wishlist.wishlistcount - 1);
+                    }
                 } else {
                     existingItem.quantity = nextQuantity;
                 }
@@ -562,6 +606,9 @@ const AddtocartSlice = createSlice({
                     pagination.totalItems = Math.max(0, (Number(pagination.totalItems) || 0) - 1);
                     const limit = Number(pagination.limit) || 10;
                     pagination.totalPages = Math.ceil(pagination.totalItems / limit);
+                }
+                if (before !== state.wishlist.wishlistdata.length && state.wishlist.wishlistcount != null) {
+                    state.wishlist.wishlistcount = Math.max(0, state.wishlist.wishlistcount - 1);
                 }
             })
             .addCase(deletewishlistitem.rejected, (state, action) => {

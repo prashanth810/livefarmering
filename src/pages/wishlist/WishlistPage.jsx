@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { FiArrowLeft, FiArrowRight, FiHeart, FiMinus, FiPlus, FiShoppingBag, FiShoppingCart } from "react-icons/fi";
 import { addtocart, addwichlist, deletewishlistitem, getwishlistitems, handledecitemswishlist } from "../../redux/Slices/AddtocartSlice";
 import { showErrorToast, showSuccessToast } from "../../components/Toast";
+import EmptyCart from "../cartpage/Emptycart";
+import CartSkeleton from "../../reusables/CartSkeleton";
 
 const WishlistPage = () => {
     const dispatch = useDispatch();
@@ -131,18 +133,15 @@ const WishlistPage = () => {
                         </Link>
                     </div>
                 ) : wishlistloading ? (
-                    <p className="bg-white p-10 text-center text-gray-500">Loading your wishlist...</p>
+                    <CartSkeleton />
                 ) : wishlisterror ? (
                     <div role="alert" className="bg-white p-10 text-center text-red-600">
                         {wishlisterror}
                     </div>
                 ) : items.length === 0 ? (
                     <div className="bg-white p-10 text-center shadow-sm">
-                        <FiHeart className="mx-auto mb-4 h-10 w-10 text-gray-300" />
-                        <p className="mb-4 text-gray-500">Your wishlist is empty.</p>
-                        <Link to="/shop" className="inline-flex items-center gap-2 bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700">
-                            <FiArrowLeft className="h-4 w-4" /> Browse Products
-                        </Link>
+                        <EmptyCart name={"Wishlist"} icon={
+                            <FiHeart className="mx-auto mb-4 h-10 w-10 text-gray-300" />} />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">

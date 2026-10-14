@@ -5,7 +5,7 @@ import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { ORDER_TABS } from "../profile/Profiledata";
 import OrderCard from "./Ordercard";
 import { groupOf, normalizeOrder } from "./Orderutils";
-import { getmyorders } from "../../redux/Slices/OrderSlice";
+import { downloadinvoice, getmyorders } from "../../redux/Slices/OrderSlice";
 
 const LIMIT = 10;
 
@@ -17,6 +17,7 @@ const MyOrdersPage = () => {
 
     const [page, setPage] = useState(1);
     const [active, setActive] = useState("all");
+    const [downloadingOrderId, setDownloadingOrderId] = useState(null);
 
     useEffect(() => {
         dispatch(getmyorders({ page, limit: LIMIT }));
@@ -38,6 +39,21 @@ const MyOrdersPage = () => {
 
     const visible = active === "all" ? list : list.filter((o) => o.group === active);
     const soon = (msg) => () => toast(msg, { id: "orders-toast" });
+
+    const handleInvoiceDownload = async (order) => {
+        const orderId = order.raw?._id ?? order.raw?.orderId ?? order.id;
+        if (!orderId || downloadingOrderId) return;
+
+        setDownloadingOrderId(String(orderId));
+        try {
+            await dispatch(downloadinvoice(orderId)).unwrap();
+            toast.success("Invoice downloaded");
+        } catch (error) {
+            toast.error(typeof error === "string" ? error : "Unable to download invoice");
+        } finally {
+            setDownloadingOrderId(null);
+        }
+    };
 
     const goToPage = (next) => {
         setPage(next);
@@ -118,7 +134,8 @@ const MyOrdersPage = () => {
                         <OrderCard
                             key={order.raw._id ?? order.id}
                             order={order}
-                            onInvoice={soon("Invoice download coming soon")}
+                            onInvoice={handleInvoiceDownload}
+                            invoiceLoading={downloadingOrderId === String(order.raw?._id ?? order.raw?.orderId ?? order.id)}
                             onDetails={soon("Order details coming soon")}
                             onTrack={soon("Order tracking coming soon")}
                         />

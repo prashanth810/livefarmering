@@ -1,6 +1,5 @@
 import { FiCamera, FiEdit2, FiPhone, FiUser, FiHeart, FiPercent } from "react-icons/fi";
 import { LuShoppingBag, LuWallet } from "react-icons/lu";
-import ProfileSummarySkeleton from "../../reusables/ProfileSummarySkeleton";
 
 const StatItem = ({ icon: Icon, value, label, iconClass }) => (
     <div className="flex flex-col items-center gap-1 px-2 text-center">
@@ -10,7 +9,7 @@ const StatItem = ({ icon: Icon, value, label, iconClass }) => (
     </div>
 );
 
-const ProfileSummary = ({ name, email, phone, image, role, memberSince, stats, onEdit, onChangePhoto, profileloading }) => {
+const ProfileSummary = ({ name, email, phone, image, role, memberSince, stats, onEdit, onChangePhoto }) => {
 
     return (
         <section className="grid gap-6 border border-gray-100 bg-white p-5 shadow-sm lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] lg:items-center">
@@ -58,7 +57,7 @@ const ProfileSummary = ({ name, email, phone, image, role, memberSince, stats, o
             {/* Stats */}
             <div className="grid grid-cols-2 gap-y-5 divide-gray-100 sm:grid-cols-4 sm:divide-x">
                 <StatItem icon={LuShoppingBag} value={stats.orders ?? "—"} label="Total Orders" iconClass="text-green-600" />
-                <StatItem icon={FiHeart} value={stats.favourites ?? "—"} label="Favourites" iconClass="text-red-500" />
+                <StatItem icon={FiHeart} value={stats.favourites ?? "—"} label="Wishlist Items" iconClass="text-red-500" />
                 <StatItem icon={LuWallet} value={stats.wallet != null ? `₹${stats.wallet}` : "—"} label="Wallet Balance" iconClass="text-orange-500" />
                 <StatItem icon={FiPercent} value={stats.offers ?? "—"} label="Active Offers" iconClass="text-emerald-600" />
             </div>

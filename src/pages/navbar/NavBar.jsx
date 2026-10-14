@@ -260,6 +260,7 @@ const NavBar = () => {
                                         onClick={() => {
                                             setAccountOpen(false);
                                             navigate("/profile");
+                                            window.scrollTo(0, 0);
                                         }}
                                         className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 cursor-pointer"
                                     >

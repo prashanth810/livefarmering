@@ -177,7 +177,7 @@ const CartPage = () => {
                 {getcartloading || (token && (!userId || cartLoadedForUser !== String(userId))) ? (
                     <CartSkeleton />
                 ) : getcarterror ? (
-                    <EmptyCart />
+                    <EmptyCart name={"Cart"} />
                 ) : cartItems.length === 0 ? (
                     <EmptyCart />
                 ) : (

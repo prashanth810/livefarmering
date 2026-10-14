@@ -17,7 +17,7 @@ export const handleplaceorder = async (data) => {
 export const handlegetmyorders = async ({ limit = 10, page = 1 }) => {
     try {
         return await orderApi.get(`${baseurl}/order/my-orders`, {
-            limit, page
+            params: { limit, page },
         });
     } catch (error) {
         console.error("Get orders failed:", error.response?.data || error.message);
@@ -31,6 +31,17 @@ export const handlegetsingleorder = async (orderId) => {
         return await orderApi.get(`${baseurl}/order/${orderId}`);
     } catch (error) {
         console.error("Get order failed:", error.response?.data || error.message);
+        throw error;
+    }
+};
+
+export const handledownloadinvoice = async (orderId) => {
+    try {
+        return await orderApi.get(`${baseurl}/order/${orderId}/invoice`, {
+            responseType: "blob",
+        });
+    } catch (error) {
+        console.error("Invoice download failed:", error.response?.data || error.message);
         throw error;
     }
 };
