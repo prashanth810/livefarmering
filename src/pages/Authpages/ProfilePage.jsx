@@ -10,6 +10,9 @@ import QuickActions from "../profile/Quickactions";
 import OffersBanner from "../profile/Offersbanner";
 import { DUMMY_ORDERS } from "../profile/Profiledata";
 import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
+import ProfileSummarySkeleton from "../../reusables/ProfileSummarySkeleton";
+import RecentOrdersSkeleton from "../../reusables/RecentOrdersSkeleton";
+import QuickActionsSkeleton from "../../reusables/QuickActionsSkeleton";
 
 const formatMemberSince = (value) => {
     if (!value) return "";
@@ -46,9 +49,40 @@ const ProfilePage = () => {
     if (!profile) {
         return (
             <main className="mx-auto flex xl:max-w-[90%] flex-col gap-5 px-4 py-6 sm:px-6">
-                <p role={profileerror ? "alert" : undefined} className="text-sm text-gray-600">
-                    {profileerror ? "Unable to load your profile." : profileloading ? "Loading profile..." : "Loading profile..."}
-                </p>
+                {profileerror ? (
+                    <p role="alert" className="text-sm text-gray-600">
+                        Unable to load your profile.
+                    </p>
+                ) : (
+                    <>
+                        <div className="flex items-center gap-4 my-3 p-5 border border-gray-300">
+                            <div className="min-w-0 flex-1 space-y-2">
+                                <div className="h-6 w-40 max-w-full rounded bg-gray-200" />
+                                <div className="h-5 w-52 max-w-full rounded bg-gray-200" />
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="h-5 w-32 rounded bg-gray-200" />
+                                <div className="h-5 w-32 rounded bg-gray-200" />
+                                <div className="h-5 w-32 rounded bg-gray-200" />
+                            </div>
+                        </div>
+                        <ProfileSummarySkeleton />
+                        <RecentOrdersSkeleton />
+                        <QuickActionsSkeleton />
+
+
+                        <div className="flex items-center justify-between gap-4 border border-gray-200 shadow-sm p-4">
+                            <div className="border border-gray-300 bg-gray-100 h-8 w-72">
+                            </div>
+                            <div className="border border-gray-300 bg-gray-100 h-8 w-72">
+                            </div>
+                            <div className="border border-gray-300 bg-gray-100 h-8 w-72">
+                            </div>
+                            <div className="border border-gray-300 bg-gray-100 h-8 w-72">
+                            </div>
+                        </div>
+                    </>
+                )}
             </main>
         );
     }

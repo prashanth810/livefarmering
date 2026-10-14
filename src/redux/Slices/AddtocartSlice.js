@@ -284,6 +284,7 @@ const initialState = {
         getcartloading: false,
         getcartdata: [],
         getcarterror: null,
+        requestId: null,
     },
     wishlist: {
         wishlistloading: false,
@@ -297,7 +298,16 @@ const initialState = {
 const AddtocartSlice = createSlice({
     name: "cart",
     initialState,
-    reducers: {},
+    reducers: {
+        removeCartItems: (state, action) => {
+            const removed = Array.isArray(action.payload) ? action.payload : [];
+            state.getcart.requestId = null;
+            state.getcart.getcartloading = false;
+            state.carts.cartdata = state.carts.cartdata.filter(
+                (cartItem) => !removed.some((r) => isSameCartItem(cartItem, r.productId, r.weight))
+            );
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(logout, (state) => {
@@ -398,13 +408,6 @@ const AddtocartSlice = createSlice({
             })
             .addCase(deleteproductfromcart.fulfilled, (state, action) => {
                 state.carts.cartloading = false;
-                const updatedItems = extractCartItems(action.payload);
-
-                if (Array.isArray(updatedItems)) {
-                    state.carts.cartdata = updatedItems.map(normalizeCartItem).filter(Boolean);
-                    return;
-                }
-
                 const productId = getCartProductId(action.meta.arg);
                 const weight = action.meta.arg?.weight ?? action.meta.arg?.unit;
                 state.carts.cartdata = state.carts.cartdata.filter((cartItem) =>
@@ -418,18 +421,25 @@ const AddtocartSlice = createSlice({
             })
 
             // get cart items 
-            .addCase(getcartitems.pending, (state) => {
+            .addCase(getcartitems.pending, (state, action) => {
                 state.getcart.getcartloading = true;
                 state.getcart.getcarterror = null;
+                state.getcart.requestId = action.meta.requestId;
             })
             .addCase(getcartitems.fulfilled, (state, action) => {
+                if (state.getcart.requestId !== action.meta.requestId) return;
+
                 state.getcart.getcartloading = false;
                 state.getcart.getcartdata = action.payload;
                 state.carts.cartdata = action.payload.map(normalizeCartItem).filter(Boolean);
+                state.getcart.requestId = null;
             })
             .addCase(getcartitems.rejected, (state, action) => {
+                if (state.getcart.requestId !== action.meta.requestId) return;
+
                 state.getcart.getcartloading = false;
                 state.getcart.getcarterror = action.payload;
+                state.getcart.requestId = null;
             })
 
             .addCase(getwishlistitems.pending, (state) => {
@@ -562,3 +572,4 @@ const AddtocartSlice = createSlice({
 });
 
 export default AddtocartSlice.reducer;
+export const { removeCartItems } = AddtocartSlice.actions;

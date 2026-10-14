@@ -34,6 +34,7 @@ const ACTIONS = [
         icon: FiSettings,
         card: "bg-blue-50",
         iconBox: "bg-blue-100 text-blue-600",
+        to: "/settings"
     },
 ];
 

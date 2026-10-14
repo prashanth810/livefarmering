@@ -1,5 +1,6 @@
 import { FiCamera, FiEdit2, FiPhone, FiUser, FiHeart, FiPercent } from "react-icons/fi";
 import { LuShoppingBag, LuWallet } from "react-icons/lu";
+import ProfileSummarySkeleton from "../../reusables/ProfileSummarySkeleton";
 
 const StatItem = ({ icon: Icon, value, label, iconClass }) => (
     <div className="flex flex-col items-center gap-1 px-2 text-center">
@@ -9,7 +10,8 @@ const StatItem = ({ icon: Icon, value, label, iconClass }) => (
     </div>
 );
 
-const ProfileSummary = ({ name, email, phone, image, role, memberSince, stats, onEdit, onChangePhoto }) => {
+const ProfileSummary = ({ name, email, phone, image, role, memberSince, stats, onEdit, onChangePhoto, profileloading }) => {
+
     return (
         <section className="grid gap-6 border border-gray-100 bg-white p-5 shadow-sm lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] lg:items-center">
             {/* User info */}

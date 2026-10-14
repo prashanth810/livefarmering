@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { FiCreditCard, FiInfo, FiLock, FiPlus, FiMapPin } from "react-icons/fi";
-import { getcartitems } from "../../redux/Slices/AddtocartSlice";
+import { FiLock, FiPlus, FiMapPin } from "react-icons/fi";
+import { getcartitems, deleteproductfromcart, removeCartItems } from "../../redux/Slices/AddtocartSlice";
 import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 import { showErrorToast, showSuccessToast, showWarningToast } from "../../components/Toast";
@@ -19,6 +19,10 @@ import {
 import DeleteConfirmModal from "../../reusables/DeleteConfirmModal";
 import CheckoutSkeleton from "../../reusables/CheckoutSkeleton";
 
+// razor pay
+import { placeorder, verifypayment, cancelorder } from "../../redux/Slices/OrderSlice";
+import { openRazorpay } from "../../utils/razorpay";
+
 // ---------- config (change as per your business rules) ----------
 const TAX_RATE = 0.05;
 const MAX_ADDRESSES = 3;
@@ -30,7 +34,6 @@ const deliveryOptions = [
 ];
 
 const paymentOptions = [
-    { id: "card", label: "Credit / Debit Card", note: "Safe and secure card payment" },
     { id: "upi", label: "UPI", note: "Pay using any UPI app. You will be redirected to complete the payment." },
     { id: "cod", label: "Cash on Delivery", note: "Pay with cash when your order is delivered" },
 ];
@@ -109,9 +112,13 @@ const CheckoutPage = () => {
     const [productDetailsById, setProductDetailsById] = useState({});
     const [addressId, setAddressId] = useState(null);
     const [deliveryId, setDeliveryId] = useState("standard");
-    const [paymentId, setPaymentId] = useState("card");
     const [placing, setPlacing] = useState(false);
     const [card, setCard] = useState({ number: "", expiry: "", cvv: "", name: "" });
+
+    const location = useLocation();
+    const buyNow = location.state?.buyNow || null; // set by the Buy Now button
+
+    const [paymentId, setPaymentId] = useState("upi");
 
     // add / edit address modal
     const [addressmodel, setAddressmodel] = useState(false);
@@ -243,7 +250,19 @@ const CheckoutPage = () => {
         };
     }, [dispatch, userId]);
 
-    const rawCartItems = useMemo(() => (Array.isArray(cartdata) ? cartdata : []), [cartdata]);
+    const rawCartItems = useMemo(() => {
+        if (buyNow) {
+            return [{
+                productId: buyNow.productId,
+                name: buyNow.name,
+                weight: buyNow.weight,
+                quantity: buyNow.quantity,
+                price: buyNow.price,
+                image: buyNow.image,
+            }];
+        }
+        return Array.isArray(cartdata) ? cartdata : [];
+    }, [buyNow, cartdata]);
 
     const cartProductIdsKey = useMemo(
         () =>
@@ -294,6 +313,7 @@ const CheckoutPage = () => {
 
                 return {
                     id: `${productId || index}-${item.weight || "unit"}`,
+                    productId: String(productId),
                     name: item.name || product.name || "Product",
                     unit: item.weight || item.unit || "",
                     quantity: Number(item.quantity) || 1,
@@ -307,8 +327,9 @@ const CheckoutPage = () => {
     const selectedDelivery = deliveryOptions.find((option) => option.id === deliveryId);
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shipping = orderItems.length > 0 ? selectedDelivery.price : 0;
-    const tax = subtotal * TAX_RATE;
-    const total = subtotal + shipping + tax;
+
+    const tax = Number((subtotal * TAX_RATE).toFixed(2));
+    const total = Number((subtotal + shipping + tax).toFixed(2));
 
     // ---- card field handlers ----
     const handleCardChange = (event) => {
@@ -335,6 +356,62 @@ const CheckoutPage = () => {
         return "";
     };
 
+    // Remove purchased lines from local state immediately, then persist removals via the cart API.
+    const clearPurchasedFromCart = async () => {
+        const purchasedCartItems = (Array.isArray(cartdata) ? cartdata : []).filter((cartItem) => {
+            const cartProductId = cartItem.productId && typeof cartItem.productId === "object"
+                ? cartItem.productId._id
+                : cartItem.productId;
+            const cartWeight = cartItem.weight ?? cartItem.unit ?? "";
+
+            return orderItems.some((orderedItem) =>
+                String(orderedItem.productId) === String(cartProductId) &&
+                String(orderedItem.unit ?? "") === String(cartWeight)
+            );
+        });
+
+        if (purchasedCartItems.length === 0) return;
+
+        dispatch(removeCartItems(purchasedCartItems.map((item) => ({
+            productId: item.productId && typeof item.productId === "object"
+                ? item.productId._id
+                : item.productId,
+            weight: item.weight ?? item.unit ?? "",
+        }))));
+
+        let failedDeletes = 0;
+        // Keep API deletes sequential so each request sees the latest server cart.
+        for (const item of purchasedCartItems) {
+            try {
+                await dispatch(
+                    deleteproductfromcart({
+                        productId: item.productId && typeof item.productId === "object"
+                            ? item.productId._id
+                            : item.productId,
+                        weight: item.weight ?? item.unit ?? "",
+                    })
+                ).unwrap();
+            } catch {
+                failedDeletes += 1;
+            }
+        }
+
+        if (failedDeletes > 0) {
+            showWarningToast(
+                `Your order was placed, but ${failedDeletes} cart item${failedDeletes === 1 ? " could" : "s could"} not be removed from your saved cart.`
+            );
+            return;
+        }
+
+        if (userId) {
+            try {
+                await dispatch(getcartitems(userId)).unwrap();
+            } catch {
+                showWarningToast("Your order was placed and your cart was cleared, but the remaining cart items could not be refreshed.");
+            }
+        }
+    };
+
     const handlePlaceOrder = async () => {
         if (orderItems.length === 0) {
             showWarningToast("Your cart is empty");
@@ -346,22 +423,51 @@ const CheckoutPage = () => {
             return;
         }
 
-        if (paymentId === "card") {
-            const cardError = validateCard();
-            if (cardError) {
-                showErrorToast(cardError);
-                return;
-            }
-        }
+        const paymentMethod = paymentId === "cod" ? "COD" : "ONLINE";
+
+        let createdOrderId = null;
+        let paymentDone = false;
 
         setPlacing(true);
         try {
-            // TODO: replace with your order API, e.g.
-            // await dispatch(placeorder({ addressId: selectedAddressId, deliveryId, paymentId, items: orderItems })).unwrap();
-            await new Promise((resolve) => setTimeout(resolve, 800));
-            showSuccessToast("Order placed successfully!");
-            navigate("/");
+            const result = await dispatch(
+                placeorder({
+                    addressId: selectedAddressId,
+                    deliveryId,
+                    paymentMethod,
+                    items: orderItems.map((item) => ({
+                        productId: item.productId,
+                        weight: item.unit,
+                        quantity: item.quantity,
+                    })),
+                })
+            ).unwrap();
+
+            createdOrderId = result.order._id;
+
+            if (paymentMethod === "ONLINE") {
+                const paymentResponse = await openRazorpay({
+                    order: result.order,
+                    razorpay: result.razorpay,
+                    profile,
+                    onFailed: (message) => showErrorToast(message || "Payment failed. Please try again."),
+                });
+
+                paymentDone = true; // money was taken, never cancel after this point
+
+                await dispatch(
+                    verifypayment({ orderId: result.order._id, ...paymentResponse })
+                ).unwrap();
+            }
+
+            await clearPurchasedFromCart();
+            showSuccessToast(paymentMethod === "COD" ? "Order placed successfully!" : "Payment successful. Order placed!");
+            navigate("/orders", { replace: true });
         } catch (error) {
+            // popup closed or payment not completed -> cancel the unpaid order
+            if (createdOrderId && paymentMethod === "ONLINE" && !paymentDone) {
+                dispatch(cancelorder(createdOrderId));
+            }
             showErrorToast(getErrorMessage(error, "Unable to place your order"));
         } finally {
             setPlacing(false);
@@ -571,19 +677,13 @@ const CheckoutPage = () => {
                         <Section step={3} title="Payment Method">
                             {paymentOptions.map((option) => {
                                 const selected = paymentId === option.id;
-                                const isCard = option.id === "card";
                                 return (
-                                    <div
+                                    <button
                                         key={option.id}
+                                        type="button"
                                         role="radio"
                                         aria-checked={selected}
-                                        tabIndex={0}
                                         onClick={() => setPaymentId(option.id)}
-                                        onKeyDown={(event) => {
-                                            if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
-                                                setPaymentId(option.id);
-                                            }
-                                        }}
                                         className={optionClass(selected)}
                                     >
                                         <div className="flex items-start gap-3">
@@ -592,81 +692,8 @@ const CheckoutPage = () => {
                                                 <p className="text-sm font-semibold text-gray-900">{option.label}</p>
                                                 <p className="mt-1.5 text-xs text-slate-400">{option.note}</p>
                                             </div>
-                                            {isCard && (
-                                                <span className="rounded bg-gray-100 p-1 text-slate-400">
-                                                    <FiCreditCard className="h-3.5 w-3.5" />
-                                                </span>
-                                            )}
                                         </div>
-
-                                        {isCard && selected && (
-                                            <div
-                                                className="mt-4 space-y-4 border-t border-emerald-200/70 pt-4"
-                                                onClick={(event) => event.stopPropagation()}
-                                            >
-                                                <CardInput label="Card Number">
-                                                    <div className="relative">
-                                                        <FiCreditCard className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                                                        <input
-                                                            type="text"
-                                                            inputMode="numeric"
-                                                            autoComplete="cc-number"
-                                                            name="number"
-                                                            value={card.number}
-                                                            onChange={handleCardChange}
-                                                            placeholder="4444 5555 6666 7777"
-                                                            className={`${cardInputClass} pl-9`}
-                                                        />
-                                                    </div>
-                                                </CardInput>
-
-                                                <div className="grid gap-4 sm:grid-cols-2">
-                                                    <CardInput label="Expiry Date">
-                                                        <input
-                                                            type="text"
-                                                            inputMode="numeric"
-                                                            autoComplete="cc-exp"
-                                                            name="expiry"
-                                                            value={card.expiry}
-                                                            onChange={handleCardChange}
-                                                            placeholder="MM/YY"
-                                                            className={cardInputClass}
-                                                        />
-                                                    </CardInput>
-                                                    <CardInput label="CVV">
-                                                        <div className="relative">
-                                                            <input
-                                                                type="password"
-                                                                inputMode="numeric"
-                                                                autoComplete="cc-csc"
-                                                                name="cvv"
-                                                                value={card.cvv}
-                                                                onChange={handleCardChange}
-                                                                placeholder="123"
-                                                                className={`${cardInputClass} pr-9`}
-                                                            />
-                                                            <FiInfo
-                                                                className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
-                                                                title="3 or 4 digit code on the back of your card"
-                                                            />
-                                                        </div>
-                                                    </CardInput>
-                                                </div>
-
-                                                <CardInput label="Name on Card">
-                                                    <input
-                                                        type="text"
-                                                        autoComplete="cc-name"
-                                                        name="name"
-                                                        value={card.name}
-                                                        onChange={handleCardChange}
-                                                        placeholder="Name on card"
-                                                        className={cardInputClass}
-                                                    />
-                                                </CardInput>
-                                            </div>
-                                        )}
-                                    </div>
+                                    </button>
                                 );
                             })}
                         </Section>
