@@ -16,6 +16,7 @@ import WishlistPage from "./pages/wishlist/WishlistPage";
 import ContactPage from "./pages/contact/Contactpage";
 import CheckoutPage from "./pages/checkout/Checkoutpage";
 import MyOrdersPage from "./pages/profile/Myorderspage";
+import AccountSettings from "./pages/settings/Accountsettings";
 
 // Home
 const Home = () => (
@@ -148,7 +149,17 @@ const App = () => {
             </PrivateRoute>
           }
         />
+
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <AccountSettings />
+            </PrivateRoute>
+          }
+        />
       </Routes>
+
 
       {!isAuthPage && <Footer />}
     </>

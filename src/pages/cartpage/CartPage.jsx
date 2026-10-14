@@ -8,8 +8,6 @@ import {
     FiArrowRight,
     FiArrowLeft,
     FiShield,
-    FiTrash,
-    FiShoppingBag,
     FiShoppingCart,
 } from "react-icons/fi";
 import { addtocart, deleteproductfromcart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
@@ -17,6 +15,7 @@ import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 import { showErrorToast } from "../../components/Toast";
 import EmptyCart from "./Emptycart";
+import CartSkeleton from "../../reusables/CartSkeleton";
 
 const CartPage = () => {
     const dispatch = useDispatch();
@@ -176,15 +175,11 @@ const CartPage = () => {
                 </h1>
 
                 {getcartloading || (token && (!userId || cartLoadedForUser !== String(userId))) ? (
-                    <p className="bg-white p-10 text-center text-gray-500">Loading your cart...</p>
+                    <CartSkeleton />
                 ) : getcarterror ? (
-                    <>
-                        <EmptyCart />
-                    </>
+                    <EmptyCart />
                 ) : cartItems.length === 0 ? (
-                    <div>
-                        <EmptyCart />
-                    </div>
+                    <EmptyCart />
                 ) : (
                     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                         {/* Product details */}

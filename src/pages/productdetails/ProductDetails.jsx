@@ -379,17 +379,24 @@ const ProductDetails = () => {
                         </div>
 
                         <div className="mb-6 flex items-end gap-4 border-b border-[var(--border)] pb-6">
-                            <div className="flex flex-col">
-                                {product.oldPrice && <span className="text-xl font-medium text-[var(--muted-foreground)] line-through">
-                                    ₹{product.oldPrice.toFixed(2)}
-                                </span>}
-                                <span className="text-4xl font-extrabold leading-none text-[var(--foreground)]">
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-4xl font-bold leading-none font-mono text-[var(--foreground)]">
                                     ₹{product.price.toFixed(2)}
                                 </span>
+
+                                {product.oldPrice && (
+                                    <span className="text-md font-medium text-[var(--muted-foreground)] line-through font-mono">
+                                        ₹{product.oldPrice.toFixed(2)}
+                                    </span>
+                                )}
+
+                                {product.oldPrice && (
+                                    <span className="self-center bg-[var(--destructive)] px-2.5 py-1 text-sm font-bold text-[var(--destructive-foreground)]">
+                                        Save {Math.round((1 - product.price / product.oldPrice) * 100)}%
+                                    </span>
+                                )}
                             </div>
-                            {product.oldPrice && <span className="mb-0.5 bg-[var(--destructive)] px-2.5 py-1 text-sm font-bold text-[var(--destructive-foreground)]">
-                                Save {Math.round((1 - product.price / product.oldPrice) * 100)}%
-                            </span>}
+
                         </div>
 
                         {variants.length > 0 && (
@@ -482,6 +489,25 @@ const ProductDetails = () => {
                                 {variantStock > 0 && (
                                     <button
                                         type="button"
+                                        onClick={() => {
+                                            if (!token) {
+                                                showErrorToast("Please login to continue");
+                                                navigate("/login");
+                                                return;
+                                            }
+                                            navigate("/checkout", {
+                                                state: {
+                                                    buyNow: {
+                                                        productId: product.id,
+                                                        name: product.name,
+                                                        weight: selectedWeight,
+                                                        quantity: displayedQuantity,
+                                                        price: product.price,
+                                                        image: product.image,
+                                                    },
+                                                },
+                                            });
+                                        }}
                                         className="flex h-12 flex-1 items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] px-6 text-base font-semibold text-[var(--accent-foreground)] cursor-pointer"
                                     >
                                         Buy Now

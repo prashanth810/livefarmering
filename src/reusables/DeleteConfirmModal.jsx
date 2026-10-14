@@ -40,7 +40,7 @@ const DeleteConfirmModal = ({
                 role="alertdialog"
                 aria-modal="true"
                 aria-labelledby="delete-modal-title"
-                className="w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg"
+                className="w-full max-w-sm overflow-hidden bg-white shadow-lg"
             >
                 <div className="flex items-start justify-between gap-3 px-5 pt-5">
                     <div className="flex items-start gap-3">
@@ -70,7 +70,7 @@ const DeleteConfirmModal = ({
                         type="button"
                         onClick={onClose}
                         disabled={loading}
-                        className="flex-1 cursor-pointer rounded-md border border-gray-300 bg-white py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex-1 cursor-pointer border border-gray-300 bg-white py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         Cancel
                     </button>
@@ -78,7 +78,7 @@ const DeleteConfirmModal = ({
                         type="button"
                         onClick={onConfirm}
                         disabled={loading}
-                        className="flex-1 cursor-pointer rounded-md bg-red-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="flex-1 cursor-pointer bg-red-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                         {loading ? "Deleting..." : confirmLabel}
                     </button>

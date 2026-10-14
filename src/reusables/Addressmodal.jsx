@@ -64,20 +64,6 @@ const validate = (values) => {
     return errors;
 };
 
-/**
- * Reusable address modal (add + edit).
- *
- * Props
- * - open:        boolean, show / hide the modal
- * - onClose:     () => void
- * - onSubmit:    (values) => void | Promise  -> values has the exact backend fields:
- *                full_name, phone, building_number, street, landmark, city,
- *                state, pincode, country, address_type, is_default
- * - initialData: optional address object, pass it to open the modal in edit mode
- * - loading:     boolean, disables the form while saving
- * - title:       optional, overrides the default heading
- * - submitLabel: optional, overrides the default button text
- */
 const AddressModal = ({
     open,
     onClose,
@@ -228,7 +214,7 @@ const AddressModal = ({
                                             type="button"
                                             onClick={() => setValues((prev) => ({ ...prev, address_type: value }))}
                                             aria-pressed={selected}
-                                            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border py-2 text-xs font-semibold transition-colors ${selected
+                                            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 border py-2 text-xs font-semibold transition-colors ${selected
                                                 ? "border-emerald-500 bg-[#dff7e9] text-emerald-700"
                                                 : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                                                 }`}
