@@ -62,6 +62,11 @@ const RecentOrders = () => {
                                     <p className="text-xs text-gray-600">
                                         {count} {count === 1 ? "item" : "items"} • ₹{order.total}
                                     </p>
+                                    {order.estimatedDelivery && order.group !== "completed" && (
+                                        <p className="text-xs text-emerald-700">
+                                            Est. delivery: {order.estimatedDelivery}
+                                        </p>
+                                    )}
                                     <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[11px] font-medium ${ORDER_STATUS_STYLES[label] || "bg-gray-100 text-gray-600"}`}>
                                         {label}
                                     </span>

@@ -427,6 +427,7 @@ const CheckoutPage = () => {
 
         let createdOrderId = null;
         let paymentDone = false;
+        let paymentResponse = null;
 
         setPlacing(true);
         try {
@@ -446,7 +447,7 @@ const CheckoutPage = () => {
             createdOrderId = result.order._id;
 
             if (paymentMethod === "ONLINE") {
-                const paymentResponse = await openRazorpay({
+                paymentResponse = await openRazorpay({
                     order: result.order,
                     razorpay: result.razorpay,
                     profile,
@@ -460,9 +461,26 @@ const CheckoutPage = () => {
                 ).unwrap();
             }
 
+            // snapshot BEFORE the cart is cleared (orderItems becomes empty after that)
+            const orderSummary = {
+                orderId: result.order._id,
+                createdAt: result.order.createdAt || new Date().toISOString(),
+                paymentMethod,
+                transactionId: paymentResponse?.razorpay_payment_id || "",
+                items: orderItems,
+                subtotal,
+                shipping,
+                tax,
+                total,
+                address: addresses.find((a) => a._id === selectedAddressId) || null,
+                deliveryLabel: selectedDelivery.label,
+                estimatedDeliveryFrom: result.order.estimatedDeliveryFrom,
+                estimatedDeliveryTo: result.order.estimatedDeliveryTo,
+                expectedDelivery: result.order.expectedDelivery ?? formatArrival(selectedDelivery.days),
+            };
+
             await clearPurchasedFromCart();
-            showSuccessToast(paymentMethod === "COD" ? "Order placed successfully!" : "Payment successful. Order placed!");
-            navigate("/orders", { replace: true });
+            navigate("/order-success", { replace: true, state: { orderSummary } });
         } catch (error) {
             // popup closed or payment not completed -> cancel the unpaid order
             if (createdOrderId && paymentMethod === "ONLINE" && !paymentDone) {

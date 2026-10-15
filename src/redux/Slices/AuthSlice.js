@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getmyprofielinfo, handlelogout, LoginApi, Registerapi } from "../Apis";
+import { getmyprofielinfo, handlelogout, handleprofileedit, LoginApi, Registerapi } from "../Apis";
 
 // register api
 export const handleRegister = createAsyncThunk("auth/register", async (data, { rejectWithValue }) => {
@@ -55,6 +55,26 @@ export const logoutapi = createAsyncThunk("auth/logout", async (token, ThunkApi)
     }
 })
 
+// update profile data
+export const updateprofile = createAsyncThunk("auth/edit", async ({ id, data }, ThunkApi) => {
+    try {
+        const response = await handleprofileedit({ id, data });
+        const payload = response.data;
+        return payload?.data?.user ?? payload?.data ?? payload?.user ?? payload;
+    }
+    catch (error) {
+        return ThunkApi.rejectWithValue(
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            (typeof error.response?.data === "string" ? error.response.data : null) ||
+            error.message ||
+            "Unable to update your profile"
+        );
+    }
+})
+
+
+
 const AuthSlice = createSlice({
     name: "auth",
 
@@ -75,6 +95,8 @@ const AuthSlice = createSlice({
             profileloading: false,
             profiledata: null,
             profileerror: null,
+            profileupdating: false,
+            profileupdateerror: null,
         },
 
     },
@@ -128,6 +150,18 @@ const AuthSlice = createSlice({
             .addCase(handlefetchprofileinfo.rejected, (state, action) => {
                 state.profile.profileloading = false;
                 state.profile.profileerror = action.payload;
+            })
+            .addCase(updateprofile.pending, (state) => {
+                state.profile.profileupdating = true;
+                state.profile.profileupdateerror = null;
+            })
+            .addCase(updateprofile.fulfilled, (state, action) => {
+                state.profile.profileupdating = false;
+                state.profile.profiledata = action.payload;
+            })
+            .addCase(updateprofile.rejected, (state, action) => {
+                state.profile.profileupdating = false;
+                state.profile.profileupdateerror = action.payload;
             })
 
             // logout

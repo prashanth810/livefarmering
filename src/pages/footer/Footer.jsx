@@ -8,7 +8,7 @@ const quickLinks = [
     { label: "About Us", href: "/about" },
     { label: "Vendor Partners", href: "/vendors" },
     { label: "Careers", href: "/careers" },
-    { label: "Track Order", href: "/track-order" },
+    { label: "Track Order", href: "/orders" },
     { label: "Contact Support", href: "/contact" },
 ];
 
@@ -72,6 +72,7 @@ const Footer = () => {
                                 <li key={link.label}>
                                     <Link
                                         to={link.href}
+                                        onClick={() => window.scrollTo(0, 0)}
                                         className="text-sm text-gray-500 transition-colors hover:text-green-600"
                                     >
                                         {link.label}

@@ -6,6 +6,7 @@ import { ORDER_TABS } from "../profile/Profiledata";
 import OrderCard from "./Ordercard";
 import { groupOf, normalizeOrder } from "./Orderutils";
 import { downloadinvoice, getmyorders } from "../../redux/Slices/OrderSlice";
+import { useNavigate } from "react-router-dom";
 
 const LIMIT = 10;
 
@@ -18,6 +19,7 @@ const MyOrdersPage = () => {
     const [page, setPage] = useState(1);
     const [active, setActive] = useState("all");
     const [downloadingOrderId, setDownloadingOrderId] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         dispatch(getmyorders({ page, limit: LIMIT }));
@@ -61,41 +63,13 @@ const MyOrdersPage = () => {
     };
 
     const arrowClass =
-        "flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-900 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40";
+        "flex h-9 w-9 items-center justify-center border border-yellow-800 bg-white text-gray-900 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40";
 
     return (
         <main className="mx-auto flex max-w-[90%] flex-col gap-6 px-4 py-8 sm:px-6">
             {/* title + pagination (right corner) */}
             <div className="flex items-center justify-between gap-4">
                 <h1 className="text-2xl font-semibold text-gray-900">My Orders</h1>
-
-                {orderspagination && (
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            aria-label="Previous page"
-                            disabled={!orderspagination.hasPrevPage || ordersloading}
-                            onClick={() => goToPage(page - 1)}
-                            className={arrowClass}
-                        >
-                            <FiChevronLeft className="h-5 w-5" />
-                        </button>
-
-                        <span className="min-w-6 text-center text-sm font-semibold text-gray-900">
-                            {orderspagination.currentPage}
-                        </span>
-
-                        <button
-                            type="button"
-                            aria-label="Next page"
-                            disabled={!orderspagination.hasNextPage || ordersloading}
-                            onClick={() => goToPage(page + 1)}
-                            className={arrowClass}
-                        >
-                            <FiChevronRight className="h-5 w-5" />
-                        </button>
-                    </div>
-                )}
             </div>
 
             <div className="scrollbar flex gap-8 overflow-x-auto border-b border-gray-200" role="tablist">
@@ -137,9 +111,38 @@ const MyOrdersPage = () => {
                             onInvoice={handleInvoiceDownload}
                             invoiceLoading={downloadingOrderId === String(order.raw?._id ?? order.raw?.orderId ?? order.id)}
                             onDetails={soon("Order details coming soon")}
-                            onTrack={soon("Order tracking coming soon")}
+                            onTrack={(order) => navigate(`/track-order/${order.raw?._id ?? order.id}`)}
                         />
                     ))}
+                </div>
+            )}
+
+
+            {orderspagination && (
+                <div className="flex items-center  justify-end gap-3">
+                    <button
+                        type="button"
+                        aria-label="Previous page"
+                        disabled={!orderspagination.hasPrevPage || ordersloading}
+                        onClick={() => goToPage(page - 1)}
+                        className={arrowClass}
+                    >
+                        <FiChevronLeft className="h-5 w-5" />
+                    </button>
+
+                    <span className="min-w-6 text-center text-sm font-semibold text-gray-900">
+                        {orderspagination.currentPage}
+                    </span>
+
+                    <button
+                        type="button"
+                        aria-label="Next page"
+                        disabled={!orderspagination.hasNextPage || ordersloading}
+                        onClick={() => goToPage(page + 1)}
+                        className={arrowClass}
+                    >
+                        <FiChevronRight className="h-5 w-5" />
+                    </button>
                 </div>
             )}
         </main>

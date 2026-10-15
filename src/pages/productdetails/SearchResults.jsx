@@ -157,9 +157,9 @@ const ProductCard = ({ product }) => {
 
                 <div className="mt-auto flex flex-wrap items-end justify-between gap-2 pt-4">
                     <div>
-                        <strong className="block text-base text-gray-900">${product.price.toFixed(2)}</strong>
+                        <strong className="block text-base text-gray-900"> ₹{product.price.toFixed(2)}</strong>
                         {product.oldPrice ? (
-                            <span className="text-xs text-gray-400 line-through">${product.oldPrice.toFixed(2)}</span>
+                            <span className="text-xs text-gray-400 line-through"> ₹{product.oldPrice.toFixed(2)}</span>
                         ) : null}
                     </div>
                     {cartQuantity > 0 ? (

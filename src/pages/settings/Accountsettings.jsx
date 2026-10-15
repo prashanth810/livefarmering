@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { FiBell, FiLock, FiUser } from "react-icons/fi";
-import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
+import { handlefetchprofileinfo, updateprofile } from "../../redux/Slices/AuthSlice";
 import DeleteConfirmModal from "../../reusables/DeleteConfirmModal";
 import PersonalInfo from "./Personalinfo";
 import ChangePassword from "./Changepassword";
 import NotificationPrefs from "./Notificationprefs";
 import DangerZone from "./Dangerzone";
+import { showErrorToast, showSuccessToast } from "../../components/Toast";
 
 const SECTIONS = [
     { id: "profile-settings", label: "Profile Settings", icon: FiUser },
@@ -19,7 +20,12 @@ const soon = (message) => toast(message, { id: "settings-toast" });
 
 const AccountSettings = () => {
     const dispatch = useDispatch();
-    const { profiledata: profile, profileerror } = useSelector((state) => state.auth.profile);
+    const {
+        profiledata: profile,
+        profileerror,
+        profileloading,
+        profileupdating,
+    } = useSelector((state) => state.auth.profile);
 
     const [activeId, setActiveId] = useState(SECTIONS[0].id);
     const [deleteOpen, setDeleteOpen] = useState(false);
@@ -27,8 +33,8 @@ const AccountSettings = () => {
     const ready = Boolean(profile);
 
     useEffect(() => {
-        if (!profile) dispatch(handlefetchprofileinfo());
-    }, [dispatch, profile]);
+        dispatch(handlefetchprofileinfo());
+    }, [dispatch]);
 
     // highlight the sidebar item of the section that is on screen while scrolling
     useEffect(() => {
@@ -56,10 +62,25 @@ const AccountSettings = () => {
         document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
-    // ---- handlers (connect these to your APIs) ----
-    const handleSaveProfile = async () => {
-        // TODO: await dispatch(updateprofile(values)).unwrap(); then dispatch(handlefetchprofileinfo())
-        soon("Profile update will be available soon");
+    const handleSaveProfile = async (values) => {
+        if (!profile?._id) {
+            showErrorToast("Unable to identify your profile. Please refresh and try again.");
+            return;
+        }
+
+        const data = new FormData();
+        data.append("name", values.name);
+        if (values.phone) data.append("phone", values.phone);
+        if (values.date_of_birth) data.append("date_of_birth", values.date_of_birth);
+        if (values.gender) data.append("gender", values.gender);
+        if (values.profile_pic instanceof File) data.append("profile_pic", values.profile_pic);
+
+        try {
+            await dispatch(updateprofile({ id: profile._id, data })).unwrap();
+            showSuccessToast("Profile updated successfully");
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to update your profile");
+        }
     };
 
     const handleChangePassword = async () => {
@@ -87,6 +108,14 @@ const AccountSettings = () => {
     return (
         <main className="mx-auto flex xl:max-w-[90%] flex-col gap-5 px-4 py-10 sm:px-6">
             <h1 className="text-2xl font-semibold text-gray-900">Account Settings</h1>
+            {profileloading && profile && (
+                <p role="status" className="text-sm text-gray-600">Refreshing your profile…</p>
+            )}
+            {profileerror && profile && (
+                <p role="alert" className="text-sm text-red-700">
+                    We couldn&apos;t refresh your profile. The details below may be out of date.
+                </p>
+            )}
 
             <div className="grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
                 {/* ---------- sidebar ---------- */}
@@ -116,7 +145,20 @@ const AccountSettings = () => {
 
                 {/* ---------- sections ---------- */}
                 <div className="flex min-w-0 flex-col gap-5">
-                    <PersonalInfo profile={profile} onSave={handleSaveProfile} />
+                    <PersonalInfo
+                        key={[
+                            profile._id,
+                            profile.name,
+                            profile.email,
+                            profile.phone,
+                            profile.date_of_birth,
+                            profile.gender,
+                            profile.profile_pic,
+                        ].join("|")}
+                        profile={profile}
+                        onSave={handleSaveProfile}
+                        saving={profileupdating}
+                    />
                     <ChangePassword onSubmit={handleChangePassword} />
                     <NotificationPrefs />
                     <DangerZone onDelete={() => setDeleteOpen(true)} />
