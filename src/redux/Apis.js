@@ -59,3 +59,21 @@ export const handlelogout = async (token) => {
         throw error;
     }
 }
+
+// update profile 
+export const handleprofileedit = async ({ id, data }) => {
+    try {
+        const response = await authApi.put(
+            `/api/auth/v1/profile/${encodeURIComponent(id)}`,
+            data,
+            data instanceof FormData
+                ? { headers: { "Content-Type": "multipart/form-data" } }
+                : undefined
+        );
+        return response;
+    }
+    catch (error) {
+        console.error("Profile update failed:", error.response?.data || error.message);
+        throw error;
+    }
+}

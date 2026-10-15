@@ -1,21 +1,32 @@
 import { FiCheckCircle, FiFileText, FiPackage, FiXCircle } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { ORDER_BADGE } from "./Profiledata";
 
 const ICONS = { completed: FiCheckCircle, processing: FiPackage, cancelled: FiXCircle };
 
-const OrderCard = ({ order, onInvoice, invoiceLoading = false, onDetails, onTrack }) => {
+const OrderCard = ({ order, onInvoice, invoiceLoading = false, onTrack }) => {
+    const navigate = useNavigate();
+
     const badge = ORDER_BADGE[order.group] || ORDER_BADGE.processing;
     const Icon = ICONS[order.group] || FiPackage;
-    const badgeText = order.group === "cancelled" ? badge.prefix : `${badge.prefix} ${order.statusDate}`.trim();
+    const badgeText = order.group === "completed"
+        ? `${badge.prefix} ${order.statusDate}`.trim()
+        : badge.prefix;
     const count = order.items.length;
+
+    // goes to /orders/:orderId  ->  <OrderDetails /> fetches the order by this id
+    const handleView = () => {
+        navigate(`/orders/${order._id ?? order.id}`);
+    };
 
     return (
         <article className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             {/* Header */}
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 px-4 py-4 sm:px-6">
-                <div className="grid flex-1 grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+                <div className="grid flex-1 grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 xl:grid-cols-5">
                     <Meta label="Order ID" value={`#${order.id}`} />
                     <Meta label="Date Placed" value={order.date} />
+                    <Meta label="Estimated Delivery" value={order.estimatedDelivery || "Not available"} />
                     <Meta label="Total Amount" value={`₹${order.total}`} />
                     <Meta label="Shipped To" value={order.shippedTo} />
                 </div>
@@ -23,7 +34,7 @@ const OrderCard = ({ order, onInvoice, invoiceLoading = false, onDetails, onTrac
                     type="button"
                     onClick={() => onInvoice?.(order)}
                     disabled={invoiceLoading}
-                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex items-center gap-2 border border-orange-400 bg-white px-4 py-2 text-sm font-semibold text-orange-500 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60 outline-none cursor-pointer"
                 >
                     <FiFileText className="h-4 w-4" /> {invoiceLoading ? "Downloading..." : "Download Invoice"}
                 </button>
@@ -55,7 +66,7 @@ const OrderCard = ({ order, onInvoice, invoiceLoading = false, onDetails, onTrac
                 </ul>
             </div>
 
-            {/* Footer (hidden for single-item delivered style when no actions) */}
+            {/* Footer */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-4 sm:px-6">
                 <p className="text-sm text-gray-400">
                     {count} {count === 1 ? "item" : "items"} in this order
@@ -63,16 +74,16 @@ const OrderCard = ({ order, onInvoice, invoiceLoading = false, onDetails, onTrac
                 <div className="flex gap-3">
                     <button
                         type="button"
-                        onClick={() => onDetails?.(order)}
-                        className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                        onClick={handleView}
+                        className="border border-orange-400 bg-white px-4 py-2 text-sm font-semibold text-orange-500 hover:bg-orange-50 cursor-pointer outline-none"
                     >
-                        View Details
+                        View Order
                     </button>
                     {order.group === "processing" && (
                         <button
                             type="button"
                             onClick={() => onTrack?.(order)}
-                            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                            className="bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 cursor-pointer outline-none"
                         >
                             Track Order
                         </button>
@@ -86,7 +97,7 @@ const OrderCard = ({ order, onInvoice, invoiceLoading = false, onDetails, onTrac
 const Meta = ({ label, value }) => (
     <div className="min-w-0">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{label}</p>
-        <p className="mt-1 truncate text-sm font-bold text-gray-900">{value}</p>
+        <p className="mt-1 truncate text-sm font-bold text-gray-900 capitalize">{value}</p>
     </div>
 );
 

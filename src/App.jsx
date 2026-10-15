@@ -17,6 +17,9 @@ import ContactPage from "./pages/contact/Contactpage";
 import CheckoutPage from "./pages/checkout/Checkoutpage";
 import MyOrdersPage from "./pages/profile/Myorderspage";
 import AccountSettings from "./pages/settings/Accountsettings";
+import OrderSuccess from "./pages/checkout/OrderSuccess";
+import TrackOrder from "./pages/track/Trackorder";
+import OrderDetails from "./pages/profile/Orderdetails";
 
 // Home
 const Home = () => (
@@ -155,6 +158,33 @@ const App = () => {
           element={
             <PrivateRoute>
               <AccountSettings />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/order-success"
+          element={
+            <PrivateRoute>
+              <OrderSuccess />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/track-order/:orderId"
+          element={
+            <PrivateRoute>
+              <TrackOrder />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/orders/:orderId"
+          element={
+            <PrivateRoute>
+              <OrderDetails />
             </PrivateRoute>
           }
         />

@@ -17,28 +17,24 @@ const ProfileSummary = ({ name, email, phone, image, role, memberSince, stats, o
             <div className="flex items-center gap-4">
                 <div className="relative shrink-0">
                     {image ? (
-                        <img src={image} alt={name} className="h-24 w-24 rounded-full object-cover" />
+                        <img src={image} alt={name} className="h-24 w-24 rounded object-cover" />
                     ) : (
-                        <span className="flex h-24 w-24 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                        <span className="flex h-24 w-24 items-center justify-center bg-gray-100 text-gray-400">
                             <FiUser className="h-10 w-10" />
                         </span>
                     )}
-                    <button
+                    {/* <button
                         type="button"
-                        onClick={onChangePhoto}
                         aria-label="Change photo"
                         className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-green-600 text-white hover:bg-green-700"
                     >
                         <FiCamera className="h-4 w-4" />
-                    </button>
+                    </button> */}
                 </div>
 
                 <div className="min-w-0">
                     <div className="flex items-center gap-2">
                         <h2 className="truncate text-lg font-semibold text-gray-900">{name}</h2>
-                        <button type="button" onClick={onEdit} aria-label="Edit profile" className="text-gray-400 hover:text-green-600">
-                            <FiEdit2 className="h-4 w-4" />
-                        </button>
                     </div>
                     {email && <p className="truncate text-sm text-gray-500">{email}</p>}
                     {phone && (
