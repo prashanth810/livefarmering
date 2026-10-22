@@ -392,13 +392,6 @@ const NavBar = () => {
                             {category.label}
                         </NavLink>
                     ))}
-                    <Link
-                        to="/special-offers"
-                        className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-sm font-medium text-orange-600 transition-colors hover:text-orange-500 md:ml-auto"
-                    >
-                        <FiTag className="h-4 w-4" />
-                        Special Offers
-                    </Link>
                 </div>
             </div>
 

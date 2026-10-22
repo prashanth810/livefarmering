@@ -16,20 +16,27 @@ import { LuLeaf } from "react-icons/lu";
 import { PiStorefrontLight } from "react-icons/pi";
 import { FaFacebookF, FaXTwitter, FaInstagram } from "react-icons/fa6";
 import { useWishlist } from "../../services/wishlist";
-import { nutritionRows, ratingBars, reviews, themeVars } from "../../constants/Styles";
+import { nutritionRows, themeVars } from "../../constants/Styles";
 import { FaArrowCircleRight, FaArrowRight } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 import { addtocart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
 import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 import { showErrorToast, showSuccessToast } from "../../components/Toast";
+import { clearfeedbacks, createfeedback, getfeedbacks } from "../../redux/Slices/FeedbackSlice";
+import FeedbackModal from "../../reusables/FeedbackModal";
 
 
 const tabs = [
     { id: "description", label: "Description & Nutrition" },
-    { id: "reviews", label: "Reviews (124)" },
+    { id: "reviews", label: "Reviews" },
     { id: "vendor", label: "Vendor Profile" },
 ];
+
+// "2026-10-22T08:22:51.448Z" -> "22 Oct 2026"
+const formatReviewDate = (value) => value
+    ? new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : "";
 
 /* ------------------------------------------------------------------ */
 /* Small reusable pieces                                               */
@@ -50,7 +57,7 @@ const StarRating = ({ rating, size = 16 }) => (
                     />
                     <span
                         className="absolute inset-0 overflow-hidden"
-                        style={{ width: `₹{fillPercent}%` }}
+                        style={{ width: `${fillPercent}%` }}
                     >
                         <FiStar
                             className="fill-current text-[var(--warning)]"
@@ -71,6 +78,7 @@ const IconCircle = ({ children, size = 24 }) => (
         {children}
     </div>
 );
+
 
 /* ------------------------------------------------------------------ */
 /* Page                                                                 */
@@ -94,6 +102,47 @@ const ProductDetails = () => {
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState("description");
     const { isWishlisted, toggleWishlist } = useWishlist();
+    const [openfeedback, setOpenfeedback] = useState(false);
+
+    const [submittingfeedback, setSubmittingfeedback] = useState(false);
+
+    const handleopenfeedback = () => {
+        if (!token) {
+            showErrorToast("Please login to write a review");
+            navigate("/login");
+            return;
+        }
+        setOpenfeedback(true);
+    };
+
+    const handleclosefeedback = () => setOpenfeedback(false);
+
+    const handlesubmitfeedback = async ({ rating, feedback }) => {
+        try {
+            setSubmittingfeedback(true);
+            await dispatch(
+                createfeedback({
+                    id: productId,
+                    data: { rating, comment: feedback },
+                })
+            ).unwrap();
+            showSuccessToast("Thanks for your review!");
+            setOpenfeedback(false);
+            // reload the list and the rating summary
+            dispatch(clearfeedbacks());
+            dispatch(getfeedbacks({ productId, page: 1, limit: 5 }));
+        } catch (error) {
+            // the modal shows this message inside the popup
+            throw new Error(typeof error === "string" ? error : error?.message || "Unable to submit your review");
+        } finally {
+            setSubmittingfeedback(false);
+        }
+    };
+
+    // feedback of this product: list + summary (average, total, 1-5 star counts) + pagination
+    const { feedbackloading, feedbackdata, feedbackerror, summary, pagination } = useSelector(
+        (state) => state.feedback.feedback,
+    );
 
     useEffect(() => {
         if (productId) {
@@ -101,6 +150,8 @@ const ProductDetails = () => {
             setSelectedVariantIndex(0);
             setQuantity(1);
             dispatch(getsingleproduct(productId));
+            dispatch(clearfeedbacks());
+            dispatch(getfeedbacks({ productId, page: 1, limit: 5 }));
         }
     }, [dispatch, productId]);
 
@@ -127,8 +178,8 @@ const ProductDetails = () => {
         unit: variant.weight || "Unit unavailable",
         price: Number(variant.selling_price) || 0,
         oldPrice: Number(variant.original_price) || null,
-        rating: Number(singleproductdata.rating) || 0,
-        reviews: singleproductdata.reviews?.length || 0,
+        rating: summary.totalReviews ? summary.averageRating : Number(singleproductdata.rating) || 0,
+        reviews: summary.totalReviews,
         image: singleproductdata.thumbnail || singleproductdata.images?.[0] || "",
     };
     const aboutProduct = singleproductdata?.about_product || [];
@@ -148,6 +199,16 @@ const ProductDetails = () => {
         ? Number(selectedCartItem.quantity) || 1
         : quantity;
     const cartIsLoading = cartloading || getcartloading;
+
+    // star bars: 5 Stars ... 1 Stars with count and percent from the API summary
+    const ratingRows = [5, 4, 3, 2, 1].map((star) => {
+        const count = summary.breakdown?.[star] || 0;
+        return {
+            label: `${star} Stars`,
+            count,
+            percent: summary.totalReviews ? (count / summary.totalReviews) * 100 : 0,
+        };
+    });
 
     const showPreviousImage = () => {
         setActiveThumb((current) => current === 0 ? productImages.length - 1 : current - 1);
@@ -372,6 +433,7 @@ const ProductDetails = () => {
                             <StarRating rating={product.rating} />
                             <button
                                 type="button"
+                                onClick={() => setActiveTab("reviews")}
                                 className="text-sm text-[var(--muted-foreground)] underline"
                             >
                                 {product.rating} ({product.reviews} reviews)
@@ -541,12 +603,12 @@ const ProductDetails = () => {
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`shrink-0 whitespace-nowrap border-b border-gray-400 px-6 py-5 text-base font-semibold transition-colors sm:px-8 ₹{activeTab === tab.id
+                                className={`shrink-0 whitespace-nowrap border-b border-gray-400 px-6 py-5 text-base font-semibold transition-colors sm:px-8 ${activeTab === tab.id
                                     ? "border-[var(--primary)] bg-[var(--card)] text-[var(--primary)]"
                                     : "border-transparent text-[var(--muted-foreground)]"
                                     }`}
                             >
-                                {tab.label}
+                                {tab.id === "reviews" ? `Reviews (${summary.totalReviews})` : tab.label}
                             </button>
                         ))}
                     </div>
@@ -590,7 +652,7 @@ const ProductDetails = () => {
                                         <IconCircle size={20}>
                                             <FiTruck className="h-5 w-5 text-[var(--muted-foreground)]" />
                                         </IconCircle>
-                                        <span>Free delivery on orders over <spam className="text-green-700 font-semibold text-md"> ₹199 </spam></span>
+                                        <span>Free delivery on orders over <span className="text-green-700 font-semibold text-md"> ₹199 </span></span>
                                     </div>
                                     <div className="flex items-center gap-3 text-[15px] text-[var(--foreground)]">
                                         <IconCircle size={20}>
@@ -617,7 +679,7 @@ const ProductDetails = () => {
                                         .map(([label, value]) => ({ label: label.replaceAll("_", " "), value })) : nutritionRows).map((row) => (
                                             <div
                                                 key={row.label}
-                                                className={`flex justify-between border-b border-[var(--border)] py-3 text-[15px] ₹{row.bold ? "font-bold border-b-2" : ""}`}>
+                                                className={`flex justify-between border-b border-[var(--border)] py-3 text-[15px] ${row.bold ? "font-bold border-b-2" : ""}`}>
                                                 <span className={row.indent ? "pl-4" : ""}>
                                                     {row.label}
                                                 </span>
@@ -639,18 +701,18 @@ const ProductDetails = () => {
                             <div className="mb-10 flex flex-col gap-8 md:flex-row md:items-center">
                                 <div className="flex flex-col items-center justify-center">
                                     <span className="text-6xl font-extrabold leading-none text-[var(--foreground)]">
-                                        4.8
+                                        {Number(summary.averageRating).toFixed(1)}
                                     </span>
                                     <div className="my-2">
-                                        <StarRating rating={4.8} size={20} />
+                                        <StarRating rating={summary.averageRating} size={20} />
                                     </div>
                                     <span className="text-sm text-[var(--muted-foreground)]">
-                                        Based on 124 reviews
+                                        Based on {summary.totalReviews} review{summary.totalReviews !== 1 ? "s" : ""}
                                     </span>
                                 </div>
 
                                 <div className="flex w-full max-w-[400px] flex-col gap-3">
-                                    {ratingBars.map((bar) => (
+                                    {ratingRows.map((bar) => (
                                         <div
                                             key={bar.label}
                                             className="flex items-center gap-3 text-sm text-[var(--muted-foreground)]"
@@ -659,7 +721,7 @@ const ProductDetails = () => {
                                             <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--input)]">
                                                 <div
                                                     className="h-full rounded-full bg-[var(--warning)]"
-                                                    style={{ width: `₹{bar.percent}%` }}
+                                                    style={{ width: `${bar.percent}%` }}
                                                 />
                                             </div>
                                             <span className="w-8 shrink-0 text-right">
@@ -671,28 +733,39 @@ const ProductDetails = () => {
 
                                 <button
                                     type="button"
-                                    className="rounded-[var(--radius-md)] border border-[var(--border)] px-6 py-3 text-[15px] font-semibold text-[var(--foreground)] md:ml-auto"
+                                    onClick={handleopenfeedback}
+                                    className="border border-[#FF6900] px-6 py-3 text-sm text-[#FF6900] md:ml-auto hover:bg-[#FF6900] hover:text-white duration-500 cursor-pointer"
                                 >
                                     Write a Review
                                 </button>
                             </div>
 
+                            {feedbackloading && feedbackdata.length === 0 && (
+                                <p className="py-6 text-center text-sm text-[var(--muted-foreground)]">Loading reviews...</p>
+                            )}
+                            {feedbackerror && feedbackdata.length === 0 && (
+                                <p className="py-6 text-center text-sm text-red-500" role="alert">{feedbackerror}</p>
+                            )}
+                            {!feedbackloading && !feedbackerror && feedbackdata.length === 0 && (
+                                <p className="py-6 text-center text-sm text-[var(--muted-foreground)]">
+                                    No reviews yet. Be the first to review this product.
+                                </p>
+                            )}
+
                             <div className="flex flex-col gap-6">
-                                {reviews.map((review) => (
+                                {feedbackdata.map((review) => (
                                     <div
-                                        key={review.name}
+                                        key={review._id}
                                         className="rounded-[var(--radius-md)] border border-[var(--border)] p-6"
                                     >
                                         <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
                                             <div className="flex items-center gap-4">
-                                                <img
-                                                    src={review.avatar}
-                                                    alt={review.name}
-                                                    className="h-12 w-12 rounded-full object-cover"
-                                                />
+                                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--secondary)] text-lg font-bold uppercase text-[var(--secondary-foreground)]">
+                                                    {(review.userName || "C").charAt(0)}
+                                                </div>
                                                 <div>
                                                     <div className="font-bold text-[var(--foreground)]">
-                                                        {review.name}
+                                                        {review.userName || "Customer"}
                                                     </div>
                                                     <div className="mt-1">
                                                         <StarRating rating={review.rating} size={14} />
@@ -700,28 +773,44 @@ const ProductDetails = () => {
                                                 </div>
                                             </div>
                                             <div className="text-[13px] text-[var(--muted-foreground)]">
-                                                {review.date}
+                                                {formatReviewDate(review.createdAt)}
                                             </div>
                                         </div>
                                         <p className="text-[15px] leading-relaxed text-[var(--foreground)]">
-                                            {review.text}
+                                            {review.comment}
                                         </p>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="mt-8 text-center">
-                                <button
-                                    type="button"
-                                    className="inline-flex items-center justify-center gap-2 border border-[#f2a46c] px-6 py-3 text-sm font-semibold text-[#e87c30] transition duration-300 hover:border-[#FF6900] cursor-pointer" >
-                                    Load More Reviews
-                                    <FaArrowRight className="h-4 w-4" />
-                                </button>
-                            </div>
+                            {pagination?.hasNext && (
+                                <div className="mt-8 text-center">
+                                    <button
+                                        type="button"
+                                        disabled={feedbackloading}
+                                        onClick={() => dispatch(getfeedbacks({ productId, page: pagination.page + 1, limit: pagination.limit }))}
+                                        className="inline-flex items-center justify-center gap-2 border border-[#f2a46c] px-6 py-3 text-sm font-semibold text-[#e87c30] transition duration-300 hover:border-[#FF6900] cursor-pointer disabled:cursor-not-allowed disabled:opacity-60" >
+                                        {feedbackloading ? "Loading..." : "Load More Reviews"}
+                                        <FaArrowRight className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </main>
+
+            <FeedbackModal
+                open={openfeedback}
+                onClose={handleclosefeedback}
+                onSubmit={handlesubmitfeedback}
+                loading={submittingfeedback}
+                initialRating={0}
+                title="Rate this product"
+                subtitle={`Tell us what you think about ${product.name}.`}
+                submitLabel="Submit Review"
+                placeholder="Tell us about the quality, freshness, packaging or anything you liked or disliked..."
+            />
 
             {/* Footer */}
             <footer className="mt-20 border-t border-[var(--border)] bg-[var(--card)] px-6 pb-8 pt-20 md:px-12" />
