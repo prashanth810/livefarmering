@@ -57,9 +57,9 @@ export const handleverifypayment = async (data) => {
 };
 
 // cancel order
-export const handlecancelorder = async (orderId) => {
+export const handlecancelorder = async (orderId, reason = "") => {
     try {
-        return await orderApi.post(`${baseurl}/order/${orderId}/cancel`);
+        return await orderApi.post(`${baseurl}/order/${orderId}/cancel`, { reason });
     } catch (error) {
         console.error("Cancel order failed:", error.response?.data || error.message);
         throw error;

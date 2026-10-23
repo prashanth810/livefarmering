@@ -71,7 +71,7 @@ const STAGES = [
     },
     {
         key: "preparing",
-        label: "Preparing",
+        label: "Shipping",
         icon: FiPackage,
         text: { done: "Your items have been packed.", active: "Your items are being packed.", todo: "Your items will be packed soon." },
     },

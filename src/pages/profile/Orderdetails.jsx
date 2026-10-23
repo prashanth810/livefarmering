@@ -31,6 +31,8 @@ import { showErrorToast, showSuccessToast } from "../../components/Toast";
 import onthewaymap from "../../assets/onthewaymap.png";
 import FeedbackModal from "../../reusables/FeedbackModal";
 import { formatEstimatedDelivery } from "./Orderutils";
+import CancelOrderModal from "../../reusables/CancelOrderModal";
+import canclaion from '../../assets/canclaion.png'
 
 // ---------- helpers ----------
 const NA = "NA";
@@ -94,7 +96,7 @@ const STAGES = [
     },
     {
         key: "preparing",
-        label: "Preparing",
+        label: "Shipping",
         dotIcon: FiPackage,
         icon: FiBox,
         text: { done: "Your items have been packed.", active: "Your items are being packed.", todo: "Your items will be packed soon." },
@@ -206,6 +208,9 @@ const OrderDetails = () => {
     const [feedbackOpen, setFeedbackOpen] = useState(false);
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
+    // cancel model
+    const [cancelOpen, setCancelOpen] = useState(false);
+
     useEffect(() => {
         if (orderId) dispatch(getsingleorder(orderId));
     }, [dispatch, orderId]);
@@ -239,12 +244,16 @@ const OrderDetails = () => {
         });
     };
 
-    const handleCancel = async () => {
+    // cancel model 
+    const openCancel = () => setCancelOpen(true);
+    const closeCancel = () => setCancelOpen(false);
+
+    const handleCancel = async (reason) => {
         if (cancelloading) return;
-        if (!window.confirm("Are you sure you want to cancel this order?")) return;
         try {
-            await dispatch(cancelorder(orderId)).unwrap();
+            await dispatch(cancelorder({ orderId, reason })).unwrap();
             showSuccessToast("Order cancelled");
+            setCancelOpen(false);
             dispatch(getsingleorder(orderId));
         } catch (error) {
             showErrorToast(typeof error === "string" ? error : "Unable to cancel order");
@@ -314,6 +323,7 @@ const OrderDetails = () => {
             ? `${itemNames[0]} + ${itemNames.length - 1} more`
             : "Order details";
 
+    const image = order.image;
     const stage = stageOf(order.orderStatus);
     const cancelled = stage === -1;
     const current = cancelled ? 0 : stage;
@@ -455,7 +465,9 @@ const OrderDetails = () => {
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white">
+                                <span
+                                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white ${cancelled ? "bg-red-500" : "bg-emerald-700"}`}
+                                >
                                     {cancelled ? <FiXCircle className="h-6 w-6" /> : <FiTruck className="h-6 w-6" />}
                                 </span>
                                 <div>
@@ -572,11 +584,10 @@ const OrderDetails = () => {
                                 {canCancel && (
                                     <button
                                         type="button"
-                                        onClick={handleCancel}
-                                        disabled={cancelloading}
-                                        className="inline-flex items-center gap-2 border border-red-400 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                                        onClick={openCancel}
+                                        className="inline-flex items-center gap-2 border border-red-400 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
                                     >
-                                        <FiXCircle className="h-4 w-4" /> {cancelloading ? "Cancelling..." : "Cancel Order"}
+                                        <FiXCircle className="h-4 w-4" /> Cancel Order
                                     </button>
                                 )}
                             </div>
@@ -771,6 +782,14 @@ const OrderDetails = () => {
                 subtitle={`Share feedback about ${feedbackItem?.name || "a product in your order"}.`}
                 submitLabel="Submit Feedback"
                 placeholder="Tell us about the quality, freshness, packaging or anything you liked or disliked..."
+            />
+
+            <CancelOrderModal
+                open={cancelOpen}
+                onClose={closeCancel}
+                onSubmit={handleCancel}
+                loading={!!cancelloading}
+                image={canclaion}
             />
         </main>
     );
