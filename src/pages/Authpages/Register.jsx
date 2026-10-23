@@ -346,7 +346,7 @@ const App = () => {
                         </div>
 
                         {/* Social buttons */}
-                        <div className="mt-4 grid grid-cols-2 gap-4">
+                        {/* <div className="mt-4 grid grid-cols-2 gap-4">
                             <button
                                 type="button"
                                 className="flex items-center justify-center gap-2  border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50  cursor-pointer">
@@ -359,7 +359,7 @@ const App = () => {
                                 <FaFacebook className="h-4.5 w-4.5 text-[#1877F2]" />
                                 Facebook
                             </button>
-                        </div>
+                        </div> */}
 
                         <p className="mt-4.5 text-center text-sm text-gray-500">
                             Already have an account?{" "}

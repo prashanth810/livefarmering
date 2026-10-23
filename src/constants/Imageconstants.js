@@ -5,3 +5,4 @@ export { default as vendorlogin } from "../assets/vendorlogin.png";
 export { default as login } from "../assets/login.png";
 export { default as bannerimg } from "../assets/bannerimg.png";
 export { default as Promobarimg } from "../assets/Promobarimg.png";
+export { default as forgotpassword } from "../assets/forgotpassword.png";

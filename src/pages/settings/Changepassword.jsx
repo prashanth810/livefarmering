@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { Field, SectionCard, inputClass, primaryBtn } from "./Settingsui";
+import { useDispatch, useSelector } from "react-redux";
+import { updatepassword } from "../../redux/Slices/AuthSlice";
 
 const EMPTY = { current: "", next: "", confirm: "" };
 
-const ChangePassword = ({ onSubmit }) => {
+const ChangePassword = () => {
     const [values, setValues] = useState(EMPTY);
     const [errors, setErrors] = useState({});
+    const [success, setSuccess] = useState("");
+
+    const dispatch = useDispatch();
+    const loading = useSelector((state) => state.auth.changepassword.changepasswordloading);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
         setValues((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
+        setErrors((prev) => ({ ...prev, [name]: "", form: "" }));
+        setSuccess("");
     };
 
     const validate = () => {
@@ -27,9 +34,23 @@ const ChangePassword = ({ onSubmit }) => {
         event.preventDefault();
         if (!validate()) return;
 
-        // handler returns true only when the password was really changed
-        const ok = await onSubmit({ currentPassword: values.current, newPassword: values.next });
-        if (ok) setValues(EMPTY);
+        const token = sessionStorage.getItem("resetToken") || sessionStorage.getItem("token");
+
+        try {
+            const result = await dispatch(
+                updatepassword({
+                    password: values.next,            // NEW password
+                    currentPassword: values.current,  // verified by backend
+                    token,
+                })
+            ).unwrap();
+
+            setSuccess(result?.message || "Password changed successfully");
+            setValues(EMPTY);
+            sessionStorage.removeItem("resetToken");
+        } catch (message) {
+            setErrors({ form: typeof message === "string" ? message : "Unable to change password" });
+        }
     };
 
     return (
@@ -45,10 +66,15 @@ const ChangePassword = ({ onSubmit }) => {
                     <Field label="Confirm New Password" htmlFor="confirm" error={errors.confirm}>
                         <input id="confirm" name="confirm" type="password" autoComplete="new-password" value={values.confirm} onChange={handleChange} className={inputClass} placeholder="Confirm new password..." />
                     </Field>
+
+                    {errors.form && <p className="text-sm text-red-600 sm:col-span-2">{errors.form}</p>}
+                    {success && <p className="text-sm text-green-600 sm:col-span-2">{success}</p>}
                 </div>
 
                 <div className="flex justify-end border-t border-gray-100 px-6 py-4">
-                    <button type="submit" className={primaryBtn}>Update Password</button>
+                    <button type="submit" disabled={loading} className={primaryBtn}>
+                        {loading ? "Updating..." : "Update Password"}
+                    </button>
                 </div>
             </form>
         </SectionCard>

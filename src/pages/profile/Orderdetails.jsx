@@ -301,6 +301,18 @@ const OrderDetails = () => {
     // ---- everything below comes straight from the API response ----
     const items = Array.isArray(order.items) ? order.items : [];
     const itemCount = items.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+    const itemNames = items.map((item) => (
+        item.name
+        ?? item.title
+        ?? item.productName
+        ?? (typeof item.productId === "object" ? item.productId?.name : null)
+        ?? "Item"
+    ));
+    const itemTitle = itemNames.length === 1
+        ? itemNames[0]
+        : itemNames.length > 1
+            ? `${itemNames[0]} + ${itemNames.length - 1} more`
+            : "Order details";
 
     const stage = stageOf(order.orderStatus);
     const cancelled = stage === -1;
@@ -416,10 +428,13 @@ const OrderDetails = () => {
                                     {cancelled ? <FiXCircle className="h-7 w-7" /> : <FiCheck className="h-7 w-7" strokeWidth={3} />}
                                 </span>
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
+                                    <h2 className="break-words text-lg font-bold text-gray-900 sm:text-xl">
+                                        {itemTitle}
+                                    </h2>
+                                    <div className="mt-1 flex items-center gap-1.5">
+                                        <p className="text-sm text-gray-600">
                                             Order #{String(order._id).slice(-8).toUpperCase()}
-                                        </h2>
+                                        </p>
                                         <button
                                             type="button"
                                             onClick={() => copy(order._id, "Order ID copied")}
