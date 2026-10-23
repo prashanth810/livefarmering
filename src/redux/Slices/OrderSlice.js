@@ -100,9 +100,10 @@ export const downloadinvoice = createAsyncThunk(
 );
 
 // cancel an unpaid online order (popup closed / payment not completed)
-export const cancelorder = createAsyncThunk("order/cancel", async (orderId, { rejectWithValue }) => {
+export const cancelorder = createAsyncThunk("order/cancel", async (arg, { rejectWithValue }) => {
+    const { orderId, reason } = typeof arg === "object" && arg !== null ? arg : { orderId: arg, reason: "" };
     try {
-        await handlecancelorder(orderId);
+        await handlecancelorder(orderId, reason);
         return orderId;
     } catch (error) {
         return rejectWithValue(errMsg(error, "Unable to cancel order"));
