@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -9,7 +9,6 @@ import {
     FiChevronRight,
     FiCopy,
     FiCreditCard,
-    FiEdit2,
     FiFileText,
     FiHeadphones,
     FiHome,
@@ -27,8 +26,10 @@ import {
     FiXCircle,
 } from "react-icons/fi";
 import { cancelorder, getsingleorder } from "../../redux/Slices/OrderSlice";
+import { createfeedback } from "../../redux/Slices/FeedbackSlice";
 import { showErrorToast, showSuccessToast } from "../../components/Toast";
 import onthewaymap from "../../assets/onthewaymap.png";
+import FeedbackModal from "../../reusables/FeedbackModal";
 import { formatEstimatedDelivery } from "./Orderutils";
 
 // ---------- helpers ----------
@@ -65,6 +66,12 @@ const fmtShort = (v) => {
 const fmtLong = (v) => {
     const d = toDate(v);
     return d ? `${fmtDate(d)}, ${fmtTime(d)}` : NA;
+};
+
+const getFeedbackProductId = (item) => {
+    const productId = item?.productId;
+    if (productId && typeof productId === "object") return productId._id ?? productId.id ?? null;
+    return productId || null;
 };
 
 // 0 = placed/confirmed, 1 = preparing, 2 = out for delivery, 3 = delivered, -1 = cancelled
@@ -135,7 +142,6 @@ const Card = ({ icon: Icon, title, action, children, className = "" }) => (
 
 const Step = ({ stage, state, time, isLast, withDivider }) => {
     const DotIcon = state === "done" ? FiCheck : stage.dotIcon;
-    const Icon = stage.icon;
     const dot =
         state === "todo"
             ? "bg-gray-400 text-white"
@@ -197,6 +203,8 @@ const OrderDetails = () => {
 
     const { singleorderloading, singleorderdata, singleordererror } = useSelector((state) => state.order.singleorder);
     const cancelloading = useSelector((state) => state.order.cancel?.cancelloading);
+    const [feedbackOpen, setFeedbackOpen] = useState(false);
+    const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
     useEffect(() => {
         if (orderId) dispatch(getsingleorder(orderId));
@@ -243,6 +251,33 @@ const OrderDetails = () => {
         }
     };
 
+    const closeFeedback = () => setFeedbackOpen(false);
+
+    const handleSubmitFeedback = async ({ rating, feedback }) => {
+        const feedbackItem = items.find((item) => getFeedbackProductId(item));
+        const productId = feedbackItem && getFeedbackProductId(feedbackItem);
+        if (!productId) throw new Error("No product is available for feedback on this order.");
+
+        try {
+            setSubmittingFeedback(true);
+            await dispatch(
+                createfeedback({
+                    id: productId,
+                    data: { rating, comment: feedback },
+                }),
+            ).unwrap();
+            showSuccessToast("Thanks for your feedback!");
+            setFeedbackOpen(false);
+        } catch (error) {
+            throw new Error(
+                typeof error === "string" ? error : error?.message || "Unable to submit your feedback.",
+                { cause: error },
+            );
+        } finally {
+            setSubmittingFeedback(false);
+        }
+    };
+
     // ---- states ----
     if (!order && singleordererror && !singleorderloading) {
         return (
@@ -266,17 +301,35 @@ const OrderDetails = () => {
     // ---- everything below comes straight from the API response ----
     const items = Array.isArray(order.items) ? order.items : [];
     const itemCount = items.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+    const itemNames = items.map((item) => (
+        item.name
+        ?? item.title
+        ?? item.productName
+        ?? (typeof item.productId === "object" ? item.productId?.name : null)
+        ?? "Item"
+    ));
+    const itemTitle = itemNames.length === 1
+        ? itemNames[0]
+        : itemNames.length > 1
+            ? `${itemNames[0]} + ${itemNames.length - 1} more`
+            : "Order details";
 
     const stage = stageOf(order.orderStatus);
     const cancelled = stage === -1;
     const current = cancelled ? 0 : stage;
     const canCancel = !cancelled && stage <= 1;
     const canTrack = !cancelled && stage < 3;
+    const normalizedOrderStatus = String(order.orderStatus || "").toLowerCase().replace(/[\s-]/g, "_");
 
     const isCod = String(order.paymentMethod || "").toUpperCase() === "COD";
     // Payment fields may be returned as paymentStatus or status by the API.
     const paymentStatus = order.paymentStatus ?? order.status ?? order.items?.[0]?.status;
     const normalizedPaymentStatus = String(paymentStatus || "").toUpperCase();
+    const failed = ["failed", "failure", "delivery_failed", "delivery_failure", "payment_failed", "payment_failure"].includes(normalizedOrderStatus)
+        || ["FAILED", "FAILURE"].includes(normalizedPaymentStatus);
+    const isTerminal = cancelled || stage === 3 || failed;
+    const feedbackItem = items.find((item) => getFeedbackProductId(item));
+    const feedbackProductId = feedbackItem && getFeedbackProductId(feedbackItem);
     const paid = !isCod && ["SUCCESS", "PAID", "COMPLETED", "CAPTURED"].includes(normalizedPaymentStatus);
     const methodLabel = isCod ? "Cash on Delivery" : val(order.paymentMethod);
     const paymentDate = order.paidAt || order.createdAt;
@@ -288,11 +341,21 @@ const OrderDetails = () => {
     const saved = discount;
     const estimatedDelivery = formatEstimatedDelivery(order);
 
-    // time shown under each step
+    const statusHistory = Array.isArray(order.statusHistory)
+        ? order.statusHistory
+        : Array.isArray(order.timeline)
+            ? order.timeline
+            : [];
+
     const timeFor = (index) => {
         if (index === 0) return order.createdAt;
-        if (stage === index) return order.updatedAt;
-        return null;
+        if (index === 3 && order.deliveredAt) return order.deliveredAt;
+        const historyEntry = statusHistory.find((entry) => stageOf(entry.status) === index);
+        return historyEntry?.at
+            ?? historyEntry?.date
+            ?? historyEntry?.timestamp
+            ?? historyEntry?.createdAt
+            ?? (stage === index ? order.updatedAt : null);
     };
 
     const subTime = (index) => {
@@ -304,7 +367,7 @@ const OrderDetails = () => {
     const expectedLine = cancelled
         ? "This order was cancelled"
         : stage === 3
-            ? `Delivered on ${fmtDate(order.updatedAt)}`
+            ? `Delivered on ${fmtDate(timeFor(3))}`
             : estimatedDelivery
                 ? `Estimated delivery: ${estimatedDelivery}`
                 : `Estimated delivery: ${NA}`;
@@ -365,10 +428,13 @@ const OrderDetails = () => {
                                     {cancelled ? <FiXCircle className="h-7 w-7" /> : <FiCheck className="h-7 w-7" strokeWidth={3} />}
                                 </span>
                                 <div>
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
+                                    <h2 className="break-words text-lg font-bold text-gray-900 sm:text-xl">
+                                        {itemTitle}
+                                    </h2>
+                                    <div className="mt-1 flex items-center gap-1.5">
+                                        <p className="text-sm text-gray-600">
                                             Order #{String(order._id).slice(-8).toUpperCase()}
-                                        </h2>
+                                        </p>
                                         <button
                                             type="button"
                                             onClick={() => copy(order._id, "Order ID copied")}
@@ -484,13 +550,25 @@ const OrderDetails = () => {
                                 >
                                     <FiMessageCircle className="h-4 w-4" /> Contact Support
                                 </Link>
-                                <Link
-                                    to="/contact"
-                                    state={{ orderId }}
-                                    className="inline-flex items-center gap-2 border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                                <button
+                                    type="button"
+                                    onClick={() => navigate("/contact", { state: { orderId } })}
+                                    disabled={isTerminal || stage >= 1}
+                                    className="inline-flex items-center gap-2 border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <FiRepeat className="h-4 w-4" /> Request Change
-                                </Link>
+                                </button>
+                                {isTerminal && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFeedbackOpen(true)}
+                                        disabled={!feedbackProductId}
+                                        title={!feedbackProductId ? "No product is available for feedback on this order" : undefined}
+                                        className="inline-flex items-center gap-2 border border-emerald-700 bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <FiStar className="h-4 w-4" /> Add feedback
+                                    </button>
+                                )}
                                 {canCancel && (
                                     <button
                                         type="button"
@@ -683,6 +761,17 @@ const OrderDetails = () => {
                     )}
                 </div>
             </div>
+            <FeedbackModal
+                open={feedbackOpen}
+                onClose={closeFeedback}
+                onSubmit={handleSubmitFeedback}
+                loading={submittingFeedback}
+                initialRating={0}
+                title="Rate this product"
+                subtitle={`Share feedback about ${feedbackItem?.name || "a product in your order"}.`}
+                submitLabel="Submit Feedback"
+                placeholder="Tell us about the quality, freshness, packaging or anything you liked or disliked..."
+            />
         </main>
     );
 };

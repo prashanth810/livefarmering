@@ -24,6 +24,45 @@ export const LoginApi = async (data) => {
     };
 }
 
+// send otp
+export const handlesendotp = async (data) => {
+    try {
+        const response = await authApi.post(`/api/auth/mail/send-otp`, data);
+        return response;
+    }
+    catch (error) {
+        console.error(error.message);
+    }
+}
+
+// verify otp
+export const handleverifyotp = async ({ email, otp, role }) => {
+    try {
+        const resposne = await authApi.post(`/api/auth/mail/verify-otp`, { email, otp, role });
+        return resposne;
+    }
+    catch (error) {
+        console.error(error.message);
+    }
+}
+
+// change password
+// change password (reset flow = token from verify-otp, settings flow = login token + currentPassword)
+export const handlechangepassword = async ({ password, token }) => {
+    try {
+        const response = await authApi.patch(
+            `/api/auth/mail/change-password`,
+            { password },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        return response;
+    }
+    catch (error) {
+        console.error("Change password failed:", error.response?.data || error.message);
+        throw error;
+    }
+}
+
 // get all my profile info 
 export const getmyprofielinfo = async () => {
     try {

@@ -5,6 +5,7 @@ import VendorSlice from '../Slices/VendorSlice.js';
 import AddtocartSlice from '../Slices/AddtocartSlice.js';
 import AddressSlice from '../Slices/AddressSlice.js';
 import OrderSlice from '../Slices/OrderSlice.js';
+import FeedbackSlice from '../Slices/FeedbackSlice.js';
 
 const Mystore = configureStore({
     reducer: {
@@ -14,6 +15,7 @@ const Mystore = configureStore({
         cart: AddtocartSlice,
         address: AddressSlice,
         order: OrderSlice,
+        feedback: FeedbackSlice
     }
 })
 

@@ -20,6 +20,9 @@ import AccountSettings from "./pages/settings/Accountsettings";
 import OrderSuccess from "./pages/checkout/OrderSuccess";
 import TrackOrder from "./pages/track/Trackorder";
 import OrderDetails from "./pages/profile/Orderdetails";
+import Forgotpassword from "./pages/forgot-password/Forgotpassword";
+import Otpsession from "./pages/forgot-password/Otpsession";
+import Resetpassword from "./pages/forgot-password/Resetpassword";
 
 // Home
 const Home = () => (
@@ -61,6 +64,9 @@ const App = () => {
     "/register",
     "/vendor-login",
     "/vendor-register",
+    '/forgot-password',
+    '/otp',
+    '/reset-password'
   ];
 
   const isAuthPage = authPages.includes(location.pathname);
@@ -106,6 +112,31 @@ const App = () => {
           element={
             <PublicOnlyRoute>
               <Register />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicOnlyRoute>
+              <Forgotpassword />
+            </PublicOnlyRoute>
+          }
+        />
+
+        <Route
+          path="/otp"
+          element={
+            <PublicOnlyRoute>
+              <Otpsession />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <PublicOnlyRoute>
+              <Resetpassword />
             </PublicOnlyRoute>
           }
         />

@@ -240,6 +240,11 @@ const TrackOrder = () => {
             stage,
             cancelled,
             shortId: String(order._id).slice(-8).toUpperCase(),
+            itemTitle: items.length === 1
+                ? items[0].name
+                : items.length > 1
+                    ? `${items[0].name} + ${items.length - 1} more`
+                    : "Order details",
             placedAt: order.createdAt,
             items,
             itemCount,
@@ -365,16 +370,19 @@ const TrackOrder = () => {
 
                     <h1 className="mt-4 text-3xl font-bold text-gray-900 sm:text-4xl">Track Your Order</h1>
 
-                    <div className="mt-3 flex items-center gap-3">
-                        <p className="text-lg font-bold text-gray-900">Order #{view.shortId}</p>
-                        <button
-                            type="button"
-                            onClick={copyId}
-                            aria-label="Copy order id"
-                            className="p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                        >
-                            <FiCopy className="h-4 w-4" />
-                        </button>
+                    <div className="mt-3 min-w-0">
+                        <h2 className="break-words text-lg font-bold text-gray-900 sm:text-xl">{view.itemTitle}</h2>
+                        <div className="mt-1 flex items-center gap-1.5">
+                            <p className="text-sm text-gray-500">Order #{view.shortId}</p>
+                            <button
+                                type="button"
+                                onClick={copyId}
+                                aria-label="Copy order id"
+                                className="p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                            >
+                                <FiCopy className="h-4 w-4" />
+                            </button>
+                        </div>
                     </div>
 
                     <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
@@ -539,9 +547,9 @@ const TrackOrder = () => {
                             <span className="flex h-14 w-14 shrink-0 items-center justify-center bg-emerald-100 text-emerald-700">
                                 <FiPackage className="h-7 w-7" />
                             </span>
-                            <div>
+                            <div className="min-w-0 flex-1">
                                 <p className="text-xs font-semibold text-emerald-800">Estimated Delivery</p>
-                                <p className="text-xl font-extrabold text-gray-900">{expectedText}</p>
+                                <p className="text-base font-bold leading-snug text-gray-900">{expectedText}</p>
                                 {!cancelled && stage !== 3 && (
                                     <p className="text-xs text-gray-600">We&apos;ll notify you when it&apos;s out for delivery.</p>
                                 )}

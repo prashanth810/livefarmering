@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { FiArrowLeft } from "react-icons/fi";
-import { FaLeaf, FaApple, FaEye } from "react-icons/fa";
-import { FcGoogle } from "react-icons/fc";
-import { vendorlogin, login } from "../../constants/Imageconstants";
+import { FaLeaf, FaEye } from "react-icons/fa";
+import { login } from "../../constants/Imageconstants";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { handleLogin } from "../../redux/Slices/AuthSlice";
@@ -211,12 +210,11 @@ const UserLogin = () => {
                                         />
                                         Remember me
                                     </label>
-                                    <a
-                                        href="#"
+                                    <Link to='/forgot-password'
                                         className="text-sm font-medium text-[#1E8449] hover:text-[#166638]"
                                     >
                                         Forgot password?
-                                    </a>
+                                    </Link>
                                 </div>
 
                                 <button
@@ -239,32 +237,15 @@ const UserLogin = () => {
                                 <div className="h-px flex-1 bg-[#E5E7E1]" />
                             </div>
 
-                            {/* Social sign-in */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    className="flex items-center justify-center gap-2 border border-[#DDE3D6] bg-white py-2.5 text-sm font-medium text-[#2C3126] transition hover:bg-[#F7F5EF] cursor-pointer">
-                                    <FcGoogle size={18} />
-                                    Google
-                                </button>
-                                <button
-                                    type="button"
-                                    className="flex items-center justify-center gap-2 border border-[#DDE3D6] bg-white py-2.5 text-sm font-medium text-[#2C3126] transition hover:bg-[#F7F5EF] cursor-pointer">
-                                    <FaApple size={17} />
-                                    Apple
-                                </button>
-                            </div>
-
                             <div className="flex items-center justify-between px-2 mt-7">
-                                <p className="text-sm text-[#6B7166] flex items-center gap-1">
+
+                                <Link
+                                    to="/vendor-login"
+                                    className="text-sm flex items-center gap-2 text-[#01441d] hover:text-[#166638]"
+                                >
                                     Vendor Login?
-                                    <Link
-                                        to="/vendor-login"
-                                        className="font-semibold text-[#01441d] hover:text-[#166638]"
-                                    >
-                                        <PiStorefrontLight className="h-5 w-5" />
-                                    </Link>
-                                </p>
+                                    <PiStorefrontLight className="h-5 w-5" />
+                                </Link>
 
                                 <p className="text-sm text-[#6B7166]">
                                     Don&apos;t have an account?{" "}

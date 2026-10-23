@@ -1,5 +1,18 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getmyprofielinfo, handlelogout, handleprofileedit, LoginApi, Registerapi } from "../Apis";
+import axios from "axios";
+import { getmyprofielinfo, handlechangepassword, handlelogout, handleprofileedit, handlesendotp, handleverifyotp, LoginApi, Registerapi } from "../Apis";
+
+// backend url for the forgot password flow (change if your backend runs on another host/port)
+const MAIL_API_URL = "http://localhost:2000/api/auth/mail";
+
+// one helper: always return the real backend message ("Invalid OTP !!!") instead of
+// axios' generic "Request failed with status code 400"
+const getErrorMessage = (error) =>
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    (typeof error.response?.data === "string" ? error.response.data : null) ||
+    (error.response?.status === 429 ? "Too many requests" : null) ||
+    error.message;
 
 // register api
 export const handleRegister = createAsyncThunk("auth/register", async (data, { rejectWithValue }) => {
@@ -8,71 +21,89 @@ export const handleRegister = createAsyncThunk("auth/register", async (data, { r
         return response.data;
     }
     catch (error) {
-        return rejectWithValue(
-            error.response?.data?.message ||
-            error.response?.data?.error ||
-            (typeof error.response?.data === "string" ? error.response.data : null) ||
-            (error.response?.status === 429 ? "Too many requests" : null) ||
-            error.message
-        );
+        return rejectWithValue(getErrorMessage(error));
     }
 });
 
+// login api
 export const handleLogin = createAsyncThunk("auth/login", async (data, { rejectWithValue }) => {
     try {
         const response = await LoginApi(data);
         return response.data;
     }
     catch (error) {
-        return rejectWithValue(
-            error.response?.data?.message ||
-            error.response?.data?.error ||
-            (typeof error.response?.data === "string" ? error.response.data : null) ||
-            (error.response?.status === 429 ? "Too many requests" : null) ||
-            error.message
-        );
+        return rejectWithValue(getErrorMessage(error));
     }
 });
 
-export const handlefetchprofileinfo = createAsyncThunk("auth/profil", async (_, ThunkApi) => {
+// send otp
+export const sendotp = createAsyncThunk("auth/send-otp", async (data, { rejectWithValue }) => {
     try {
-        const resposne = await getmyprofielinfo();
-        return resposne.data.data;
+        const response = await handlesendotp(data);
+        return response.data;                       // { success, message }
     }
     catch (error) {
-        return ThunkApi.rejectWithValue(error.message);
+        return rejectWithValue(getErrorMessage(error));
     }
-})
+});
 
-// logout 
-export const logoutapi = createAsyncThunk("auth/logout", async (token, ThunkApi) => {
+// verify otp
+export const veriyotp = createAsyncThunk("auth/verify-otp", async ({ email, role, otp }, { rejectWithValue }) => {
+    try {
+        const response = await handleverifyotp({ email, role, otp });
+        return response.data;                       // { success, message, token }
+    }
+    catch (error) {
+        return rejectWithValue(getErrorMessage(error));
+    }
+});
+
+// change password  (arg = { password, token })
+export const updatepassword = createAsyncThunk("change/password", async ({ password, token }, { rejectWithValue }) => {
+    try {
+        const response = await handlechangepassword({ password, token });
+        return response.data;                       // { success, message }
+    }
+    catch (error) {
+        return rejectWithValue(getErrorMessage(error));
+    }
+});
+
+// my profile info
+export const handlefetchprofileinfo = createAsyncThunk("auth/profil", async (_, { rejectWithValue }) => {
+    try {
+        const response = await getmyprofielinfo();
+        return response.data.data;
+    }
+    catch (error) {
+        return rejectWithValue(error.message);
+    }
+});
+
+// logout
+export const logoutapi = createAsyncThunk("auth/logout", async (token, { rejectWithValue }) => {
     try {
         const response = await handlelogout(token);
         return response.data.data;
     }
     catch (error) {
-        return ThunkApi.rejectWithValue(error.message);
+        return rejectWithValue(error.message);
     }
-})
+});
 
 // update profile data
-export const updateprofile = createAsyncThunk("auth/edit", async ({ id, data }, ThunkApi) => {
+export const updateprofile = createAsyncThunk("auth/edit", async ({ id, data }, { rejectWithValue }) => {
     try {
         const response = await handleprofileedit({ id, data });
         const payload = response.data;
         return payload?.data?.user ?? payload?.data ?? payload?.user ?? payload;
     }
     catch (error) {
-        return ThunkApi.rejectWithValue(
-            error.response?.data?.message ||
-            error.response?.data?.error ||
-            (typeof error.response?.data === "string" ? error.response.data : null) ||
-            error.message ||
-            "Unable to update your profile"
+        return rejectWithValue(
+            getErrorMessage(error) || "Unable to update your profile"
         );
     }
-})
-
+});
 
 
 const AuthSlice = createSlice({
@@ -98,7 +129,21 @@ const AuthSlice = createSlice({
             profileupdating: false,
             profileupdateerror: null,
         },
-
+        sendotp: {
+            sendotploading: false,
+            sendotpdata: {},
+            sendotperror: null,
+        },
+        verifyotp: {
+            verifyotploading: false,
+            verifyotpdata: {},
+            verifyotperror: null,
+        },
+        changepassword: {
+            changepasswordloading: false,
+            changepassworddata: {},
+            changepassworderror: null,
+        },
     },
 
     reducers: {
@@ -112,8 +157,10 @@ const AuthSlice = createSlice({
 
     extraReducers: (builder) => {
         builder
+            // register
             .addCase(handleRegister.pending, (state) => {
                 state.register.registerloading = true;
+                state.register.registererror = null;
             })
             .addCase(handleRegister.fulfilled, (state, action) => {
                 state.register.registerloading = false;
@@ -125,6 +172,8 @@ const AuthSlice = createSlice({
                 state.register.registerloading = false;
                 state.register.registererror = action.payload;
             })
+
+            // login
             .addCase(handleLogin.pending, (state) => {
                 state.login.loginloading = true;
                 state.login.loginerror = null;
@@ -139,6 +188,8 @@ const AuthSlice = createSlice({
                 state.login.loginloading = false;
                 state.login.loginerror = action.payload;
             })
+
+            // profile info
             .addCase(handlefetchprofileinfo.pending, (state) => {
                 state.profile.profileloading = true;
                 state.profile.profileerror = null;
@@ -151,6 +202,8 @@ const AuthSlice = createSlice({
                 state.profile.profileloading = false;
                 state.profile.profileerror = action.payload;
             })
+
+            // update profile
             .addCase(updateprofile.pending, (state) => {
                 state.profile.profileupdating = true;
                 state.profile.profileupdateerror = null;
@@ -162,6 +215,48 @@ const AuthSlice = createSlice({
             .addCase(updateprofile.rejected, (state, action) => {
                 state.profile.profileupdating = false;
                 state.profile.profileupdateerror = action.payload;
+            })
+
+            // send otp
+            .addCase(sendotp.pending, (state) => {
+                state.sendotp.sendotploading = true;
+                state.sendotp.sendotperror = null;
+            })
+            .addCase(sendotp.fulfilled, (state, action) => {
+                state.sendotp.sendotploading = false;
+                state.sendotp.sendotpdata = action.payload;
+            })
+            .addCase(sendotp.rejected, (state, action) => {
+                state.sendotp.sendotploading = false;
+                state.sendotp.sendotperror = action.payload;
+            })
+
+            // verify otp
+            .addCase(veriyotp.pending, (state) => {
+                state.verifyotp.verifyotploading = true;
+                state.verifyotp.verifyotperror = null;
+            })
+            .addCase(veriyotp.fulfilled, (state, action) => {
+                state.verifyotp.verifyotploading = false;   // was true
+                state.verifyotp.verifyotpdata = action.payload;
+            })
+            .addCase(veriyotp.rejected, (state, action) => {
+                state.verifyotp.verifyotploading = false;   // was true
+                state.verifyotp.verifyotperror = action.payload;
+            })
+
+            // change password
+            .addCase(updatepassword.pending, (state) => {
+                state.changepassword.changepasswordloading = true;
+                state.changepassword.changepassworderror = null;
+            })
+            .addCase(updatepassword.fulfilled, (state, action) => {
+                state.changepassword.changepasswordloading = false;
+                state.changepassword.changepassworddata = action.payload;
+            })
+            .addCase(updatepassword.rejected, (state, action) => {
+                state.changepassword.changepasswordloading = false;
+                state.changepassword.changepassworderror = action.payload;
             })
 
             // logout
@@ -176,15 +271,14 @@ const AuthSlice = createSlice({
                 state.register.registerloading = false;
                 state.register.token = null;
                 state.register.registerdata = {};
-                state.profile.profiledata = null;
                 sessionStorage.removeItem("token");
             })
             .addCase(logoutapi.rejected, (state, action) => {
                 state.login.loginloading = false;
                 state.login.loginerror = action.payload;
-            })
-    }
-})
+            });
+    },
+});
 
 export const { logout } = AuthSlice.actions;
 export default AuthSlice.reducer;
