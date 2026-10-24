@@ -20,6 +20,11 @@ const isSameCartItem = (item, productId, weight) =>
     String(getCartProductId(item)) === String(productId) &&
     String(getCartItemWeight(item)) === String(weight ?? "");
 
+const invalidatePendingCartFetch = (state) => {
+    state.getcart.requestId = null;
+    state.getcart.getcartloading = false;
+};
+
 const extractCartItems = (payload) => {
     if (Array.isArray(payload)) return payload;
     if (!payload || typeof payload !== "object") return null;
@@ -346,6 +351,7 @@ const AddtocartSlice = createSlice({
             })
             .addCase(addtocart.fulfilled, (state, action) => {
                 state.carts.cartloading = false;
+                invalidatePendingCartFetch(state);
                 const requestedItem = normalizeCartItem(action.meta.arg);
 
                 if (!requestedItem?.productId) {
@@ -395,6 +401,7 @@ const AddtocartSlice = createSlice({
             })
             .addCase(removetocart.fulfilled, (state, action) => {
                 state.carts.cartloading = false;
+                invalidatePendingCartFetch(state);
                 const updatedItems = extractCartItems(action.payload);
 
                 if (Array.isArray(updatedItems)) {
@@ -431,6 +438,7 @@ const AddtocartSlice = createSlice({
             })
             .addCase(deleteproductfromcart.fulfilled, (state, action) => {
                 state.carts.cartloading = false;
+                invalidatePendingCartFetch(state);
                 const productId = getCartProductId(action.meta.arg);
                 const weight = action.meta.arg?.weight ?? action.meta.arg?.unit;
                 state.carts.cartdata = state.carts.cartdata.filter((cartItem) =>

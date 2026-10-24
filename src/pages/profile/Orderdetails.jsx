@@ -33,6 +33,7 @@ import FeedbackModal from "../../reusables/FeedbackModal";
 import { formatEstimatedDelivery } from "./Orderutils";
 import CancelOrderModal from "../../reusables/CancelOrderModal";
 import canclaion from '../../assets/canclaion.png'
+import { Windowtop } from "../../reusables/Windowtop";
 
 // ---------- helpers ----------
 const NA = "NA";
@@ -382,7 +383,10 @@ const OrderDetails = () => {
                 ? `Estimated delivery: ${estimatedDelivery}`
                 : `Estimated delivery: ${NA}`;
 
-    const goTrack = () => navigate(`/track-order/${orderId}`);
+    const goTrack = () => {
+        navigate(`/track-order/${orderId}`);
+        Windowtop();
+    };
 
     return (
         <main className="bg-[#f6f7f5]">
@@ -558,6 +562,7 @@ const OrderDetails = () => {
                             <div className="flex flex-wrap gap-3">
                                 <Link
                                     to="/contact"
+                                    onClick={Windowtop}
                                     className="inline-flex items-center gap-2 border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50"
                                 >
                                     <FiMessageCircle className="h-4 w-4" /> Contact Support

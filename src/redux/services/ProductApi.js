@@ -1,4 +1,4 @@
-import { cartApi, productApi } from "../../services/BaseUrl";
+import { productApi } from "../../services/BaseUrl";
 
 const baseurl = `/api/auth/v2`;
 
@@ -45,3 +45,24 @@ export const handlegetallproducts = async (page = 1, limit = 10) => {
     return response;
 }
 
+// update feedback
+export const updatefeedback = async ({ id, data }) => {
+    try {
+        const resposne = await productApi.put(`${baseurl}/feedback/${id}`, data);
+        return resposne;
+    }
+    catch (error) {
+        console.error(error.message);
+    }
+}
+
+// delete feedback
+export const deletefeedback = async (id) => {
+    try {
+        const resposne = await productApi.delete(`${baseurl}/feedback/${id}`);
+        return resposne;
+    }
+    catch (error) {
+        console.error(error.message);
+    }
+}

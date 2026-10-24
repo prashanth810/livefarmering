@@ -16,6 +16,7 @@ import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 import { showErrorToast } from "../../components/Toast";
 import EmptyCart from "./Emptycart";
 import CartSkeleton from "../../reusables/CartSkeleton";
+import { Windowtop } from "../../reusables/Windowtop";
 
 const CartPage = () => {
     const dispatch = useDispatch();
@@ -345,8 +346,9 @@ const CartPage = () => {
                                     </span>
                                 </div>
 
-                                <Link to="/checkout">
+                                <Link to="/checkout"  >
                                     <button
+                                        onClick={Windowtop}
                                         type="button"
                                         className="mb-3 flex w-full items-center justify-center gap-2 bg-orange-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
                                     >

@@ -29,8 +29,8 @@ const MAX_ADDRESSES = 3;
 
 const deliveryOptions = [
     { id: "free", label: "Free Delivery", price: 0, days: 3, note: "Estimated delivery in 2 - 3 business days." },
-    { id: "standard", label: "Standard Delivery", price: 40, days: 2, note: "Estimated delivery in 1 - 2 business days." },
-    { id: "express", label: "Express Delivery", price: 99, days: 1, note: "Next day delivery." },
+    { id: "standard", label: "Standard Delivery", price: 19, days: 2, note: "Estimated delivery in 1 - 2 business days." },
+    { id: "express", label: "Express Delivery", price: 29, days: 1, note: "Next day delivery." },
 ];
 
 const paymentOptions = [

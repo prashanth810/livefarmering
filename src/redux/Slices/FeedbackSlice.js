@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { handlecreatefeedback, handlegetallfeedbacks } from "../services/FeedbackApis";
+import { deletefeedback, updatefeedback } from "../services/ProductApi";
 
 const emptySummary = { averageRating: 0, totalReviews: 0, breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
 
@@ -23,7 +24,29 @@ export const createfeedback = createAsyncThunk('post/feedback', async ({ id, dat
     catch (error) {
         return ThunkApi.rejectWithValue(error.response?.data?.message || error.message || "Unable to submit feedback.");
     }
-})
+});
+
+// edit / update feedbacks
+export const editfeedback = createAsyncThunk("put/feedback", async ({ id, data }, ThunkApi) => {
+    try {
+        const response = await updatefeedback({ id, data });
+        return response.data.data;
+    }
+    catch (error) {
+        return ThunkApi.rejectWithValue(error.message);
+    }
+});
+
+// delete feedback 
+export const removefeedback = createAsyncThunk("delete/feedback", async (id, ThunkApi) => {
+    try {
+        await deletefeedback(id);
+        return id;
+    }
+    catch (error) {
+        return ThunkApi.rejectWithValue(error.response?.data?.message || error.message || "Unable to delete feedback.");
+    }
+});
 
 const initialState = {
     feedback: {
@@ -62,6 +85,22 @@ const FeedbackSlice = createSlice({
             .addCase(getfeedbacks.rejected, (state, action) => {
                 state.feedback.feedbackloading = false;
                 state.feedback.feedbackerror = action.payload;
+            })
+
+            // update feddback
+            .addCase(editfeedback.fulfilled, (state, action) => {
+                const updated = action.payload;
+                if (!updated?._id) return;
+                state.feedback.feedbackdata = state.feedback.feedbackdata.map((item) =>
+                    item._id === updated._id ? { ...item, ...updated } : item
+                );
+            })
+
+            // delete feedback
+            .addCase(removefeedback.fulfilled, (state, action) => {
+                state.feedback.feedbackdata = state.feedback.feedbackdata.filter(
+                    (item) => item._id !== action.payload
+                );
             });
     },
 });
