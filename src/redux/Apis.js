@@ -75,6 +75,17 @@ export const getmyprofielinfo = async () => {
     }
 }
 
+// get a user's public profile
+export const handlegetprofilebyid = async (id) => {
+    try {
+        return await authApi.get(`/api/auth/v1/profile/${encodeURIComponent(id)}`);
+    }
+    catch (error) {
+        console.error("User profile lookup failed:", error.response?.data || error.message);
+        throw error;
+    }
+}
+
 // vendor register
 export const handlevendorregister = async (data) => {
     try {

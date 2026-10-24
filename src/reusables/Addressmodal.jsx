@@ -359,7 +359,7 @@ const AddressModal = ({
                             type="button"
                             onClick={onClose}
                             disabled={loading}
-                            className="flex-1 cursor-pointer border border-gray-300 bg-white py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-yellow-600 hover:bg-gray-50 hover:text-yellow-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex-1 cursor-pointer border border-gray-300 bg-white py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-orange-600 hover:bg-gray-50 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             Cancel
                         </button>

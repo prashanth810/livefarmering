@@ -11,6 +11,7 @@ import {
     FiTruck,
     FiRefreshCw,
     FiStar,
+    FiUser,
 } from "react-icons/fi";
 import { LuLeaf } from "react-icons/lu";
 import { PiStorefrontLight } from "react-icons/pi";
@@ -21,10 +22,12 @@ import { FaArrowCircleRight, FaArrowRight } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { getsingleproduct } from "../../redux/Slices/ProductSlice";
 import { addtocart, getcartitems, removetocart } from "../../redux/Slices/AddtocartSlice";
-import { handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
+import { fetchprofilebyid, handlefetchprofileinfo } from "../../redux/Slices/AuthSlice";
 import { showErrorToast, showSuccessToast } from "../../components/Toast";
-import { clearfeedbacks, createfeedback, getfeedbacks } from "../../redux/Slices/FeedbackSlice";
 import FeedbackModal from "../../reusables/FeedbackModal";
+import { clearfeedbacks, createfeedback, getfeedbacks, editfeedback, removefeedback } from "../../redux/Slices/FeedbackSlice";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import DeleteConfirmModal from "../../reusables/DeleteConfirmModal";
 
 
 const tabs = [
@@ -33,10 +36,26 @@ const tabs = [
     { id: "vendor", label: "Vendor Profile" },
 ];
 
-// "2026-10-22T08:22:51.448Z" -> "22 Oct 2026"
-const formatReviewDate = (value) => value
-    ? new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-    : "";
+// "2026-10-22T08:22:51.448Z" -> "22 Oct 2026, 08:22 AM"
+const formatReviewDate = (value) => {
+    if (!value) return "";
+    const date = new Date(value);
+    const formattedDate = date.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+    const formattedTime = date
+        .toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
+        .replace(/\b(am|pm)\b/i, (period) => period.toUpperCase());
+
+    return `${formattedDate}, ${formattedTime}`;
+};
+
+const getReviewUserId = (review) => {
+    const user = review.user ?? review.userId;
+    return user && typeof user === "object" ? user._id : user;
+};
 
 /* ------------------------------------------------------------------ */
 /* Small reusable pieces                                               */
@@ -106,6 +125,26 @@ const ProductDetails = () => {
 
     const [submittingfeedback, setSubmittingfeedback] = useState(false);
 
+    const [editingReview, setEditingReview] = useState(null);
+
+    const [reviewToDelete, setReviewToDelete] = useState(null);
+    const [deletingReview, setDeletingReview] = useState(false);
+
+    const isMyReview = (review) => {
+        const reviewUserId = review.userId?._id ?? review.userId ?? review.user?._id ?? review.user;
+        return Boolean(userId) && String(reviewUserId) === String(userId);
+    };
+
+    const handleopenedit = (review) => {
+        setEditingReview(review);
+        setOpenfeedback(true);
+    };
+
+    const handleclosefeedback = () => {
+        setOpenfeedback(false);
+        setEditingReview(null);
+    };
+
     const handleopenfeedback = () => {
         if (!token) {
             showErrorToast("Please login to write a review");
@@ -115,24 +154,32 @@ const ProductDetails = () => {
         setOpenfeedback(true);
     };
 
-    const handleclosefeedback = () => setOpenfeedback(false);
-
+    // handle update feedbacks
     const handlesubmitfeedback = async ({ rating, feedback }) => {
         try {
             setSubmittingfeedback(true);
-            await dispatch(
-                createfeedback({
-                    id: productId,
-                    data: { rating, comment: feedback },
-                })
-            ).unwrap();
-            showSuccessToast("Thanks for your review!");
-            setOpenfeedback(false);
+            if (editingReview) {
+                await dispatch(
+                    editfeedback({
+                        id: editingReview._id,
+                        data: { rating, comment: feedback },
+                    })
+                ).unwrap();
+                showSuccessToast("Your review was updated!");
+            } else {
+                await dispatch(
+                    createfeedback({
+                        id: productId,
+                        data: { rating, comment: feedback },
+                    })
+                ).unwrap();
+                showSuccessToast("Thanks for your review!");
+                dispatch(clearfeedbacks());
+            }
+            handleclosefeedback();
             // reload the list and the rating summary
-            dispatch(clearfeedbacks());
             dispatch(getfeedbacks({ productId, page: 1, limit: 5 }));
         } catch (error) {
-            // the modal shows this message inside the popup
             throw new Error(typeof error === "string" ? error : error?.message || "Unable to submit your review");
         } finally {
             setSubmittingfeedback(false);
@@ -143,6 +190,7 @@ const ProductDetails = () => {
     const { feedbackloading, feedbackdata, feedbackerror, summary, pagination } = useSelector(
         (state) => state.feedback.feedback,
     );
+    const reviewerProfiles = useSelector((state) => state.auth.reviewerProfiles.byId);
 
     useEffect(() => {
         if (productId) {
@@ -154,6 +202,17 @@ const ProductDetails = () => {
             dispatch(getfeedbacks({ productId, page: 1, limit: 5 }));
         }
     }, [dispatch, productId]);
+
+    useEffect(() => {
+        const reviewerIds = [...new Set(feedbackdata
+            .map(getReviewUserId)
+            .filter(Boolean)
+            .map(String))];
+
+        reviewerIds.forEach((id) => {
+            dispatch(fetchprofilebyid(id));
+        });
+    }, [dispatch, feedbackdata]);
 
     useEffect(() => {
         if (token && !userId && !profileLoading) {
@@ -289,6 +348,23 @@ const ProductDetails = () => {
         }
 
         setQuantity((current) => Math.min(variantStock, current + 1));
+    };
+
+
+    const handleconfirmdelete = async () => {
+        if (!reviewToDelete) return;
+        try {
+            setDeletingReview(true);
+            await dispatch(removefeedback(reviewToDelete._id)).unwrap();
+            showSuccessToast("Your review was deleted");
+            setReviewToDelete(null);
+            // reload the list and the rating summary
+            dispatch(getfeedbacks({ productId, page: 1, limit: 5 }));
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to delete your review");
+        } finally {
+            setDeletingReview(false);
+        }
     };
 
     // Pull in the Inter font used by the design.
@@ -694,7 +770,7 @@ const ProductDetails = () => {
 
                         {/* Reviews */}
                         <div>
-                            <h3 className="mb-8 text-2xl font-extrabold text-[var(--foreground)]">
+                            <h3 className="mb-8 text-2xl font-semibold text-[var(--foreground)]">
                                 Customer Reviews
                             </h3>
 
@@ -760,21 +836,55 @@ const ProductDetails = () => {
                                     >
                                         <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
                                             <div className="flex items-center gap-4">
-                                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--secondary)] text-lg font-bold uppercase text-[var(--secondary-foreground)]">
-                                                    {(review.userName || "C").charAt(0)}
+                                                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--secondary)] text-lg font-bold uppercase text-[var(--secondary-foreground)]">
+                                                    <FiUser className="h-6 w-6" aria-hidden="true" />
+                                                    {reviewerProfiles[String(getReviewUserId(review))]?.profile_pic && (
+                                                        <img
+                                                            src={reviewerProfiles[String(getReviewUserId(review))].profile_pic}
+                                                            alt={`${review.userName || "Customer"} profile`}
+                                                            className="absolute inset-0 h-full w-full object-cover"
+                                                            onError={(event) => {
+                                                                event.currentTarget.style.display = "none";
+                                                            }}
+                                                        />
+                                                    )}
                                                 </div>
                                                 <div>
-                                                    <div className="font-bold text-[var(--foreground)]">
-                                                        {review.userName || "Customer"}
+                                                    <div className="text-[var(--foreground)] flex items-baseline gap-2">
+                                                        <p className="font-bold">{review.userName || "Customer"}</p>
+                                                        <span className="text-xs text-[var(--muted-foreground)]">
+                                                            {formatReviewDate(review.createdAt)}
+                                                        </span>
                                                     </div>
                                                     <div className="mt-1">
                                                         <StarRating rating={review.rating} size={14} />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-[13px] text-[var(--muted-foreground)]">
-                                                {formatReviewDate(review.createdAt)}
-                                            </div>
+
+                                            {isMyReview(review) && (
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleopenedit(review)}
+                                                        aria-label="Edit your review"
+                                                        title="Edit review"
+                                                        className="flex h-8 w-8 items-center justify-center border border-gray-300 text-[var(--muted-foreground)] hover:border-[#FF6900] hover:bg-[#FF6900] hover:text-white duration-300 cursor-pointer"
+                                                    >
+                                                        <FiEdit2 className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setReviewToDelete(review)}
+                                                        aria-label="Delete your review"
+                                                        title="Delete review"
+                                                        className="flex h-8 w-8 items-center justify-center border border-gray-300 text-[var(--muted-foreground)] hover:border-red-600 hover:bg-red-600 hover:text-white duration-300 cursor-pointer"
+                                                    >
+                                                        <FiTrash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            )}
+
                                         </div>
                                         <p className="text-[15px] leading-relaxed text-[var(--foreground)]">
                                             {review.comment}
@@ -805,11 +915,23 @@ const ProductDetails = () => {
                 onClose={handleclosefeedback}
                 onSubmit={handlesubmitfeedback}
                 loading={submittingfeedback}
-                initialRating={0}
-                title="Rate this product"
+                initialRating={editingReview?.rating || 0}
+                initialFeedback={editingReview?.comment || ""}
+                title={editingReview ? "Edit your review" : "Rate this product"}
                 subtitle={`Tell us what you think about ${product.name}.`}
-                submitLabel="Submit Review"
+                submitLabel={editingReview ? "Update Review" : "Submit Review"}
                 placeholder="Tell us about the quality, freshness, packaging or anything you liked or disliked..."
+            />
+
+
+            <DeleteConfirmModal
+                open={Boolean(reviewToDelete)}
+                onClose={() => setReviewToDelete(null)}
+                onConfirm={handleconfirmdelete}
+                loading={deletingReview}
+                title="Delete Review"
+                message="Are you sure you want to delete your review? This action cannot be undone."
+                confirmLabel="Delete"
             />
 
             {/* Footer */}

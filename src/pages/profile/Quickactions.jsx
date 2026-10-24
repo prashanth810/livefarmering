@@ -1,5 +1,6 @@
 import { FiChevronRight, FiHeart, FiMapPin, FiSettings } from "react-icons/fi";
 import { LuWallet } from "react-icons/lu";
+import { Windowtop } from "../../reusables/Windowtop";
 
 const ACTIONS = [
     {
@@ -49,7 +50,7 @@ const QuickActions = ({ onAction }) => (
                     <button
                         key={action.key}
                         type="button"
-                        onClick={() => onAction(action)}
+                        onClick={() => { onAction(action), Windowtop() }}
                         className={`flex items-center gap-3 p-4 text-left transition hover:shadow-md ${action.card}`}
                     >
                         <span className={`flex h-11 w-11 shrink-0 items-center justify-center ${action.iconBox}`}>

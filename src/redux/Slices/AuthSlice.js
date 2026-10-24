@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { getmyprofielinfo, handlechangepassword, handlelogout, handleprofileedit, handlesendotp, handleverifyotp, LoginApi, Registerapi } from "../Apis";
+import { getmyprofielinfo, handlechangepassword, handlegetprofilebyid, handlelogout, handleprofileedit, handlesendotp, handleverifyotp, LoginApi, Registerapi } from "../Apis";
 
 // backend url for the forgot password flow (change if your backend runs on another host/port)
 const MAIL_API_URL = "http://localhost:2000/api/auth/mail";
@@ -80,6 +80,31 @@ export const handlefetchprofileinfo = createAsyncThunk("auth/profil", async (_, 
     }
 });
 
+export const fetchprofilebyid = createAsyncThunk(
+    "auth/profileById",
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await handlegetprofilebyid(id);
+            return { id: String(id), profile: response.data.data };
+        }
+        catch (error) {
+            return rejectWithValue({
+                id: String(id),
+                message: getErrorMessage(error) || "Unable to load reviewer profile",
+            });
+        }
+    },
+    {
+        condition: (id, { getState }) => {
+            const reviewerProfiles = getState().auth.reviewerProfiles;
+            const key = String(id);
+            return Boolean(key)
+                && !reviewerProfiles.byId[key]
+                && !reviewerProfiles.loadingIds.includes(key);
+        },
+    }
+);
+
 // logout
 export const logoutapi = createAsyncThunk("auth/logout", async (token, { rejectWithValue }) => {
     try {
@@ -128,6 +153,11 @@ const AuthSlice = createSlice({
             profileerror: null,
             profileupdating: false,
             profileupdateerror: null,
+        },
+        reviewerProfiles: {
+            byId: {},
+            loadingIds: [],
+            errorById: {},
         },
         sendotp: {
             sendotploading: false,
@@ -201,6 +231,26 @@ const AuthSlice = createSlice({
             .addCase(handlefetchprofileinfo.rejected, (state, action) => {
                 state.profile.profileloading = false;
                 state.profile.profileerror = action.payload;
+            })
+
+            .addCase(fetchprofilebyid.pending, (state, action) => {
+                const key = String(action.meta.arg);
+                if (!state.reviewerProfiles.loadingIds.includes(key)) {
+                    state.reviewerProfiles.loadingIds.push(key);
+                }
+                delete state.reviewerProfiles.errorById[key];
+            })
+            .addCase(fetchprofilebyid.fulfilled, (state, action) => {
+                const { id, profile } = action.payload;
+                state.reviewerProfiles.loadingIds = state.reviewerProfiles.loadingIds.filter((key) => key !== id);
+                state.reviewerProfiles.byId[id] = profile;
+            })
+            .addCase(fetchprofilebyid.rejected, (state, action) => {
+                const key = action.payload?.id || String(action.meta.arg);
+                state.reviewerProfiles.loadingIds = state.reviewerProfiles.loadingIds.filter((id) => id !== key);
+                if (action.payload?.message) {
+                    state.reviewerProfiles.errorById[key] = action.payload.message;
+                }
             })
 
             // update profile

@@ -319,7 +319,7 @@ const NavBar = () => {
                         <span className="relative">
                             <FiShoppingCart className="h-5 w-5" />
                             {cartCount > 0 && (
-                                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white">
+                                <span className="absolute -right-2 -top-2 pt-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white">
                                     {cartCount > 9 ? "9+" : cartCount}
                                 </span>
                             )}

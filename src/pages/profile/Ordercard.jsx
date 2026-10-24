@@ -1,6 +1,7 @@
 import { FiCheckCircle, FiFileText, FiPackage, FiXCircle } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { ORDER_BADGE } from "./Profiledata";
+import { Windowtop } from "../../reusables/Windowtop";
 
 const ICONS = { completed: FiCheckCircle, processing: FiPackage, cancelled: FiXCircle };
 
@@ -16,6 +17,7 @@ const OrderCard = ({ order, onInvoice, invoiceLoading = false, onTrack }) => {
 
     // goes to /orders/:orderId  ->  <OrderDetails /> fetches the order by this id
     const handleView = () => {
+        Windowtop();
         navigate(`/orders/${order._id ?? order.id}`);
     };
 
@@ -82,7 +84,7 @@ const OrderCard = ({ order, onInvoice, invoiceLoading = false, onTrack }) => {
                     {order.group === "processing" && (
                         <button
                             type="button"
-                            onClick={() => onTrack?.(order)}
+                            onClick={() => { onTrack?.(order), Windowtop() }}
                             className="bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 cursor-pointer outline-none"
                         >
                             Track Order

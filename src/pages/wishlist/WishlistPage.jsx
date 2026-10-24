@@ -6,6 +6,7 @@ import { addtocart, addwichlist, deletewishlistitem, getwishlistitems, handledec
 import { showErrorToast, showSuccessToast } from "../../components/Toast";
 import EmptyCart from "../cartpage/Emptycart";
 import CartSkeleton from "../../reusables/CartSkeleton";
+import { Windowtop } from "../../reusables/Windowtop";
 
 const WishlistPage = () => {
     const dispatch = useDispatch();
@@ -108,6 +109,10 @@ const WishlistPage = () => {
             showErrorToast("Could not remove it from your wishlist");
         }
     };
+
+    const handleopenshop = () => {
+        navigate('/shop');
+    }
 
     return (
         <section className="min-h-screen bg-gray-100 px-4 py-6 sm:px-6 lg:px-8">
@@ -259,7 +264,11 @@ const WishlistPage = () => {
                                     <div className="flex items-center justify-between"><span className="text-gray-500">Saved items</span><span className="font-semibold text-gray-800">{savedItemCount}</span></div>
                                     <div className="flex items-center justify-between"><span className="text-gray-500">Estimated value</span><span className="font-semibold text-gray-800">₹{estimatedValue.toFixed(2)}</span></div>
                                 </div>
-                                <Link to="/shop" className="mt-5 flex w-full items-center justify-center gap-2 bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600">Continue Shopping <FiArrowRight className="h-4 w-4" /></Link>
+                                <button
+                                    onClick={handleopenshop}
+                                    className="mt-5 flex w-full items-center justify-center gap-2 bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600">
+                                    Continue Shopping <FiArrowRight className="h-4 w-4" />
+                                </button>
                             </div>
                             <div className="flex items-center gap-3 bg-[#027810dc] p-4 text-white shadow-sm">
                                 <FiHeart className="h-8 w-8 shrink-0" />

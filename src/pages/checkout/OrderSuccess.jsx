@@ -14,6 +14,7 @@ import {
     FiHome,
 } from "react-icons/fi";
 import { formatEstimatedDelivery } from "../profile/Orderutils";
+import { Windowtop } from "../../reusables/Windowtop";
 
 const money = (value) => `₹${Number(value || 0).toFixed(2).replace(/\.00$/, "")}`;
 
@@ -195,6 +196,10 @@ const OrderSuccess = () => {
     const { state } = useLocation();
     const navigate = useNavigate();
     const summary = state?.orderSummary;
+
+    useEffect(() => {
+        Windowtop();
+    }, []);
 
     // opened directly / refreshed without data -> nothing to show
     if (!summary) return <Navigate to="/orders" replace />;
@@ -423,6 +428,7 @@ const OrderSuccess = () => {
                     </Link>
                     <Link
                         to="/orders"
+                        onClick={Windowtop}
                         replace
                         className="flex items-center justify-center gap-2 bg-[#FF6900] py-3.5 text-sm font-bold text-white hover:bg-[#d45b04]"
                     >
