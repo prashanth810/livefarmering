@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Field, SectionCard, inputClass, primaryBtn } from "./Settingsui";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
-import { updatepassword } from "../../redux/Slices/AuthSlice";
+import { resetpassword } from "../../redux/Slices/AuthSlice";
+import { showErrorToast, showSuccessToast } from "../../components/Toast";
 
 const EMPTY = { current: "", next: "", confirm: "" };
 
@@ -10,8 +12,12 @@ const ChangePassword = () => {
     const [errors, setErrors] = useState({});
     const [success, setSuccess] = useState("");
 
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     const dispatch = useDispatch();
-    const loading = useSelector((state) => state.auth.changepassword.changepasswordloading);
+    const { resetpasswordloading: loading } = useSelector((s) => s.auth.resetpassword);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -34,22 +40,20 @@ const ChangePassword = () => {
         event.preventDefault();
         if (!validate()) return;
 
-        const token = sessionStorage.getItem("resetToken") || sessionStorage.getItem("token");
-
         try {
             const result = await dispatch(
-                updatepassword({
-                    password: values.next,            // NEW password
+                resetpassword({
                     currentPassword: values.current,  // verified by backend
-                    token,
+                    password: values.next,
                 })
             ).unwrap();
 
-            setSuccess(result?.message || "Password changed successfully");
+            showSuccessToast(result?.message || "Password changed successfully");
             setValues(EMPTY);
             sessionStorage.removeItem("resetToken");
         } catch (message) {
             setErrors({ form: typeof message === "string" ? message : "Unable to change password" });
+            showErrorToast(message || "failed to reset password !!!");
         }
     };
 
@@ -58,17 +62,30 @@ const ChangePassword = () => {
             <form onSubmit={handleSubmit}>
                 <div className="grid gap-x-6 gap-y-4 p-6 sm:grid-cols-2">
                     <Field label="Current Password" htmlFor="current" error={errors.current} className="sm:col-span-2">
-                        <input id="current" name="current" type="password" autoComplete="current-password" value={values.current} onChange={handleChange} className={inputClass} placeholder="Enter current password..." />
+                        <div className="relative">
+                            <input id="current" name="current" type={showCurrentPassword ? "text" : "password"} autoComplete="current-password" value={values.current} onChange={handleChange} className={`${inputClass} pr-12`} placeholder="Enter current password..." />
+                            <button type="button" onClick={() => setShowCurrentPassword((visible) => !visible)} aria-label={showCurrentPassword ? "Hide current password" : "Show current password"} aria-pressed={showCurrentPassword} className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 cursor-pointer items-center justify-center text-gray-500 hover:text-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+                                {showCurrentPassword ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
+                            </button>
+                        </div>
                     </Field>
                     <Field label="New Password" htmlFor="next" error={errors.next}>
-                        <input id="next" name="next" type="password" autoComplete="new-password" value={values.next} onChange={handleChange} className={inputClass} placeholder="Enter new password..." />
+                        <div className="relative">
+                            <input id="next" name="next" type={showPassword ? "text" : "password"} autoComplete="new-password" value={values.next} onChange={handleChange} className={`${inputClass} pr-12`} placeholder="Enter new password..." />
+                            <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide new password" : "Show new password"} aria-pressed={showPassword} className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 cursor-pointer items-center justify-center text-gray-500 hover:text-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+                                {showPassword ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
+                            </button>
+                        </div>
                     </Field>
                     <Field label="Confirm New Password" htmlFor="confirm" error={errors.confirm}>
-                        <input id="confirm" name="confirm" type="password" autoComplete="new-password" value={values.confirm} onChange={handleChange} className={inputClass} placeholder="Confirm new password..." />
+                        <div className="relative">
+                            <input id="confirm" name="confirm" type={showConfirmPassword ? "text" : "password"} autoComplete="new-password" value={values.confirm} onChange={handleChange} className={`${inputClass} pr-12`} placeholder="Confirm new password..." />
+                            <button type="button" onClick={() => setShowConfirmPassword((visible) => !visible)} aria-label={showConfirmPassword ? "Hide confirmed password" : "Show confirmed password"} aria-pressed={showConfirmPassword} className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 cursor-pointer items-center justify-center text-gray-500 hover:text-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+                                {showConfirmPassword ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
+                            </button>
+                        </div>
                     </Field>
 
-                    {errors.form && <p className="text-sm text-red-600 sm:col-span-2">{errors.form}</p>}
-                    {success && <p className="text-sm text-green-600 sm:col-span-2">{success}</p>}
                 </div>
 
                 <div className="flex justify-end border-t border-gray-100 px-6 py-4">

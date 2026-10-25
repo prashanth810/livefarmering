@@ -8,7 +8,11 @@ const DeleteConfirmModal = ({
     loading = false,
     title = "Delete Address",
     message = "Are you sure you want to delete this address? This action cannot be undone.",
-    confirmLabel = "Delete",
+    confirmLabel = "Delete Account",
+    requireConfirm = false,      // NEW: show the typed-confirmation input
+    confirmWord = "DELETE",      // NEW: word the user must type
+    confirm = "",
+    setConfirm,
 }) => {
     // close on Escape + lock body scroll while open
     useEffect(() => {
@@ -85,6 +89,27 @@ const DeleteConfirmModal = ({
                     </p>
                 </div>
 
+                {requireConfirm && (
+                    <div className="px-6 pb-5 sm:px-8">
+                        <label
+                            htmlFor="delete-confirm-input"
+                            className="mb-2 block text-sm text-gray-600"
+                        >
+                            Type <span className="font-bold text-red-600">{confirmWord}</span> to confirm
+                        </label>
+                        <input
+                            id="delete-confirm-input"
+                            type="text"
+                            value={confirm}
+                            onChange={(e) => setConfirm(e.target.value)}
+                            disabled={loading}
+                            autoFocus
+                            autoComplete="off"
+                            placeholder={confirmWord}
+                            className="w-full border border-orange-600 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-300"
+                        />
+                    </div>
+                )}
                 <div className="flex gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:px-8">
                     <button
                         type="button"

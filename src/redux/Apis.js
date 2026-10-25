@@ -127,3 +127,31 @@ export const handleprofileedit = async ({ id, data }) => {
         throw error;
     }
 }
+
+
+// reset password 
+export const handleresetpassword = async ({ currentPassword, password }) => {
+    try {
+        const response = await authApi.post(`/api/auth/v1/reset-password`, { currentPassword, password });
+        return response;
+    }
+    catch (error) {
+        console.error(error.message);
+    }
+}
+
+
+// delete account 
+export const handledeleteaccount = async ({ id, confirm }) => {
+    try {
+        const resposne = await authApi.delete(`/api/auth/v1/account/${id}`,
+            {
+                data: { confirm }, // axios needs `data` for a DELETE body
+            }
+        );
+        return resposne;
+    }
+    catch (error) {
+        console.error(error.message);
+    }
+}

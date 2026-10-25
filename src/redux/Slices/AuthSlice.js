@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { getmyprofielinfo, handlechangepassword, handlegetprofilebyid, handlelogout, handleprofileedit, handlesendotp, handleverifyotp, LoginApi, Registerapi } from "../Apis";
+import { getmyprofielinfo, handlechangepassword, handledeleteaccount, handlegetprofilebyid, handlelogout, handleprofileedit, handleresetpassword, handlesendotp, handleverifyotp, LoginApi, Registerapi } from "../Apis";
 
 // backend url for the forgot password flow (change if your backend runs on another host/port)
 const MAIL_API_URL = "http://localhost:2000/api/auth/mail";
@@ -130,6 +130,30 @@ export const updateprofile = createAsyncThunk("auth/edit", async ({ id, data }, 
     }
 });
 
+// reset password 
+export const resetpassword = createAsyncThunk("rest/password", async ({ currentPassword, password }, ThunkApi) => {
+    try {
+        const response = await handleresetpassword({ currentPassword, password });
+        return response.data;
+    }
+    catch (error) {
+        return ThunkApi.rejectWithValue(error.message);
+    }
+})
+
+// delete account (arg = user id)
+export const deleteaccount = createAsyncThunk(
+    "auth/delete-account",
+    async ({ id, confirm }, { rejectWithValue }) => {
+        try {
+            const response = await handledeleteaccount({ id, confirm });
+            return response.data; // { success, message }
+        }
+        catch (error) {
+            return rejectWithValue(getErrorMessage(error) || "Unable to delete account");
+        }
+    }
+);
 
 const AuthSlice = createSlice({
     name: "auth",
@@ -173,6 +197,16 @@ const AuthSlice = createSlice({
             changepasswordloading: false,
             changepassworddata: {},
             changepassworderror: null,
+        },
+        resetpassword: {
+            resetpasswordloading: false,
+            resetpassworddata: {},
+            resetpassworderror: null,
+        },
+        deleteaccount: {
+            deleteaccountloading: false,
+            deleteaccountdata: {},
+            deleteaccounterror: null,
         },
     },
 
@@ -326,7 +360,44 @@ const AuthSlice = createSlice({
             .addCase(logoutapi.rejected, (state, action) => {
                 state.login.loginloading = false;
                 state.login.loginerror = action.payload;
-            });
+            })
+
+            // reset password
+            .addCase(resetpassword.pending, (state) => {
+                state.resetpassword.resetpasswordloading = true;
+                state.resetpassword.resetpassworderror = null;
+            })
+            .addCase(resetpassword.fulfilled, (state, action) => {
+                state.resetpassword.resetpasswordloading = false;
+                state.resetpassword.resetpassworddata = action.payload;
+            })
+            .addCase(resetpassword.rejected, (state, action) => {
+                state.resetpassword.resetpasswordloading = false;
+                state.resetpassword.resetpassworderror = action.payload;
+            })
+            // delete account
+            .addCase(deleteaccount.pending, (state) => {
+                state.deleteaccount.deleteaccountloading = true;
+                state.deleteaccount.deleteaccounterror = null;
+            })
+
+            // delete account 
+            .addCase(deleteaccount.fulfilled, (state, action) => {
+                state.deleteaccount.deleteaccountloading = false;
+                state.deleteaccount.deleteaccountdata = action.payload;
+
+                // account is gone, so clear the session like logout does
+                state.login.token = null;
+                state.login.logindata = {};
+                state.profile.profiledata = null;
+                state.register.token = null;
+                state.register.registerdata = {};
+                sessionStorage.removeItem("token");
+            })
+            .addCase(deleteaccount.rejected, (state, action) => {
+                state.deleteaccount.deleteaccountloading = false;
+                state.deleteaccount.deleteaccounterror = action.payload;
+            })
     },
 });
 
