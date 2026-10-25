@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { FiBell, FiLock, FiUser } from "react-icons/fi";
-import { handlefetchprofileinfo, updateprofile } from "../../redux/Slices/AuthSlice";
+import { deleteaccount, handlefetchprofileinfo, updateprofile } from "../../redux/Slices/AuthSlice";
 import DeleteConfirmModal from "../../reusables/DeleteConfirmModal";
 import PersonalInfo from "./Personalinfo";
 import ChangePassword from "./Changepassword";
 import NotificationPrefs from "./Notificationprefs";
 import DangerZone from "./Dangerzone";
 import { showErrorToast, showSuccessToast } from "../../components/Toast";
+import { useNavigate } from "react-router-dom"; // NEW
 
 const SECTIONS = [
     { id: "profile-settings", label: "Profile Settings", icon: FiUser },
@@ -19,6 +20,7 @@ const SECTIONS = [
 const soon = (message) => toast(message, { id: "settings-toast" });
 
 const AccountSettings = () => {
+    const navigate = useNavigate(); // NEW
     const dispatch = useDispatch();
     const {
         profiledata: profile,
@@ -29,6 +31,7 @@ const AccountSettings = () => {
 
     const [activeId, setActiveId] = useState(SECTIONS[0].id);
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [confirm, setConfirm] = useState("");
 
     const ready = Boolean(profile);
 
@@ -89,10 +92,33 @@ const AccountSettings = () => {
         return false;
     };
 
-    const handleConfirmDelete = () => {
-        // TODO: await dispatch(deleteaccount()).unwrap(); then logout
+    const handleCloseDelete = () => {
         setDeleteOpen(false);
-        soon("Account deletion will be available soon");
+        setConfirm("");
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!profile?._id) {
+            showErrorToast("Unable to identify your account. Please refresh and try again.");
+            return;
+        }
+
+        if (confirm.trim() !== "DELETE") {
+            showErrorToast('Type "DELETE" to confirm');
+            return;
+        }
+
+        try {
+            const result = await dispatch(
+                deleteaccount({ id: profile._id, confirm })
+            ).unwrap();
+
+            handleCloseDelete();
+            showSuccessToast(result?.message || "Account deleted successfully");
+            navigate("/login", { replace: true });
+        } catch (error) {
+            showErrorToast(typeof error === "string" ? error : "Unable to delete your account");
+        }
     };
 
     if (!profile) {
@@ -167,9 +193,14 @@ const AccountSettings = () => {
 
             <DeleteConfirmModal
                 open={deleteOpen}
-                onClose={() => setDeleteOpen(false)}
+                onClose={handleCloseDelete}
                 onConfirm={handleConfirmDelete}
-                loading={false}
+                requireConfirm
+                confirm={confirm}
+                setConfirm={setConfirm}
+                loading={profileupdating}   // or a dedicated deleting flag
+                title="Delete Account"
+                confirmLabel="Delete Account"
                 message="Are you sure you want to permanently delete your account? All your data will be removed and this action cannot be undone."
             />
         </main>

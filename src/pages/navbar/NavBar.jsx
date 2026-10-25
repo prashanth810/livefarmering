@@ -17,6 +17,7 @@ import { MdOutlineGridView } from "react-icons/md";
 import { handlefetchprofileinfo, logoutapi } from "../../redux/Slices/AuthSlice";
 import { clearSearchProducts, handlesearchproducts } from "../../redux/Slices/ProductSlice";
 import { getcartitems, getwishlistitems } from "../../redux/Slices/AddtocartSlice";
+import { Windowtop } from "../../reusables/Windowtop";
 
 // Hides the scrollbar in all browsers (works with Tailwind 3.1+)
 const hideScrollbar = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
@@ -215,7 +216,8 @@ const NavBar = () => {
             {/* Main nav */}
             <div className="mx-auto flex max-w-[95%] items-center gap-3 px-4 py-3 sm:gap-6 sm:px-6 lg:px-8">
                 {/* Logo */}
-                <Link to="/" className="flex shrink-0 items-center gap-2">
+                <Link to="/"
+                    onClick={Windowtop} className="flex shrink-0 items-center gap-2">
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-600 text-white">
                         <LuLeaf className="h-5 w-5" />
                     </span>

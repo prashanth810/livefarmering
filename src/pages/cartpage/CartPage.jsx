@@ -100,6 +100,7 @@ const CartPage = () => {
                 name: item.name || product.name || "Product",
                 unit: item.weight || item.unit || "",
                 price: Number(item.selling_price ?? item.price ?? variant?.selling_price) || 0,
+                originalPrice: Number(item.original_price ?? variant?.original_price),
                 quantity: Number(item.quantity) || 0,
                 stock: Number(variant?.stock ?? variant?.stock_quantity ?? product.stock ?? item.stock),
                 image: item.image || item.imageurl || item.thumbnail || product.thumbnail || product.images?.[0] || "",
@@ -237,9 +238,11 @@ const CartPage = () => {
                                                 <p className="text-base font-bold text-gray-900 sm:text-lg">
                                                     ₹{(item.price * item.quantity).toFixed(2)}
                                                 </p>
-                                                <p className="text-xs line-through text-red-800">
-                                                    ₹{item.original_price.toFixed(2)}
-                                                </p>
+                                                {item.originalPrice > item.price && (
+                                                    <p className="text-xs line-through text-red-800">
+                                                        ₹{item.originalPrice.toFixed(2)}
+                                                    </p>
+                                                )}
                                             </div>
 
                                             <div className="flex items-center overflow-hidden bg-[#ebeceb] border border-gray-200 p-0.5">
