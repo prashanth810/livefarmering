@@ -22,7 +22,8 @@ import TrackOrder from "./pages/track/Trackorder";
 import OrderDetails from "./pages/profile/Orderdetails";
 import Forgotpassword from "./pages/forgot-password/Forgotpassword";
 import Otpsession from "./pages/forgot-password/Otpsession";
-import Resetpassword from "./pages/forgot-password/Resetpassword";
+import Resetpassword from "./pages/forgot-password/Resetpassword"; 
+import ManageAddresses from "./pages/manageaddress/Manageaddresses";
 
 // Home
 const Home = () => (
@@ -180,6 +181,15 @@ const App = () => {
           element={
             <PrivateRoute>
               <CheckoutPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/addresses"
+          element={
+            <PrivateRoute>
+              <ManageAddresses />
             </PrivateRoute>
           }
         />

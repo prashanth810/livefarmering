@@ -45,6 +45,7 @@ export const makeitdefalut = async (data) => {
     }
     catch (error) {
         console.error("Failed update default", error.response?.data || error.message);
+        throw error;
     }
 }
 
@@ -56,5 +57,6 @@ export const handleeditaddress = async ({ id, data }) => {
     }
     catch (error) {
         console.error("Failed to update address", error.response?.data || error.message);
+        throw error;
     }
 }

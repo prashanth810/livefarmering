@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
     FiSearch,
@@ -15,7 +15,7 @@ import {
 import { LuLeaf } from "react-icons/lu";
 import { MdOutlineGridView } from "react-icons/md";
 import { handlefetchprofileinfo, logoutapi } from "../../redux/Slices/AuthSlice";
-import { clearSearchProducts, handlesearchproducts } from "../../redux/Slices/ProductSlice";
+import { clearSearchProducts, handlesearchproducts, setSelectedCategory } from "../../redux/Slices/ProductSlice";
 import { getcartitems, getwishlistitems } from "../../redux/Slices/AddtocartSlice";
 import { Windowtop } from "../../reusables/Windowtop";
 
@@ -146,14 +146,23 @@ const NavBar = () => {
     );
 
     const { categorydata } = useSelector((state) => state.product.category);
+    const selectedCategoryId = useSelector((state) => state.product.selectedCategoryId);
+    const { pathname } = useLocation();
 
     const categories = [
         { label: "All Categories", href: "/shop", hasIcon: true },
         ...(Array.isArray(categorydata) ? categorydata.map((cat) => ({
+            id: cat._id,
             label: cat.name,
-            href: `/category/${cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-")}`,
+            href: "/shop",
         })) : []),
     ];
+
+    // click on a category -> go to /shop and select that category in the sidebar
+    const handleCategoryClick = (category) => {
+        if (category.id) dispatch(setSelectedCategory(category.id));
+        window.scrollTo(0, 0);
+    };
 
     useEffect(() => {
         const query = searchValue.trim();
@@ -378,22 +387,25 @@ const NavBar = () => {
                 <div
                     className={`mx-auto flex max-w-[95%] items-center gap-6 overflow-x-auto px-4 py-3 sm:px-6 md:py-4 lg:px-8 ${hideScrollbar}`}
                 >
-                    {categories.slice(0, 8).map((category) => (
-                        <NavLink
-                            key={category.label}
-                            to={category.href}
-                            onClick={() => window.scrollTo(0, 0)}
-                            className={({ isActive }) =>
-                                `flex shrink-0 items-center gap-2 whitespace-nowrap text-sm font-medium transition-colors ${isActive
+                    {categories.slice(0, 10).map((category) => {
+                        const isActive = category.id
+                            ? pathname === "/shop" && selectedCategoryId === category.id
+                            : pathname === "/shop" && !selectedCategoryId;
+                        return (
+                            <Link
+                                key={category.label}
+                                to={category.href}
+                                onClick={() => handleCategoryClick(category)}
+                                className={`flex shrink-0 items-center gap-2 whitespace-nowrap text-sm font-medium transition-colors ${isActive
                                     ? "text-green-700"
                                     : "text-gray-700 hover:text-green-600"
-                                }`
-                            }
-                        >
-                            {category.hasIcon && <MdOutlineGridView className="h-4 w-4" />}
-                            {category.label}
-                        </NavLink>
-                    ))}
+                                    }`}
+                            >
+                                {category.hasIcon && <MdOutlineGridView className="h-4 w-4" />}
+                                {category.label}
+                            </Link>
+                        );
+                    })}
                 </div>
             </div>
 
