@@ -10,6 +10,7 @@ const ACTIONS = [
         icon: FiMapPin,
         card: "bg-green-50",
         iconBox: "bg-green-100 text-green-600",
+        to: "/addresses",
     },
     {
         key: "favourites",

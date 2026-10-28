@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { FiChevronRight, FiEye, FiHeart, FiMinus, FiPlus, FiShoppingCart, FiStar, FiTrash2 } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
@@ -320,7 +320,16 @@ const SearchResults = () => {
     }, [categorydata, selectedCategoryId, dispatch]);
 
     /* fetch the selected API page whenever the category or page changes */
+    const prevCategoryRef = useRef(selectedCategoryId);
     useEffect(() => {
+        // category changed from the navbar -> go back to page 1 first (effect re-runs with page 1)
+        if (prevCategoryRef.current !== selectedCategoryId) {
+            prevCategoryRef.current = selectedCategoryId;
+            if (page !== 1) {
+                setPage(1);
+                return;
+            }
+        }
         if (selectedCategoryId) {
             dispatch(handlegetproductsbycategory({
                 categoryId: selectedCategoryId,

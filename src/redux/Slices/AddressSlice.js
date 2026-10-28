@@ -41,7 +41,7 @@ export const handlemakedefault = createAsyncThunk("put/default", async (data, Th
         return response.data.data;
     }
     catch (error) {
-        return ThunkApi.rejectWithValue(error.message);
+        return ThunkApi.rejectWithValue(error.response?.data || error.message);
     }
 });
 
@@ -52,7 +52,7 @@ export const updateaddress = createAsyncThunk("address/update", async ({ id, dat
         return response.data.data;
     }
     catch (error) {
-        return ThunkApi.rejectWithValue(error.message);
+        return ThunkApi.rejectWithValue(error.response?.data || error.message);
     }
 })
 
