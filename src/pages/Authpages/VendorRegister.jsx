@@ -118,7 +118,7 @@ const VendorRegister = () => {
                     <div className="w-full max-w-xl">
                         <h2 className="text-2xl font-medium text-gray-900">Create Vendor Account</h2>
                         <p className="text-xs text-gray-500">
-                            Fill in your details to get started with Green Leaf.
+                            Fill in your details to get started with Freshies.
                         </p>
 
                         <form onSubmit={handleSubmit} className="mt-5 space-y-4">

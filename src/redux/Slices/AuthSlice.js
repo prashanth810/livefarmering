@@ -1,12 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
-import { getmyprofielinfo, handlechangepassword, handledeleteaccount, handlegetprofilebyid, handlelogout, handleprofileedit, handleresetpassword, handlesendotp, handleverifyotp, LoginApi, Registerapi } from "../Apis";
+import {
+    getmyprofielinfo, handlechangepassword, handledeleteaccount, handlegetprofilebyid,
+    handlelogout, handleprofileedit, handleresetpassword, handlesendotp, handleverifyotp,
+    LoginApi, Registerapi, handleSendRegisterOTP, handleVerifyRegisterOTP,
+} from "../Apis";
 
-// backend url for the forgot password flow (change if your backend runs on another host/port)
-const MAIL_API_URL = "http://localhost:2000/api/auth/mail";
-
-// one helper: always return the real backend message ("Invalid OTP !!!") instead of
-// axios' generic "Request failed with status code 400"
+// one helper: always return the real backend message instead of axios' generic message
 const getErrorMessage = (error) =>
     error.response?.data?.message ||
     error.response?.data?.error ||
@@ -14,7 +13,33 @@ const getErrorMessage = (error) =>
     (error.response?.status === 429 ? "Too many requests" : null) ||
     error.message;
 
-// register api
+// ─── Step 1: Send registration OTP ───────────────────────────────────────────
+export const sendRegisterOtp = createAsyncThunk(
+    "auth/register/send-otp",
+    async (data, { rejectWithValue }) => {
+        try {
+            const response = await handleSendRegisterOTP(data);
+            return response.data; // { success, message }
+        } catch (error) {
+            return rejectWithValue(getErrorMessage(error));
+        }
+    }
+);
+
+// ─── Step 2: Verify registration OTP → account is created ────────────────────
+export const verifyRegisterOtp = createAsyncThunk(
+    "auth/register/verify-otp",
+    async ({ email, otp }, { rejectWithValue }) => {
+        try {
+            const response = await handleVerifyRegisterOTP({ email, otp });
+            return response.data; // { success, message, data, token }
+        } catch (error) {
+            return rejectWithValue(getErrorMessage(error));
+        }
+    }
+);
+
+// register api (legacy)
 export const handleRegister = createAsyncThunk("auth/register", async (data, { rejectWithValue }) => {
     try {
         const response = await Registerapi(data);
@@ -165,6 +190,13 @@ const AuthSlice = createSlice({
             registererror: null,
             token: null,
         },
+        // OTP-based registration state
+        registerOtp: {
+            sendloading: false,
+            senderror: null,
+            verifyloading: false,
+            verifyerror: null,
+        },
         login: {
             loginloading: false,
             logindata: {},
@@ -217,11 +249,45 @@ const AuthSlice = createSlice({
             state.profile.profiledata = null;
             sessionStorage.removeItem("token");
         },
+        // reset OTP register errors so modal can be reopened cleanly
+        clearRegisterOtpErrors: (state) => {
+            state.registerOtp.senderror = null;
+            state.registerOtp.verifyerror = null;
+        },
     },
 
     extraReducers: (builder) => {
         builder
-            // register
+            // ── Send registration OTP ──────────────────────────────────────
+            .addCase(sendRegisterOtp.pending, (state) => {
+                state.registerOtp.sendloading = true;
+                state.registerOtp.senderror = null;
+            })
+            .addCase(sendRegisterOtp.fulfilled, (state) => {
+                state.registerOtp.sendloading = false;
+            })
+            .addCase(sendRegisterOtp.rejected, (state, action) => {
+                state.registerOtp.sendloading = false;
+                state.registerOtp.senderror = action.payload;
+            })
+
+            // ── Verify registration OTP → account created ──────────────────
+            .addCase(verifyRegisterOtp.pending, (state) => {
+                state.registerOtp.verifyloading = true;
+                state.registerOtp.verifyerror = null;
+            })
+            .addCase(verifyRegisterOtp.fulfilled, (state, action) => {
+                state.registerOtp.verifyloading = false;
+                state.register.registerdata = action.payload.data;
+                state.register.token = action.payload.token;
+                sessionStorage.setItem("token", action.payload.token);
+            })
+            .addCase(verifyRegisterOtp.rejected, (state, action) => {
+                state.registerOtp.verifyloading = false;
+                state.registerOtp.verifyerror = action.payload;
+            })
+
+            // register (legacy)
             .addCase(handleRegister.pending, (state) => {
                 state.register.registerloading = true;
                 state.register.registererror = null;
@@ -321,11 +387,11 @@ const AuthSlice = createSlice({
                 state.verifyotp.verifyotperror = null;
             })
             .addCase(veriyotp.fulfilled, (state, action) => {
-                state.verifyotp.verifyotploading = false;   // was true
+                state.verifyotp.verifyotploading = false;
                 state.verifyotp.verifyotpdata = action.payload;
             })
             .addCase(veriyotp.rejected, (state, action) => {
-                state.verifyotp.verifyotploading = false;   // was true
+                state.verifyotp.verifyotploading = false;
                 state.verifyotp.verifyotperror = action.payload;
             })
 
@@ -401,5 +467,5 @@ const AuthSlice = createSlice({
     },
 });
 
-export const { logout } = AuthSlice.actions;
+export const { logout, clearRegisterOtpErrors } = AuthSlice.actions;
 export default AuthSlice.reducer;
