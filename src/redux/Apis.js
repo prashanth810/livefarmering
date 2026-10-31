@@ -1,6 +1,6 @@
 import { authApi } from "../services/BaseUrl";
 
-// regsiter api
+// regsiter api (legacy — direct register, kept but replaced by OTP flow)
 export const Registerapi = async (data) => {
     try {
         const response = await authApi.post("/api/auth/v1/register", data);
@@ -8,6 +8,30 @@ export const Registerapi = async (data) => {
     }
     catch (error) {
         console.log("Error in Registerapi", error);
+        throw error;
+    }
+}
+
+// Step 1 – send registration OTP to email
+export const handleSendRegisterOTP = async (data) => {
+    try {
+        const response = await authApi.post("/api/auth/mail/register/send-otp", data);
+        return response;
+    }
+    catch (error) {
+        console.error("Error in handleSendRegisterOTP", error);
+        throw error;
+    }
+}
+
+// Step 2 – verify registration OTP and create account
+export const handleVerifyRegisterOTP = async ({ email, otp }) => {
+    try {
+        const response = await authApi.post("/api/auth/mail/register/verify-otp", { email, otp });
+        return response;
+    }
+    catch (error) {
+        console.error("Error in handleVerifyRegisterOTP", error);
         throw error;
     }
 }

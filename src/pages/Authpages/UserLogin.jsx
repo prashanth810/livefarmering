@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiUser } from "react-icons/fi";
 import { FaLeaf, FaEye } from "react-icons/fa";
 import { login } from "../../constants/Imageconstants";
 import { Link, useNavigate } from "react-router-dom";
@@ -118,11 +118,11 @@ const UserLogin = () => {
                             </span>
                         </div>
 
-                        <Link to="/"
-                            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                        <Link to="/admin"
+                            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-orange-700 transition-colors"
                         >
-                            <FiArrowLeft className="h-4 w-4" />
-                            Back to Home
+                            <FiUser className="h-4 w-4" />
+                            Admin Login
                         </Link>
                     </div>
 

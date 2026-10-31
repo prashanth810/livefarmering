@@ -24,6 +24,8 @@ import Forgotpassword from "./pages/forgot-password/Forgotpassword";
 import Otpsession from "./pages/forgot-password/Otpsession";
 import Resetpassword from "./pages/forgot-password/Resetpassword"; 
 import ManageAddresses from "./pages/manageaddress/Manageaddresses";
+import AdminApp from "./admin/AdminApp";      // NEW
+import VendorApp from "./vendor/VendorApp";   // NEW
 
 // Home
 const Home = () => (
@@ -72,13 +74,28 @@ const App = () => {
 
   const isAuthPage = authPages.includes(location.pathname);
 
+  // NEW: Admin area has its own layout (sidebar + topbar), so hide the store Navbar/Footer
+  const isAdminPage = location.pathname.startsWith("/admin");
+
+  // NEW: Vendor dashboard also has its own layout.
+  // Exact match so /vendor-login and /vendor-register still work.
+  const isVendorPage = location.pathname === "/vendor" || location.pathname.startsWith("/vendor/");
+
+  const hideChrome = isAuthPage || isAdminPage || isVendorPage;
+
   return (
     <>
       {/* Show Navbar only on non-auth pages */}
-      {!isAuthPage && <NavBar />}
+      {!hideChrome && <NavBar />}
 
       <Routes>
         <Route path="/" element={<Home />} />
+
+        {/* NEW: Admin panel (own store, own API base url) */}
+        <Route path="/admin/*" element={<AdminApp />} />
+
+        {/* NEW: Vendor dashboard (own store, own API base url) */}
+        <Route path="/vendor/*" element={<VendorApp />} />
 
         <Route path="/about" element={<About />} />
 
@@ -232,7 +249,7 @@ const App = () => {
       </Routes>
 
 
-      {!isAuthPage && <Footer />}
+      {!hideChrome && <Footer />}
     </>
   );
 };
