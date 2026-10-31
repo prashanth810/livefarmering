@@ -24,8 +24,8 @@ import Forgotpassword from "./pages/forgot-password/Forgotpassword";
 import Otpsession from "./pages/forgot-password/Otpsession";
 import Resetpassword from "./pages/forgot-password/Resetpassword"; 
 import ManageAddresses from "./pages/manageaddress/Manageaddresses";
-import AdminApp from "./admin/AdminApp";      // NEW
-import VendorApp from "./vendor/VendorApp";   // NEW
+import adminRoutes from "./admin/router/adminRoutes";
+import VendorApp from "./vendor/VendorApp";
 
 // Home
 const Home = () => (
@@ -74,10 +74,10 @@ const App = () => {
 
   const isAuthPage = authPages.includes(location.pathname);
 
-  // NEW: Admin area has its own layout (sidebar + topbar), so hide the store Navbar/Footer
+  // Admin pages (/admin and /admin-login) have their own layout, so hide the store Navbar/Footer
   const isAdminPage = location.pathname.startsWith("/admin");
 
-  // NEW: Vendor dashboard also has its own layout.
+  // Vendor dashboard also has its own layout.
   // Exact match so /vendor-login and /vendor-register still work.
   const isVendorPage = location.pathname === "/vendor" || location.pathname.startsWith("/vendor/");
 
@@ -91,10 +91,10 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        {/* NEW: Admin panel (own store, own API base url) */}
-        <Route path="/admin/*" element={<AdminApp />} />
+        {/* NEW: admin login + admin panel (all in src/admin/routes) */}
+        {adminRoutes}
 
-        {/* NEW: Vendor dashboard (own store, own API base url) */}
+        {/* Vendor dashboard (own store, own API base url) */}
         <Route path="/vendor/*" element={<VendorApp />} />
 
         <Route path="/about" element={<About />} />

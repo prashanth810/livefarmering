@@ -311,8 +311,13 @@ const AuthSlice = createSlice({
             .addCase(handleLogin.fulfilled, (state, action) => {
                 state.login.loginloading = false;
                 state.login.logindata = action.payload.data;
-                state.login.token = action.payload.token;
-                sessionStorage.setItem("token", action.payload.token);
+                if (action.meta.arg?.role === "admin") {
+                    state.login.token = null;
+                    sessionStorage.setItem("adminToken", action.payload.token);
+                } else {
+                    state.login.token = action.payload.token;
+                    sessionStorage.setItem("token", action.payload.token);
+                }
             })
             .addCase(handleLogin.rejected, (state, action) => {
                 state.login.loginloading = false;
