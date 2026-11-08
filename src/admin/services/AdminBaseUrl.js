@@ -14,7 +14,7 @@ export const adminApi = axios.create({
 
 adminApi.interceptors.request.use(
     (config) => {
-        const token = sessionStorage.getItem("token");
+        const token = sessionStorage.getItem("adminToken");
         if (token) config.headers.Authorization = `Bearer ${token}`;
         return config;
     },
@@ -25,8 +25,8 @@ adminApi.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            sessionStorage.removeItem("token");
-            window.location.href = "/login";
+            sessionStorage.removeItem("adminToken");
+            window.location.href = "/admin-login";
         }
         return Promise.reject(error);
     }

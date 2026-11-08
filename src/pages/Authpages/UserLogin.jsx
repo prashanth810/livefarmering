@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiArrowLeft, FiUser } from "react-icons/fi";
+import { FiUser } from "react-icons/fi";
 import { FaLeaf, FaEye } from "react-icons/fa";
 import { login } from "../../constants/Imageconstants";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,7 +17,7 @@ import { PiStorefrontLight } from "react-icons/pi";
 const UserLogin = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loginloading, loginerror } = useSelector((state) => state.auth.login);
+    const { loginloading } = useSelector((state) => state.auth.login);
     const { remainingSeconds, countdownLabel, startCooldown } = useAuthRateLimit();
     const [remember, setRemember] = useState(true);
     const [email, setEmail] = useState("");
@@ -118,7 +118,7 @@ const UserLogin = () => {
                             </span>
                         </div>
 
-                        <Link to="/admin"
+                        <Link to="/admin-login"
                             className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-orange-700 transition-colors"
                         >
                             <FiUser className="h-4 w-4" />
