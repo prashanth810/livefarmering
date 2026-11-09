@@ -14,7 +14,7 @@ const productApi  = createApiClient(import.meta.env.VITE_PRODUCT_API_URL  || "ht
 const categoryApi = createApiClient(import.meta.env.VITE_CATEGORY_API_URL || "https://ecommerce-productservice.onrender.com");
 const cartApi     = createApiClient(import.meta.env.VITE_CART_API_URL     || "https://ecommerce-cartservice.onrender.com");
 // Address service always points to its own dedicated Render service (never the payment service).
-const addressApi  = createApiClient(import.meta.env.VITE_ADDRESS_API_URL);
+const addressApi  = createApiClient(import.meta.env.VITE_ADDRESS_API_URL || "https://ecommerce-addressservice.onrender.com");
 const orderApi    = createApiClient(import.meta.env.VITE_ORDER_API_URL    || "https://ecommerce-payment-jakh.onrender.com");
 
 
