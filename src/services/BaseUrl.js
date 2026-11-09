@@ -7,12 +7,12 @@ const createApiClient = (baseURL) => axios.create({
     },
 });
 
-const authApi = createApiClient(import.meta.env.VITE_AUTH_API_URL);
-const productApi = createApiClient(import.meta.env.VITE_PRODUCT_API_URL);
-const categoryApi = createApiClient(import.meta.env.VITE_CATEGORY_API_URL);
-const cartApi = createApiClient(import.meta.env.VITE_CART_API_URL);
-const addressApi = createApiClient(import.meta.env.VITE_ADDRESS_API_URL);
-const orderApi = createApiClient(import.meta.env.VITE_ORDER_API_URL);
+const authApi = createApiClient(import.meta.env.VITE_AUTH_API_URL || "https://ecommerce-authservice.onrender.com");
+const productApi = createApiClient(import.meta.env.VITE_PRODUCT_API_URL || "https://ecommerce-productservice.onrender.com");
+const categoryApi = createApiClient(import.meta.env.VITE_CATEGORY_API_URL || "https://ecommerce-productservice.onrender.com");
+const cartApi = createApiClient(import.meta.env.VITE_CART_API_URL || "https://ecommerce-cartservice.onrender.com");
+const addressApi = createApiClient(import.meta.env.VITE_ADDRESS_API_URL || "https://ecommerce-addressservice.onrender.com");
+const orderApi = createApiClient(import.meta.env.VITE_ORDER_API_URL || "https://ecommerce-payment-jakh.onrender.com");
 
 
 const attachInterceptors = (api) => {
